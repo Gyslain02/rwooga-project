@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
 import { BRAND_EMAIL, WHATSAPP_NUMBER } from '../constants';
 
+// Assets
+import logo from '../assets/Rwooga logo.png';
+
 const Footer: React.FC = () => {
   return (
     <footer className="bg-brand-dark text-white pt-20 pb-10">
@@ -11,11 +14,8 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-brand-cyan rounded-xl flex items-center justify-center text-white">
-                <span className="font-display font-bold text-xl italic">R</span>
-              </div>
-              <span className="font-display font-bold text-2xl tracking-tighter">RWOOGA</span>
+            <Link to="/" className="flex items-center mb-6" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <img src={logo} alt="Rwooga" className="h-10 w-auto object-contain brightness-0 invert" />
             </Link>
             <p className="text-emerald-100/70 leading-relaxed mb-6">
               Professional 3D services bringing imagination to life through high-end visualizations, animation, and precision 3D printing.

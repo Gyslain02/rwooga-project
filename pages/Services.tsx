@@ -2,58 +2,31 @@
 import React from 'react';
 import { ArrowRight, Box, Video, Palette, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SERVICES } from '../constants';
 
 const Services: React.FC = () => {
   return (
     <div className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mb-20">
-          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-8">Our Core <span className="text-brand-cyan">Expertise.</span></h1>
+          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-8">Our Core Expertise.</h1>
           <p className="text-xl text-gray-600 leading-relaxed">
-            From digital concepts to physical reality, we provide a full spectrum of 3D services tailored for modern brands, architects, and innovators.
+            From digital concepts to physical reality, we provide a wide range of 3D services tailored for Businesses, architects, real estate developers, marketing agencies, startups, and individuals who need custom-designed or 3D printed solutions.
           </p>
         </div>
 
         <div className="space-y-24">
-          <ServiceDetail 
-            id="viz"
-            icon={<Box size={40} />}
-            title="3D Visualization & Renders"
-            description="We create stunning, photorealistic visuals that help architects and real estate developers sell their ideas before construction begins. Our product renders allow marketing agencies to showcase products with unmatched clarity."
-            features={['Architectural Renders', 'Interior Design Visuals', 'Product Photography Replacement', '360° VR Tours']}
-            image="https://picsum.photos/id/190/800/600"
-            reverse={false}
-          />
-
-          <ServiceDetail 
-            id="anim"
-            icon={<Video size={40} />}
-            title="Animation & Promo Movies"
-            description="Movement brings emotion. We produce high-quality animated advertisements and promotional movies that capture attention and communicate complex features simply."
-            features={['Product Explainer Videos', 'Architectural Walkthroughs', 'TV Advertisements', 'Logo Animations']}
-            image="https://picsum.photos/id/201/800/600"
-            reverse={true}
-          />
-
-          <ServiceDetail 
-            id="custom"
-            icon={<Palette size={40} />}
-            title="Custom 3D Design"
-            description="Our design team specializes in turning abstract problems into functional 3D models. Whether it's a replacement part for machinery or a custom art piece, we design with manufacturing in mind."
-            features={['Mechanical Part Design', 'Prototyping', 'Artistic Sculpting', 'CAD Optimization']}
-            image="https://picsum.photos/id/202/800/600"
-            reverse={false}
-          />
-
-          <ServiceDetail 
-            id="print"
-            icon={<Printer size={40} />}
-            title="Professional 3D Printing"
-            description="Equipped with state-of-the-art 3D printers, we manufacture ready-made products and custom commissions using a variety of materials including PLA, PETG, and Resin."
-            features={['Rapid Prototyping', 'Batch Production', 'Custom Functional Parts', 'Architectural Models']}
-            image="https://picsum.photos/id/203/800/600"
-            reverse={true}
-          />
+          {SERVICES.map((service, index) => (
+            <ServiceDetail
+              key={service.id}
+              icon={getServiceIcon(service.id)}
+              title={service.title}
+              description={service.description}
+              features={getServiceFeatures(service.id)}
+              image={service.image}
+              reverse={index % 2 !== 0}
+            />
+          ))}
         </div>
 
         {/* Bottom CTA */}
@@ -72,12 +45,12 @@ const Services: React.FC = () => {
   );
 };
 
-const ServiceDetail: React.FC<{ 
-  id: string; 
-  icon: React.ReactNode; 
-  title: string; 
-  description: string; 
-  features: string[]; 
+const ServiceDetail: React.FC<{
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  features: string[];
   image: string;
   reverse: boolean;
 }> = ({ icon, title, description, features, image, reverse }) => (
@@ -102,9 +75,33 @@ const ServiceDetail: React.FC<{
     </div>
     <div className="lg:w-1/2 relative group">
       <div className="absolute inset-0 bg-brand-cyan/20 rounded-3xl -rotate-2 group-hover:rotate-0 transition-transform"></div>
-      <img src={image} alt={title} className="relative rounded-3xl shadow-xl w-full h-full object-cover aspect-video" />
+      {image.endsWith('.mp4') ? (
+        <video src={image} className="relative rounded-3xl shadow-xl w-full h-full object-cover aspect-video" autoPlay muted loop playsInline />
+      ) : (
+        <img src={image} alt={title} className="relative rounded-3xl shadow-xl w-full h-full object-cover aspect-video" />
+      )}
     </div>
   </div>
 );
+
+const getServiceIcon = (id: string) => {
+  switch (id) {
+    case 'viz': return <Box size={40} />;
+    case 'anim': return <Video size={40} />;
+    case 'custom': return <Palette size={40} />;
+    case 'print': return <Printer size={40} />;
+    default: return <Box size={40} />;
+  }
+};
+
+const getServiceFeatures = (id: string) => {
+  switch (id) {
+    case 'viz': return ['Architectural Renders', 'Interior Design Visuals', 'Product Photography Replacement', '360° VR Tours'];
+    case 'anim': return ['Product Explainer Videos', 'Architectural Walkthroughs', 'TV Advertisements', 'Logo Animations'];
+    case 'custom': return ['Mechanical Part Design', 'Prototyping', 'Artistic Sculpting', 'CAD Optimization'];
+    case 'print': return ['Rapid Prototyping', 'Batch Production', 'Custom Functional Parts', 'Architectural Models'];
+    default: return [];
+  }
+};
 
 export default Services;

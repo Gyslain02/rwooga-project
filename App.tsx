@@ -15,6 +15,9 @@ import Admin from './pages/Admin';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 
+// Assets
+import logo from './assets/Rwooga logo.png';
+
 // Components
 import Footer from './components/Footer';
 
@@ -54,15 +57,12 @@ const App: React.FC = () => {
     <Router>
       <div className="flex flex-col min-h-screen font-sans selection:bg-brand-cyan selection:text-white">
         {/* Navigation */}
-        <nav className="fixed w-full z-50 glass border-b border-gray-100">
+        <nav className="fixed w-full z-50 bg-[#eef1f2] shadow-lg border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-20">
+            <div className="flex justify-between h-24">
               <div className="flex items-center">
-                <Link to="/" className="flex items-center space-x-2">
-                  <div className="w-10 h-10 bg-brand-dark rounded-xl flex items-center justify-center text-white">
-                    <span className="font-display font-bold text-xl italic">R</span>
-                  </div>
-                  <span className="font-display font-bold text-2xl tracking-tighter text-brand-dark">RWOOGA</span>
+                <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <img src={logo} alt="Rwooga" className="h-24 w-auto object-contain" />
                 </Link>
               </div>
 
@@ -73,17 +73,16 @@ const App: React.FC = () => {
                 <NavLink to="/services">Services</NavLink>
                 <NavLink to="/portfolio">Portfolio</NavLink>
                 <NavLink to="/shop">Shop</NavLink>
+                <NavLink to="/contact">Contact</NavLink>
+
                 {isCustomPrintingEnabled && (
                   <Link
                     to="/custom-request"
-                    className="bg-brand-cyan text-white px-5 py-2.5 rounded-full font-semibold hover:bg-opacity-90 transition-all shadow-md shadow-cyan-100"
+                    className="bg-brand-cyan text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-xl shadow-cyan-900/40"
                   >
                     Custom Design
                   </Link>
                 )}
-                <Link to="/contact" className="text-gray-600 hover:text-brand-dark transition-colors">
-                  Contact
-                </Link>
 
                 <div className="h-6 w-px bg-gray-200" />
 
@@ -107,14 +106,8 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-4">
-                    <Link to="/login" className="text-gray-600 hover:text-brand-dark font-semibold">
+                    <Link to="/login" className="border border-brand-cyan text-brand-cyan px-8 py-3 rounded-full font-bold hover:bg-brand-cyan hover:text-white transition-all">
                       Login
-                    </Link>
-                    <Link
-                      to="/signup"
-                      className="bg-brand-dark text-white px-5 py-2 rounded-xl font-bold hover:bg-gray-800 transition-all"
-                    >
-                      Sign Up
                     </Link>
                   </div>
                 )}
@@ -134,17 +127,18 @@ const App: React.FC = () => {
 
           {/* Mobile Nav Overlay */}
           {isMenuOpen && (
-            <div className="md:hidden glass border-t border-gray-100 animate-in slide-in-from-top duration-300">
+            <div className="md:hidden bg-[#eef1f2] border-t border-gray-100 animate-in slide-in-from-top duration-300">
               <div className="px-4 pt-2 pb-6 space-y-1">
                 <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>Home</MobileNavLink>
                 <MobileNavLink to="/about" onClick={() => setIsMenuOpen(false)}>About</MobileNavLink>
                 <MobileNavLink to="/services" onClick={() => setIsMenuOpen(false)}>Services</MobileNavLink>
                 <MobileNavLink to="/portfolio" onClick={() => setIsMenuOpen(false)}>Portfolio</MobileNavLink>
                 <MobileNavLink to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</MobileNavLink>
+                <MobileNavLink to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</MobileNavLink>
                 {isCustomPrintingEnabled && (
                   <MobileNavLink to="/custom-request" onClick={() => setIsMenuOpen(false)}>Custom Request</MobileNavLink>
                 )}
-                <MobileNavLink to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</MobileNavLink>
+
 
                 <div className="pt-4 mt-4 border-t border-gray-100 flex flex-col space-y-3">
                   {user ? (
@@ -172,13 +166,6 @@ const App: React.FC = () => {
                       >
                         Login
                       </Link>
-                      <Link
-                        to="/signup"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block mx-3 px-3 py-4 text-lg font-bold text-center bg-brand-dark text-white rounded-xl shadow-lg"
-                      >
-                        Sign Up
-                      </Link>
                     </>
                   )}
                 </div>
@@ -188,7 +175,7 @@ const App: React.FC = () => {
         </nav>
 
         {/* Content */}
-        <main className="flex-grow pt-20">
+        <main className="flex-grow pt-24">
           <Routes>
             <Route path="/" element={<Home isPrintingEnabled={isCustomPrintingEnabled} />} />
             <Route path="/about" element={<About />} />

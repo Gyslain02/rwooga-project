@@ -1,15 +1,47 @@
 
 import React from 'react';
-import { 
-  Box, 
-  Video, 
-  Printer, 
-  Layout, 
-  Layers, 
-  Palette, 
-  Cpu 
+import {
+  Box,
+  Video,
+  Printer,
+  Layout,
+  Layers,
+  Palette,
+  Cpu
 } from 'lucide-react';
 import { Service, PortfolioItem, Product } from './types';
+
+// Asset Imports
+import vizImg from './assets/Ruti v4_Room 1.jpg.jpeg';
+import animImg from './assets/sp.mp4';
+import customImg from './assets/sp2.png';
+import printImg from './assets/sp1.png';
+
+// Portfolio Imports
+import ruti1 from './assets/Ruti v4_Room 1.jpg.jpeg';
+import ruti2 from './assets/Ruti v4_Room 1 (2).jpg.jpeg';
+import ruti3 from './assets/Ruti v4_Room 1 (3).jpg.jpeg';
+import ruti4 from './assets/Ruti v4_Room 2.jpg.jpeg';
+import ruti5 from './assets/Ruti v4_Room 2 (2).jpg.jpeg';
+import ruti6 from './assets/Ruti v4_Room 2 (3).jpg.jpeg';
+
+import maguru1 from './assets/Maguru photoshoot.png';
+import maguru2 from './assets/Maguru and mom 2.png';
+import maguru3 from './assets/Maguru.jpg';
+
+import sp1 from './assets/sp1.png';
+import sp2 from './assets/sp2.png';
+import sp3 from './assets/sp3.png';
+import spVideo from './assets/sp.mp4';
+import movieVideo from './assets/MAGURU N_INSIBIKA MOVIE first look.mp4';
+
+import sample3 from './assets/sample 3.png';
+import img0300 from './assets/0300.png';
+
+// Product Imports
+import prod1 from './assets/sample 3.png';
+import prod2 from './assets/sp1.png';
+import prod3 from './assets/0300.png';
 
 export const WHATSAPP_NUMBER = "+250784269593";
 export const BRAND_EMAIL = "phedokat@gmail.com";
@@ -20,38 +52,55 @@ export const SERVICES: Service[] = [
     title: '3D Visualization',
     description: 'Hyper-realistic architectural and product renderings that bring your blueprints to life.',
     icon: 'Layout',
-    image: 'https://picsum.photos/id/1/800/600'
+    image: vizImg
   },
   {
     id: 'anim',
     title: 'Animated Movies & Ads',
     description: 'Engaging promotional content and storytelling through high-end 3D animation.',
     icon: 'Video',
-    image: 'https://picsum.photos/id/2/800/600'
+    image: animImg
   },
   {
     id: 'custom',
     title: 'Custom 3D Design',
     description: 'Bespoke design services for unique mechanical parts, art, or prototypes.',
     icon: 'Palette',
-    image: 'https://picsum.photos/id/3/800/600'
+    image: customImg
   },
   {
     id: 'print',
     title: '3D Printing',
     description: 'Precision manufacturing of custom designs and ready-made products in various materials.',
     icon: 'Printer',
-    image: 'https://picsum.photos/id/4/800/600'
+    image: printImg
   }
 ];
 
 export const PORTFOLIO: PortfolioItem[] = [
-  { id: '1', title: 'Modern Villa Viz', category: 'visualization', image: 'https://picsum.photos/id/10/800/600', description: 'Architectural visualization for a luxury villa.' },
-  { id: '2', title: 'Smartphone Pro Ad', category: 'animation', image: 'https://picsum.photos/id/11/800/600', description: 'Product promotional animation.' },
-  { id: '3', title: 'Custom Drone Frame', category: 'print', image: 'https://picsum.photos/id/12/800/600', description: 'Lightweight 3D printed drone structure.' },
-  { id: '4', title: 'Interior Design View', category: 'visualization', image: 'https://picsum.photos/id/13/800/600', description: 'Realistic lounge interior render.' },
-  { id: '5', title: 'Action Figure Custom', category: 'product', image: 'https://picsum.photos/id/14/800/600', description: 'Highly detailed custom character design.' },
-  { id: '6', title: 'Logo Animation', category: 'animation', image: 'https://picsum.photos/id/15/800/600', description: 'Dynamic 3D logo reveal.' },
+  // Visualization
+  { id: 'v1', title: 'Ruti Room 1', category: 'visualization', image: ruti1, description: 'High-end architectural interior visualization.' },
+  { id: 'v2', title: 'Ruti Room 1 (Alt)', category: 'visualization', image: ruti2, description: 'Modern interior design rendering.' },
+  { id: 'v3', title: 'Ruti Room 1 (Detail)', category: 'visualization', image: ruti3, description: 'Detailed architectural render.' },
+  { id: 'v4', title: 'Ruti Room 2', category: 'visualization', image: ruti4, description: 'Luxury bedroom visualization.' },
+  { id: 'v5', title: 'Ruti Room 2 (Alt)', category: 'visualization', image: ruti5, description: 'Elegant interior design visualization.' },
+  { id: 'v6', title: 'Ruti Room 2 (Detail)', category: 'visualization', image: ruti6, description: 'Photorealistic architectural rendering.' },
+
+  // Animation
+  { id: 'a1', title: 'Insibika Movie', category: 'animation', image: movieVideo, description: 'First look at the MAGURU N_INSIBIKA movie.' },
+  { id: 'a2', title: 'Promotional Motion', category: 'animation', image: spVideo, description: 'Dynamic 3D character/product animation.' },
+
+  // Products
+  { id: 'p1', title: 'Maguru Photoshoot', category: 'product', image: maguru1, description: 'Professional product photography showcase.' },
+  { id: 'p2', title: 'Maguru & Mom', category: 'product', image: maguru2, description: 'Heartfelt 3D printed/designed character showcase.' },
+  { id: 'p3', title: 'Maguru Portrait', category: 'product', image: maguru3, description: 'Clean product portrait.' },
+  { id: 'p4', title: 'Artistic Sculpture', category: 'product', image: sample3, description: 'Detailed 3D printed artistic piece.' },
+  { id: 'p5', title: 'Tech Component', category: 'product', image: img0300, description: 'Precision engineered 3D printed part.' },
+
+  // Print / Custom
+  { id: 'pr1', title: 'Custom Model A', category: 'print', image: sp1, description: 'Custom precision 3D printed model.' },
+  { id: 'pr2', title: 'Functional Design B', category: 'print', image: sp2, description: 'Mechanical part prototyping.' },
+  { id: 'pr3', title: 'Experimental Print C', category: 'print', image: sp3, description: 'Advanced material 3D printing test.' },
 ];
 
 export const PRODUCTS: Product[] = [
@@ -60,7 +109,7 @@ export const PRODUCTS: Product[] = [
     name: 'Geometric Planter',
     price: 15000,
     currency: 'RWF',
-    image: 'https://picsum.photos/id/20/400/400',
+    image: prod1,
     category: 'Home Decor',
     variants: { size: ['Small', 'Medium', 'Large'], material: ['PLA', 'PETG'], color: ['Cyan', 'White', 'Black'] }
   },
@@ -69,7 +118,7 @@ export const PRODUCTS: Product[] = [
     name: 'Minimalist Phone Stand',
     price: 8000,
     currency: 'RWF',
-    image: 'https://picsum.photos/id/21/400/400',
+    image: prod2,
     category: 'Accessories',
     variants: { size: ['Standard'], material: ['PLA'], color: ['Silver', 'Gold', 'Black'] }
   },
@@ -78,7 +127,7 @@ export const PRODUCTS: Product[] = [
     name: 'Articulated Dragon',
     price: 25000,
     currency: 'RWF',
-    image: 'https://picsum.photos/id/22/400/400',
+    image: prod3,
     category: 'Toys',
     variants: { size: ['Medium'], material: ['Silk PLA'], color: ['Rainbow', 'Blue-Green'] }
   }

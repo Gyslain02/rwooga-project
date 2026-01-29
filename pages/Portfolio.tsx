@@ -7,8 +7,8 @@ const Portfolio: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const filters = ['all', 'visualization', 'animation', 'product', 'print'];
 
-  const filteredItems = activeFilter === 'all' 
-    ? PORTFOLIO 
+  const filteredItems = activeFilter === 'all'
+    ? PORTFOLIO
     : PORTFOLIO.filter(item => item.category === activeFilter);
 
   return (
@@ -27,11 +27,10 @@ const Portfolio: React.FC = () => {
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`px-8 py-3 rounded-full font-bold uppercase text-xs tracking-[0.2em] transition-all ${
-                activeFilter === filter 
-                  ? 'bg-brand-dark text-white shadow-xl translate-y-[-2px]' 
+              className={`px-8 py-3 rounded-full font-bold uppercase text-xs tracking-[0.2em] transition-all ${activeFilter === filter
+                  ? 'bg-brand-dark text-white shadow-xl translate-y-[-2px]'
                   : 'bg-white text-gray-400 border border-gray-100 hover:text-brand-dark hover:border-gray-200'
-              }`}
+                }`}
             >
               {filter}
             </button>
@@ -42,12 +41,23 @@ const Portfolio: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredItems.map((item) => (
             <div key={item.id} className="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500">
-              <div className="aspect-[4/3] overflow-hidden">
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
+              <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                {item.image.endsWith('.mp4') ? (
+                  <video
+                    src={item.image}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                )}
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-8">
                 <span className="text-brand-cyan font-bold text-xs uppercase tracking-[0.2em] mb-2">{item.category}</span>
@@ -66,9 +76,9 @@ const Portfolio: React.FC = () => {
         {/* Portfolio CTA */}
         <div className="mt-24 text-center">
           <p className="text-gray-500 mb-8 font-medium">Want to see more of our experimental designs?</p>
-          <a 
-            href="https://www.instagram.com/rwooga" 
-            target="_blank" 
+          <a
+            href="https://www.instagram.com/rwooga"
+            target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center text-2xl font-display font-extrabold text-brand-dark hover:text-brand-cyan transition-colors"
           >

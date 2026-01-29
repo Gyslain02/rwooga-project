@@ -2,33 +2,48 @@
 import React from 'react';
 import { Target, Users, Zap, Shield } from 'lucide-react';
 
+// Assets
+import teamImg from '../assets/Maguru and mom 2.png';
+
 const About: React.FC = () => {
   return (
     <div className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Intro */}
+        <div className="text-center mb-16 font-display">
+          <h2 className="text-sm font-bold text-brand-cyan uppercase tracking-[0.2em] mb-4">About Rwooga</h2>
+          <h3 className="text-4xl md:text-5xl font-display font-extrabold text-brand-dark">Who We Are</h3>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24">
           <div>
-            <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-8">Crafting Digital <br /><span className="text-brand-cyan">Masterpieces.</span></h1>
+            <h1 className="text-2xl md:text-3xl font-display font-extrabold text-brand-dark mb-8">
+              Custom problems<br />
+              need <span className="text-brand-dark">custom</span><br />
+              <span className="text-brand-dark">solutions.</span>
+            </h1>
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-              Founded with a passion for precision and creativity, Rwooga is a leading 3D studio based in Kigali, Rwanda. 
-              We bridge the gap between imagination and reality by providing professional 3D visualizations, high-end animation, and custom 3D printing solutions.
+              We are a Rwanda-based 3D studio specializing in <strong>3D visualizations, animated films and advertisements, and 3D products</strong>. We use 3D as a creative and technical tool to help brands, businesses, and individuals bring ideas to life.
             </p>
             <div className="space-y-4">
-              <MissionItem title="Our Mission" text="To empower businesses and individuals through immersive 3D technology and accessible precision manufacturing." />
-              <MissionItem title="Our Vision" text="To become the premier hub for 3D innovation in East Africa and beyond." />
+              <MissionItem
+                title="Our Mission"
+                text={
+                  <>
+                    Our approach is simple: <strong>we don’t believe in one-size-fits-all solutions</strong>. Every project starts with understanding the problem, then designing a solution specifically for it — visually, functionally, and strategically.
+                    <br /><br />
+                    From concept to final render or physical product, we combine <strong>creativity, storytelling, and technical precision</strong> to deliver high-quality, custom-made results.
+                  </>
+                }
+              />
             </div>
           </div>
           <div className="relative">
-            <img 
-              src="https://picsum.photos/id/180/800/1000" 
-              alt="Team working" 
+            <img
+              src={teamImg}
+              alt="Team working"
               className="rounded-3xl shadow-2xl"
             />
-            <div className="absolute -bottom-8 -left-8 bg-brand-cyan text-white p-8 rounded-3xl shadow-xl max-w-xs">
-              <p className="text-4xl font-display font-bold mb-2">100%</p>
-              <p className="text-sm opacity-80 uppercase tracking-widest font-bold">Client Satisfaction Focus</p>
-            </div>
           </div>
         </div>
 
@@ -61,12 +76,12 @@ const About: React.FC = () => {
   );
 };
 
-const MissionItem: React.FC<{ title: string; text: string }> = ({ title, text }) => (
+const MissionItem: React.FC<{ title: string; text: React.ReactNode }> = ({ title, text }) => (
   <div className="flex items-start space-x-4">
     <div className="mt-1 bg-brand-cyan w-2 h-2 rounded-full flex-shrink-0" />
     <div>
       <h4 className="font-bold text-brand-dark">{title}</h4>
-      <p className="text-gray-600">{text}</p>
+      <div className="text-gray-600">{text}</div>
     </div>
   </div>
 );
