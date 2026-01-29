@@ -5,6 +5,7 @@ import { UserPlus, ShieldCheck } from 'lucide-react';
 const Signup: React.FC = () => {
     const [formData, setFormData] = useState({
         name: '',
+        phone: '',
         email: '',
         password: '',
         confirmPassword: ''
@@ -31,6 +32,7 @@ const Signup: React.FC = () => {
         const newUser = {
             id: Date.now(),
             name: formData.name,
+            phone: formData.phone,
             email: formData.email,
             password: formData.password
         };
@@ -79,6 +81,17 @@ const Signup: React.FC = () => {
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
                                 placeholder="John Doe"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1.5">Phone Number</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="w-full px-5 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
+                                placeholder="+250..."
                                 required
                             />
                         </div>
