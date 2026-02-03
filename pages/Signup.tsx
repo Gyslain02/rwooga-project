@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authService } from '../services/authService';
 
 const Signup: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -13,9 +14,11 @@ const Signup: React.FC = () => {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -25,29 +28,41 @@ const Signup: React.FC = () => {
             return;
         }
 
-        const users = JSON.parse(localStorage.getItem('rwooga_users') || '[]');
-        if (users.find((u: any) => u.email === formData.email)) {
-            setError('Email already exists');
-            toast.error('Email already exists');
+        // Keep frontend password validation as a first line of defense
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            setError('Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol');
+            toast.error('Password is too weak');
             return;
         }
 
-        const newUser = {
-            id: Date.now(),
-            name: formData.name,
-            phone: formData.phone,
-            email: formData.email,
-            password: formData.password
-        };
+        try {
+            // Clean phone number: remove non-digits and take last 10
+            const cleanedPhone = formData.phone.replace(/\D/g, '').slice(-10);
 
-        users.push(newUser);
-        localStorage.setItem('rwooga_users', JSON.stringify(users));
+            if (cleanedPhone.length < 10) {
+                setError('Please enter a valid 10-digit phone number');
+                return;
+            }
 
-        setSuccess(true);
-        toast.success('Account created successfully!');
-        setTimeout(() => {
-            navigate('/login');
-        }, 2000);
+            await authService.register({
+                full_name: formData.name,
+                email: formData.email,
+                phone_number: cleanedPhone,
+                password: formData.password,
+                password_confirm: formData.confirmPassword
+            });
+
+            setSuccess(true);
+            toast.success('Account created! Please check your email for verification.');
+            setTimeout(() => {
+                navigate('/login');
+            }, 3000);
+        } catch (err: any) {
+            console.error('Signup Error:', err);
+            setError(err.message || 'Registration failed');
+            toast.error(err.message || 'Registration failed');
+        }
     };
 
     return (
@@ -114,26 +129,50 @@ const Signup: React.FC = () => {
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-gray-300 ml-1">Password</label>
-                            <input
-                                required
-                                type="password"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <input
+                                    required
+                                    type={showPassword ? "text" : "password"}
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                            <div className="px-1 py-2 space-y-1">
+                                <p className="text-[10px] text-gray-500 font-medium leading-tight">
+                                    • Must be at least 8 characters<br />
+                                    • Mix of uppercase, lowercase, numbers & symbols
+                                </p>
+                            </div>
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-gray-300 ml-1">Confirm Password</label>
-                            <input
-                                required
-                                type="password"
-                                value={formData.confirmPassword}
-                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                                placeholder="••••••••"
-                            />
+                            <div className="relative">
+                                <input
+                                    required
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={formData.confirmPassword}
+                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button

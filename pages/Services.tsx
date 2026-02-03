@@ -1,20 +1,35 @@
 
-import React from 'react';
 import { ArrowRight, Box, Video, Palette, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import React, { useRef } from 'react';
 import { SERVICES } from '../constants';
 
 const Services: React.FC = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const headerY = useTransform(smoothProgress, [0, 0.2], [0, -50]);
+  const headerOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
+
   return (
-    <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
+    <div ref={containerRef} className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-32">
+        <motion.div style={{ y: headerY, opacity: headerOpacity }} className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-2xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Capabilities</span>
-            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+            <h1 className="text-5xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
               Core <br />
               <span className="text-gray-500">Expertise</span>
             </h1>
@@ -24,7 +39,7 @@ const Services: React.FC = () => {
               We bridge the gap between imagination and reality with specialized 3D workflows tailored for Businesses, architects, real estate developers, marketing agencies, startups, and individuals who need custom-designed or 3D printed solutions.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Detailed Services */}
         <div className="space-y-48">
@@ -66,7 +81,7 @@ const ServiceDetail: React.FC<{
       className="lg:w-1/2 space-y-10"
     >
       <div className="text-brand-primary p-4 bg-white/5 inline-block rounded-2xl">{icon}</div>
-      <h3 className="text-4xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter leading-none">{title}</h3>
+      <h3 className="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter leading-none">{title}</h3>
       <p className="text-xl text-gray-400 leading-relaxed font-medium">{description}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 pt-6">
@@ -85,33 +100,45 @@ const ServiceDetail: React.FC<{
       </div>
     </motion.div>
 
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 1 }}
-      className="lg:w-1/2 relative group rounded-[40px] overflow-hidden"
-    >
-      {image && (image.includes('.mp4') || image.includes('.webm')) ? (
-        <video
-          src={image}
-          className="w-full h-full object-cover aspect-[4/3] group-hover:scale-110 transition-transform duration-[2s]"
+    <div className="lg:w-1/2 relative group rounded-[40px] overflow-hidden aspect-[4/3]">
+      <ServiceParallaxImage src={image} alt={title} />
+      <div className="absolute inset-0 bg-brand-primary/10 mix-blend-overlay pointer-events-none"></div>
+    </div>
+  </div>
+);
+
+const ServiceParallaxImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+
+  return (
+    <motion.div ref={ref} className="w-full h-full relative">
+      {src && (src.includes('.mp4') || src.includes('.webm')) ? (
+        <motion.video
+          src={src}
+          style={{ y }}
+          className="w-full h-[120%] -top-[10%] absolute object-cover group-hover:scale-110 transition-transform duration-[2s]"
           autoPlay
           muted
           loop
           playsInline
         />
       ) : (
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover aspect-[4/3] group-hover:scale-110 transition-transform duration-[2s]"
+        <motion.img
+          src={src}
+          alt={alt}
+          style={{ y }}
+          className="w-full h-[120%] -top-[10%] absolute object-cover group-hover:scale-110 transition-transform duration-[2s]"
         />
       )}
-      <div className="absolute inset-0 bg-brand-primary/10 mix-blend-overlay"></div>
     </motion.div>
-  </div>
-);
+  );
+};
 
 const getServiceIcon = (id: string) => {
   switch (id) {

@@ -161,18 +161,19 @@ const Contact: React.FC = () => {
           </div>
         </div>
 
-        {/* Studio Location (Map) */}
-        <div className="mt-32 rounded-[40px] overflow-hidden border border-white/5 h-[400px] md:h-[600px] shadow-2xl">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127602.40939515514!2d30.0125868!3d-1.930128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca429ed308f25%3A0x103681432f80164e!2sKigali!5e0!3m2!1sen!2srw!4v1714123456789!5m2!1sen!2srw"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            className="w-full h-full"
-          ></iframe>
-        </div>
+      </div>
+
+      {/* Studio Location (Map) - Full Size */}
+      <div className="mt-32 h-[500px] md:h-[700px] w-full border-t border-white/5 grayscale hover:grayscale-0 transition-all duration-1000 shadow-2xl">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127602.40939515514!2d30.0125868!3d-1.930128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca429ed308f25%3A0x103681432f80164e!2sKigali!5e0!3m2!1sen!2srw!4v1714123456789!5m2!1sen!2srw"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          className="w-full h-full"
+        ></iframe>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import Contact from './pages/Contact';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import { authService } from './services/authService';
 
 // Assets
 import logo from './assets/Rwooga logo.png';
@@ -27,19 +28,44 @@ const App: React.FC = () => {
   const [isCustomPrintingEnabled, setIsCustomPrintingEnabled] = useState(true);
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
 
-  // Load user from localStorage
+  // Load user from session
   useEffect(() => {
-    const storedUser = localStorage.getItem('rwooga_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const initializeAuth = () => {
+      const accessToken = localStorage.getItem('access_token');
+      const storedUser = localStorage.getItem('rwooga_user');
+
+      if (accessToken && storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else if (!accessToken && storedUser) {
+        // Clear legacy user without session
+        localStorage.removeItem('rwooga_user');
+      }
+    };
+
+    initializeAuth();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('rwooga_user');
-    setUser(null);
-    toast.success('Successfully logged out');
-    window.location.hash = '/';
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        await authService.logout(refreshToken);
+      }
+    } catch (error) {
+      console.error('Logout API error:', error);
+    } finally {
+      localStorage.removeItem('rwooga_user');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setUser(null);
+      toast.success('Successfully logged out');
+      window.location.hash = '/';
+    }
+  };
+
+  const handleLogin = (userData: { name: string; email: string; role: string }) => {
+    setUser(userData);
+    localStorage.setItem('rwooga_user', JSON.stringify(userData));
   };
 
   // Initialize printing state from localStorage
@@ -58,7 +84,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Toaster position="top-right" reverseOrder={false} />
-      <div className="flex flex-col min-h-screen font-sans selection:bg-brand-cyan selection:text-white">
+      <div className="flex flex-col min-h-screen font-sans selection:bg-brand-primary selection:text-white">
         {/* Navigation */}
         <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,43 +114,45 @@ const App: React.FC = () => {
                 )}
               </div>
 
-              <div className="h-6 w-px bg-white/10" />
+              <div className="flex items-center space-x-4">
+                <div className="hidden md:block h-6 w-px bg-white/10 mx-4" />
 
-              {user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</span>
-                    <span className="text-sm font-bold text-white">{user.name}</span>
+                {user ? (
+                  <div className="hidden md:flex items-center space-x-4">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</span>
+                      <span className="text-sm font-bold text-white">{user.name}</span>
+                    </div>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="p-2 bg-white/5 rounded-lg text-gray-400 hover:text-brand-primary transition-colors">
+                        <Settings size={20} />
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="text-xs font-bold text-red-400 hover:text-red-500 transition-colors"
+                    >
+                      Logout
+                    </button>
                   </div>
-                  {user.role === 'admin' && (
-                    <Link to="/admin" className="p-2 bg-white/5 rounded-lg text-gray-400 hover:text-brand-primary transition-colors">
-                      <Settings size={20} />
+                ) : (
+                  <div className="hidden md:block">
+                    <Link to="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                      Login
                     </Link>
-                  )}
+                  </div>
+                )}
+
+                {/* Mobile Menu Button - Now inside the flex container */}
+                <div className="md:hidden flex items-center">
                   <button
-                    onClick={handleLogout}
-                    className="text-xs font-bold text-red-400 hover:text-red-500 transition-colors"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="text-white p-2 hover:text-brand-primary transition-colors"
                   >
-                    Logout
+                    {isMenuOpen ? <X size={32} /> : <Menu size={32} />}
                   </button>
                 </div>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <Link to="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">
-                    Login
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-white p-2"
-              >
-                {isMenuOpen ? <X size={32} /> : <Menu size={32} />}
-              </button>
+              </div>
             </div>
           </div>
 
@@ -187,29 +215,41 @@ const App: React.FC = () => {
             <Route path="/shop" element={<Shop />} />
             <Route path="/custom-request" element={<CustomRequest isEnabled={isCustomPrintingEnabled} />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<Admin isEnabled={isCustomPrintingEnabled} onToggle={togglePrinting} />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<Admin user={user} handleLogout={handleLogout} isEnabled={isCustomPrintingEnabled} onToggle={togglePrinting} />} />
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/signup" element={<Signup />} />
           </Routes>
         </main>
 
         <Footer />
 
-        {/* Floating WhatsApp Button */}
-        <a
-          href="https://wa.me/250784269593"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed bottom-8 right-8 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
-        >
-          <span className="absolute right-full mr-4 bg-white text-gray-800 px-3 py-1 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:block">
-            Chat with us!
-          </span>
-          <MessageCircle size={28} />
-        </a>
+        <WhatsAppButton />
 
       </div >
     </Router >
+  );
+};
+
+const WhatsAppButton: React.FC = () => {
+  const location = useLocation();
+  const hidePaths = ['/login', '/signup'];
+
+  if (hidePaths.includes(location.pathname)) {
+    return null;
+  }
+
+  return (
+    <a
+      href="https://wa.me/250784269593"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-8 right-8 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+    >
+      <span className="absolute right-full mr-4 bg-white text-gray-800 px-3 py-1 rounded-lg text-sm font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:block">
+        Chat with us!
+      </span>
+      <MessageCircle size={28} />
+    </a>
   );
 };
 

@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authService } from '../services/authService';
 
-const Login: React.FC = () => {
+interface LoginProps {
+    onLogin: (user: { name: string; email: string; role: string }) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [resetCode, setResetCode] = useState('');
@@ -12,69 +17,73 @@ const Login: React.FC = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [step, setStep] = useState(0); // 0: Login, 1: Request Reset, 2: Verify & New Password
+    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (email === 'admin@rwooga.com' && password === 'admin123') {
-            localStorage.setItem('rwooga_user', JSON.stringify({ email, role: 'admin', name: 'Admin' }));
-            navigate('/admin');
-            return;
-        }
+        try {
+            const data = await authService.login({ email, password });
 
-        const users = JSON.parse(localStorage.getItem('rwooga_users') || '[]');
-        const user = users.find((u: any) => u.email === email && u.password === password);
+            // The API returns access and refresh tokens
+            localStorage.setItem('access_token', data.access);
+            localStorage.setItem('refresh_token', data.refresh);
 
-        if (user) {
-            localStorage.setItem('rwooga_user', JSON.stringify({ ...user, role: 'user' }));
-            toast.success(`Welcome back, ${user.name}!`);
-            navigate('/');
-        } else {
-            setError('Invalid email or password');
-            toast.error('Invalid email or password');
+            // Mock user role based on email for now as profile endpoint is excluded
+            const role = email === 'admin@rwooga.com' ? 'admin' : 'user';
+            const user = { email, role, name: email.split('@')[0] };
+
+            onLogin(user);
+            toast.success(`Welcome back!`);
+
+            if (role === 'admin') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Invalid email or password');
+            toast.error(err.message || 'Invalid email or password');
         }
     };
 
-    const handleRequestReset = (e: React.FormEvent) => {
+    const handleRequestReset = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        const users = JSON.parse(localStorage.getItem('rwooga_users') || '[]');
-        const userExists = users.find((u: any) => u.email === email) || email === 'admin@rwooga.com';
-
-        if (userExists) {
+        try {
+            await authService.requestPasswordReset(email);
             setSuccess('Reset code sent to your email.');
             toast.success('Reset code sent to your email.');
             setStep(2);
-        } else {
-            setError('This email address is not registered.');
-            toast.error('This email address is not registered.');
+        } catch (err: any) {
+            setError(err.message || 'Reset request failed');
+            toast.error(err.message || 'Reset request failed');
         }
     };
 
-    const handleResetPassword = (e: React.FormEvent) => {
+    const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-
-        if (resetCode !== '123456') { // Mock code for demo
-            setError('Invalid reset code');
-            return;
-        }
 
         if (newPassword !== confirmNewPassword) {
             setError('Passwords do not match');
             return;
         }
 
-        const users = JSON.parse(localStorage.getItem('rwooga_users') || '[]');
-        const userIndex = users.findIndex((u: any) => u.email === email);
+        try {
+            await authService.confirmPasswordReset({
+                email,
+                token: resetCode,
+                new_password: newPassword,
+                new_password_confirm: confirmNewPassword
+            });
 
-        if (userIndex !== -1) {
-            users[userIndex].password = newPassword;
-            localStorage.setItem('rwooga_users', JSON.stringify(users));
             setSuccess('Password updated successfully! Redirecting to login...');
             toast.success('Password updated successfully!');
             setTimeout(() => {
@@ -82,13 +91,9 @@ const Login: React.FC = () => {
                 setSuccess('');
                 setPassword('');
             }, 2000);
-        } else if (email === 'admin@rwooga.com') {
-            setSuccess('Admin password would be updated in a real system. Redirecting to login...');
-            toast.success('Admin password update requested.');
-            setTimeout(() => {
-                setStep(0);
-                setSuccess('');
-            }, 2000);
+        } catch (err: any) {
+            setError(err.message || 'Password reset failed');
+            toast.error(err.message || 'Password reset failed');
         }
     };
 
@@ -127,14 +132,23 @@ const Login: React.FC = () => {
 
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-gray-300 ml-1">Password</label>
-                                <input
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                                    placeholder="••••••••"
-                                    required
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
                                 <div className="flex justify-end">
                                     <button
                                         type="button"
@@ -241,25 +255,43 @@ const Login: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-300 ml-1">New Password</label>
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                                        placeholder="New Password"
-                                        required
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showNewPassword ? "text" : "password"}
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                            placeholder="New Password"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-gray-300 ml-1">Confirm Password</label>
-                                    <input
-                                        type="password"
-                                        value={confirmNewPassword}
-                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                                        placeholder="Confirm Password"
-                                        required
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showConfirmNewPassword ? "text" : "password"}
+                                            value={confirmNewPassword}
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                            placeholder="Confirm Password"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                        >
+                                            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <button

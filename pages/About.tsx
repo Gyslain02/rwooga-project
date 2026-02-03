@@ -1,22 +1,37 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Target, Users, Zap, Shield } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
 // Assets
 import teamImg from '../assets/Maguru and mom 2.png';
 import memberImg from '../assets/image (1).png';
 
 const About: React.FC = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  const introY = useTransform(smoothProgress, [0, 0.2], [0, -50]);
+  const introOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
+
   return (
-    <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
+    <div ref={containerRef} className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
         {/* Intro Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-32">
+        <motion.div style={{ y: introY, opacity: introOpacity }} className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-2xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Identity</span>
-            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+            <h1 className="text-5xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
               Who we <br />
               <span className="text-gray-500">really are</span>
             </h1>
@@ -26,19 +41,11 @@ const About: React.FC = () => {
               We are a Rwanda-based 3D studio specializing in 3D visualizations, animated films and advertisements, and 3D products. We use 3D as a creative and technical tool to help brands, businesses, and individuals bring ideas to life.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Content Block 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-40">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative rounded-[40px] overflow-hidden"
-          >
-            <img src={teamImg} className="w-full grayscale hover:grayscale-0 transition-all duration-1000 scale-105" alt="Team" />
-            <div className="absolute inset-0 bg-brand-primary/10 mix-blend-overlay"></div>
-          </motion.div>
+          <ParallaxImage src={teamImg} alt="Team" />
 
           <div className="space-y-12">
             <h2 className="text-4xl md:text-5xl font-display font-bold text-white leading-tight uppercase tracking-tighter">
@@ -60,7 +67,7 @@ const About: React.FC = () => {
         <div className="mb-40">
           <div className="text-center mb-24">
             <span className="text-brand-primary font-bold tracking-widest uppercase text-xs mb-4 block">Our Values</span>
-            <h2 className="text-4xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter">Why Work <span className="text-gray-500">With Us</span></h2>
+            <h2 className="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter">Why Work <span className="text-gray-500">With Us</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/5 border border-white/5 rounded-[40px] overflow-hidden">
@@ -74,7 +81,7 @@ const About: React.FC = () => {
         {/* Team Section */}
         <div className="mb-40">
           <div className="mb-16">
-            <h2 className="text-4xl font-display font-bold text-white uppercase tracking-tighter">Meet <span className="text-gray-500">our Team</span></h2>
+            <h2 className="text-3xl font-display font-bold text-white uppercase tracking-tighter">Meet <span className="text-gray-500">our Team</span></h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -125,20 +132,64 @@ const AboutFeature: React.FC<{ icon: React.ReactNode; title: string; desc: strin
   </div>
 );
 
-const TeamMember: React.FC<{ image: string; name: string; role: string }> = ({ image, name, role }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    className="group"
-  >
-    <div className="aspect-square rounded-[32px] overflow-hidden bg-white/5 mb-6">
-      <img src={image} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" alt={name} />
-    </div>
-    <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">{name}</h3>
-    <p className="text-gray-500 text-sm font-medium">{role}</p>
-  </motion.div>
-);
+const TeamMember: React.FC<{ image: string; name: string; role: string }> = ({ image, name, role }) => {
+  const cardRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [30, -30]);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="group"
+    >
+      <div className="aspect-square rounded-[32px] overflow-hidden bg-white/5 mb-6 relative">
+        <motion.img
+          src={image}
+          style={{ y }}
+          className="w-full h-[120%] -top-[10%] absolute object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+          alt={name}
+        />
+      </div>
+      <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">{name}</h3>
+      <p className="text-gray-500 text-sm font-medium">{role}</p>
+    </motion.div>
+  );
+};
+
+const ParallaxImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, -60]);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -40 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      className="relative rounded-[40px] overflow-hidden aspect-[4/3]"
+    >
+      <motion.img
+        src={src}
+        style={{ y }}
+        className="w-full h-[120%] -top-[10%] absolute object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+        alt={alt}
+      />
+      <div className="absolute inset-0 bg-brand-primary/10 mix-blend-overlay"></div>
+    </motion.div>
+  );
+};
 
 const MissionItem: React.FC<{ title: string; text: React.ReactNode }> = ({ title, text }) => (
   <motion.div
@@ -148,7 +199,7 @@ const MissionItem: React.FC<{ title: string; text: React.ReactNode }> = ({ title
     transition={{ delay: 0.4 }}
     className="flex items-start space-x-4"
   >
-    <div className="mt-1 bg-brand-cyan w-2 h-2 rounded-full flex-shrink-0" />
+    <div className="mt-1 bg-brand-primary w-2 h-2 rounded-full flex-shrink-0" />
     <div>
       <h4 className="font-bold text-brand-dark">{title}</h4>
       <div className="text-gray-600">{text}</div>
@@ -164,7 +215,7 @@ const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; text: string
     transition={{ duration: 0.6, delay }}
     className="bg-white p-8 rounded-3xl border border-gray-100 hover:shadow-xl transition-all"
   >
-    <div className="text-brand-cyan mb-6 bg-brand-cyan/10 w-12 h-12 rounded-xl flex items-center justify-center">
+    <div className="text-brand-primary mb-6 bg-brand-primary/10 w-12 h-12 rounded-xl flex items-center justify-center">
       {icon}
     </div>
     <h3 className="text-xl font-bold text-brand-dark mb-4">{title}</h3>

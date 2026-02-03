@@ -16,6 +16,16 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
     description: '',
     deadline: ''
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,13 +186,34 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
               </div>
 
               {/* Upload Area */}
-              <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-12 text-center hover:bg-white/5 hover:border-brand-primary/50 transition-all cursor-pointer group">
-                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" multiple />
-                <div className="mb-4 text-gray-400 group-hover:text-brand-primary transition-colors">
-                  <Upload size={32} className="mx-auto" />
+              <div className="space-y-6">
+                <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-12 text-center hover:bg-white/5 hover:border-brand-primary/50 transition-all cursor-pointer group">
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    multiple
+                    onChange={handleFileChange}
+                    accept="image/*,.stl,.obj"
+                  />
+                  <div className="mb-4 text-gray-400 group-hover:text-brand-primary transition-colors">
+                    <Upload size={32} className="mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Click to upload or drag files here</h3>
+                  <p className="text-gray-500 text-sm">Images, Sketches, or CAD files (STL, OBJ)</p>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Click to upload or drag files here</h3>
-                <p className="text-gray-500 text-sm">Images, Sketches, or CAD files (STL, OBJ)</p>
+
+                {/* Previews */}
+                {selectedFiles.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 mt-6">
+                    {selectedFiles.map((file, index) => (
+                      <FilePreviewItem
+                        key={index}
+                        file={file}
+                        onRemove={() => removeFile(index)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
@@ -197,6 +228,44 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
         )}
       </div>
     </div>
+  );
+};
+
+const FilePreviewItem: React.FC<{ file: File; onRemove: () => void }> = ({ file, onRemove }) => {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [file]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10 group"
+    >
+      {preview ? (
+        <img src={preview} className="w-full h-full object-cover" alt="Preview" />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
+          <Upload size={20} className="text-gray-500 mb-1" />
+          <span className="text-[10px] text-gray-400 truncate w-full">{file.name}</span>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3 h-3">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </motion.div>
   );
 };
 

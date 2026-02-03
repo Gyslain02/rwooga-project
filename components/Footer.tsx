@@ -48,10 +48,10 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Explore</h3>
             <ul className="space-y-4 text-white font-bold text-lg">
-              <li><Link to="/services" className="hover:text-brand-primary transition-colors">OUR SERVICES</Link></li>
-              <li><Link to="/portfolio" className="hover:text-brand-primary transition-colors">PORTFOLIO</Link></li>
-              <li><Link to="/shop" className="hover:text-brand-primary transition-colors">SHOP PRODUCTS</Link></li>
-              <li><Link to="/custom-request" className="hover:text-brand-primary transition-colors">CUSTOM DESIGN</Link></li>
+              <li><Link to="/services" className="hover:text-brand-primary transition-colors">Our services</Link></li>
+              <li><Link to="/portfolio" className="hover:text-brand-primary transition-colors">Portfolio</Link></li>
+              <li><Link to="/shop" className="hover:text-brand-primary transition-colors">Shop products</Link></li>
+              <li><Link to="/custom-request" className="hover:text-brand-primary transition-colors">Custom design</Link></li>
             </ul>
           </div>
 
@@ -59,10 +59,10 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Support</h3>
             <ul className="space-y-4 text-white font-bold text-lg">
-              <li><Link to="/about" className="hover:text-brand-primary transition-colors">ABOUT US</Link></li>
-              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">CONTACT</Link></li>
-              <li><Link to="/privacy-policy" className="hover:text-brand-primary transition-colors">PRIVACY</Link></li>
-              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">TERMS</Link></li>
+              <li><Link to="/about" className="hover:text-brand-primary transition-colors">About us</Link></li>
+              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">Contact</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-brand-primary transition-colors">Privacy policy</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">Terms</Link></li>
             </ul>
           </div>
 
@@ -71,11 +71,11 @@ const Footer: React.FC = () => {
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Get in Touch</h3>
             <ul className="space-y-8">
               <li className="group">
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Email Us</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Email us</span>
                 <a href={`mailto:${BRAND_EMAIL}`} className="text-xl font-bold group-hover:text-brand-primary transition-colors">{BRAND_EMAIL}</a>
               </li>
               <li className="group">
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Call Us</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Text us</span>
                 <a href={`tel:${WHATSAPP_NUMBER}`} className="text-xl font-bold group-hover:text-brand-primary transition-all tracking-tight">{WHATSAPP_NUMBER}</a>
               </li>
             </ul>
@@ -86,7 +86,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-white/5 pt-12">
           <div className="w-full flex flex-col md:flex-row justify-between items-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">
             <p>© {new Date().getFullYear()} ALL RIGHTS RESERVED.</p>
-            <p className="mt-4 md:mt-0">DESIGNED BY PIXELFIT / RWANDA</p>
+
           </div>
         </div>
       </div>
