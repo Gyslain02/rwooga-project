@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import { ShoppingBag, ArrowRight, Check, ShoppingCart, X, Trash2 } from 'lucide-react'
+
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { PRODUCTS, WHATSAPP_NUMBER } from '../constants'
+import toast from 'react-hot-toast'
 
 const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [cart, setCart] = useState([])
+  const [cart, setCart] = useState<any[]>([])
   const [showCart, setShowCart] = useState(false)
 
   const categories = ['All', ...new Set(PRODUCTS.map(p => p.category))]
@@ -15,13 +19,16 @@ const Shop = () => {
       : PRODUCTS.filter(p => p.category === selectedCategory)
 
   // --- Cart Logic ---
-  const addToCart = (product) => {
+  const addToCart = (product: any) => {
     setCart([...cart, product])
     setShowCart(true)
+    toast.success(`${product.name} added to cart!`)
   }
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (id: string) => {
+    const item = cart.find(i => i.id === id);
     setCart(cart.filter((item) => item.id !== id))
+    if (item) toast.success(`${item.name} removed from cart`);
   }
 
   const checkout = () => {
@@ -34,203 +41,217 @@ const Shop = () => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank')
     setCart([])
     setShowCart(false)
+    toast.success('Redirecting to WhatsApp for payment...')
   }
 
   return (
-    <div className="py-20 min-h-screen relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-brand-dark min-h-screen pt-40 pb-20 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-6">
-            3D Printed Goods
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Browse our collection of high-quality 3D printed items. Each piece is crafted with precision and durable materials.
-          </p>
-        </div>
+        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
+          <div className="max-w-2xl">
+            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Premium Goods</span>
+            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+              3D Printed <br />
+              <span className="text-gray-500">Products</span>
+            </h1>
+          </div>
 
-        {/* Filter + Cart Button */}
-        <div className="flex flex-wrap justify-center items-center gap-6 mb-12">
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4 items-center">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-6 py-2 rounded-full font-bold transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-brand-dark text-white shadow-lg'
-                    : 'bg-white text-gray-500 border border-gray-100 hover:border-brand-cyan'
-                }`}
+                className={`text-sm font-bold uppercase tracking-widest transition-all pb-2 border-b-2 ${selectedCategory === cat
+                  ? 'text-brand-primary border-brand-primary'
+                  : 'text-gray-500 border-transparent hover:text-white'
+                  }`}
               >
                 {cat}
               </button>
             ))}
-          </div>
 
-          {/* Cart Button */}
-          <button
-            onClick={() => setShowCart(!showCart)}
-            className="relative p-3 bg-brand-cyan/10 rounded-full hover:bg-brand-cyan/20 transition-all"
-          >
-            <ShoppingCart size={24} className="text-brand-dark" />
-            {cart.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-brand-cyan text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold">
-                {cart.length}
-              </span>
-            )}
-          </button>
+            <button
+              onClick={() => setShowCart(true)}
+              className="ml-4 p-4 bg-brand-primary text-black rounded-full hover:scale-110 transition-all relative flex items-center justify-center"
+            >
+              <ShoppingCart size={20} />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="group bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-50 hover:shadow-2xl transition-all"
-            >
-              <div className="relative aspect-square overflow-hidden bg-gray-100">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full text-brand-dark font-bold text-sm shadow-sm">
-                  {product.category}
-                </div>
-              </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-bold text-brand-dark">
-                    {product.name}
-                  </h3>
-                  <p className="text-xl font-display font-extrabold text-brand-cyan">
-                    {product.price.toLocaleString()}{' '}
-                    <span className="text-xs uppercase ml-1">
-                      {product.currency}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Check size={16} className="text-brand-cyan mr-2" />
-                    Available in {product.variants.material.join(', ')}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Check size={16} className="text-brand-cyan mr-2" />
-                    Colors: {product.variants.color.join(', ')}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => addToCart(product)}
-                  className="w-full bg-brand-dark text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 hover:bg-brand-cyan transition-all"
-                >
-                  <ShoppingBag size={20} />
-                  <span>Add to Cart</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <motion.div
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                index={index}
+                onAddToCart={addToCart}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
         {/* No Products */}
         {filteredProducts.length === 0 && (
-          <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-            <p className="text-gray-400 font-medium">
+          <div className="text-center py-40 border-2 border-dashed border-white/5 rounded-[40px]">
+            <p className="text-gray-500 font-bold uppercase tracking-widest">
               No products found in this category.
             </p>
           </div>
         )}
 
         {/* Note on Shipping */}
-        <div className="mt-20 p-8 rounded-3xl bg-brand-cyan/5 border border-brand-cyan/20">
-          <div className="flex items-start space-x-4">
-            <div className="p-3 bg-brand-cyan/10 rounded-xl text-brand-cyan">
-              <ArrowRight size={24} />
+        <div className="mt-40 p-12 rounded-[40px] bg-white/3 border border-white/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="max-w-xl">
+              <h4 className="text-2xl font-bold text-white mb-4 uppercase tracking-tight"> Secure Delivery & Payments </h4>
+              <p className="text-gray-400 leading-relaxed"> All payments are handled securely via Mobile Money upon order confirmation on WhatsApp. We offer national delivery across Rwanda. </p>
             </div>
-            <div>
-              <h4 className="text-lg font-bold text-brand-dark mb-1">
-                Local Delivery & Payments
-              </h4>
-              <p className="text-gray-600">
-                All payments are handled securely via Mobile Money upon order
-                confirmation on WhatsApp. We offer local delivery within Kigali
-                and across Rwanda.
-              </p>
-            </div>
+            <Link to="/contact" className="px-10 py-5 bg-white text-black rounded-full font-bold hover:bg-brand-primary transition-all text-center">
+              INQUIRE NOW
+            </Link>
           </div>
         </div>
       </div>
 
       {/* --- CART SIDEBAR --- */}
-      {showCart && (
-        <div className="fixed top-0 right-0 w-96 max-w-[90vw] h-screen bg-white shadow-2xl z-50 p-6 overflow-y-auto animate-[slideIn_0.3s_ease_forwards]">
-          <div className="flex justify-between items-center mb-5 pb-4 border-b-2 border-gray-100">
-            <h3 className="text-brand-dark text-xl font-bold">Shopping Cart</h3>
-            <button
+      <AnimatePresence>
+        {showCart && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setShowCart(false)}
-              className="text-3xl bg-transparent text-gray-400 hover:text-brand-dark cursor-pointer"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 w-[450px] max-w-full h-screen bg-brand-dark border-l border-white/5 z-[70] p-10 flex flex-col"
             >
-              <X size={28} />
-            </button>
-          </div>
+              <div className="flex justify-between items-center mb-16">
+                <h3 className="text-4xl font-display font-bold text-white uppercase tracking-tighter">Your <span className="text-gray-500">Cart</span></h3>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="p-3 bg-white/5 rounded-full text-white hover:bg-white/10 transition-all"
+                >
+                  <X size={24} />
+                </button>
+              </div>
 
-          {cart.length === 0 ? (
-            <p className="text-center text-gray-400 py-10">Your cart is empty</p>
-          ) : (
-            <>
-              <div className="mb-5 flex flex-col gap-3">
-                {cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
-                  >
-                    <span className="flex-1 text-gray-700">{item.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold">
-                        {item.price.toLocaleString()} {item.currency}
-                      </span>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+              <div className="flex-grow overflow-y-auto space-y-6 mb-10 pr-2 custom-scrollbar">
+                {cart.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center">
+                    <ShoppingBag size={64} className="text-white/10 mb-6" />
+                    <p className="text-gray-500 font-bold uppercase tracking-widest">Your cart is empty</p>
                   </div>
-                ))}
+                ) : (
+                  cart.map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-6 p-6 bg-white/3 rounded-3xl border border-white/5 group"
+                    >
+                      <img src={item.image} className="w-20 h-20 rounded-2xl object-cover" alt={item.name} />
+                      <div className="flex-grow">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-lg font-bold text-white">{item.name}</h4>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-gray-500 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                        <p className="text-brand-primary font-bold">{item.price.toLocaleString()} RWF</p>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
 
-              <div className="p-5 bg-gray-50 rounded-lg mb-5 text-center text-lg text-brand-dark font-semibold">
-                <strong>
-                  Total:{' '}
-                  {cart
-                    .reduce((sum, item) => sum + item.price, 0)
-                    .toLocaleString()}{' '}
-                  RWF
-                </strong>
-              </div>
+              {cart.length > 0 && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end">
+                    <span className="text-gray-500 font-bold uppercase tracking-widest text-xs">Total Amount</span>
+                    <span className="text-4xl font-display font-bold text-white tracking-tighter">
+                      {cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()} <span className="text-lg">RWF</span>
+                    </span>
+                  </div>
 
-              <button
-                className="w-full bg-brand-cyan text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-brand-dark transition-all"
-                onClick={checkout}
-              >
-                <ShoppingBag size={20} />
-                Checkout via WhatsApp
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-      `}</style>
+                  <button
+                    className="w-full bg-brand-primary text-black py-6 rounded-3xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all text-lg shadow-xl shadow-brand-primary/20"
+                    onClick={checkout}
+                  >
+                    CHECKOUT ON WHATSAPP <ArrowRight size={24} />
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+const ProductCard: React.FC<{
+  product: any;
+  index: number;
+  onAddToCart: (product: any) => void;
+}> = ({ product, index, onAddToCart }) => {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      className="group"
+    >
+      <div className="aspect-square rounded-[40px] overflow-hidden bg-white/5 relative mb-6">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+        />
+        <div className="absolute top-6 left-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
+          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{product.category}</span>
+        </div>
+
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+          <button
+            onClick={() => onAddToCart(product)}
+            className="bg-brand-primary text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-all shadow-2xl"
+          >
+            ADD TO CART
+          </button>
+        </div>
+      </div>
+
+      <div className="px-2">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-2xl font-bold text-white uppercase tracking-tight">{product.name}</h3>
+          <p className="text-brand-primary font-bold text-xl">{product.price.toLocaleString()} RWF</p>
+        </div>
+        <p className="text-gray-500 text-sm font-medium">Available in {product.variants.material[0]} & {product.variants.color.length} colors</p>
+      </div>
+    </motion.div>
   )
 }
 

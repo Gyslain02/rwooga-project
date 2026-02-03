@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -28,9 +29,11 @@ const Login: React.FC = () => {
 
         if (user) {
             localStorage.setItem('rwooga_user', JSON.stringify({ ...user, role: 'user' }));
+            toast.success(`Welcome back, ${user.name}!`);
             navigate('/');
         } else {
             setError('Invalid email or password');
+            toast.error('Invalid email or password');
         }
     };
 
@@ -44,9 +47,11 @@ const Login: React.FC = () => {
 
         if (userExists) {
             setSuccess('Reset code sent to your email.');
+            toast.success('Reset code sent to your email.');
             setStep(2);
         } else {
             setError('This email address is not registered.');
+            toast.error('This email address is not registered.');
         }
     };
 
@@ -71,6 +76,7 @@ const Login: React.FC = () => {
             users[userIndex].password = newPassword;
             localStorage.setItem('rwooga_users', JSON.stringify(users));
             setSuccess('Password updated successfully! Redirecting to login...');
+            toast.success('Password updated successfully!');
             setTimeout(() => {
                 setStep(0);
                 setSuccess('');
@@ -78,6 +84,7 @@ const Login: React.FC = () => {
             }, 2000);
         } else if (email === 'admin@rwooga.com') {
             setSuccess('Admin password would be updated in a real system. Redirecting to login...');
+            toast.success('Admin password update requested.');
             setTimeout(() => {
                 setStep(0);
                 setSuccess('');
@@ -86,97 +93,102 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center px-4">
-            <div className="max-w-md w-full glass p-8 rounded-3xl border border-gray-100 shadow-xl transition-all duration-300">
+        <div className="bg-brand-dark min-h-screen flex items-center justify-center px-4 pt-20 overflow-hidden relative">
+            {/* Minimalist Background Decor */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-primary/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="max-w-md w-full bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl relative z-10 transition-all duration-300">
                 {step === 0 && (
                     <>
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-brand-dark rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-                                <LogIn size={32} />
-                            </div>
-                            <h2 className="text-3xl font-display font-bold text-brand-dark">Welcome Back</h2>
-                            <p className="text-gray-500 mt-2">Login to your Rwooga account</p>
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-display font-bold text-white mb-3">Welcome Back</h2>
+                            <p className="text-gray-400">Enter your details to access your account</p>
                         </div>
 
                         {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center space-x-3 text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center space-x-3 text-sm font-bold">
                                 <ShieldAlert size={18} />
                                 <span>{error}</span>
                             </div>
                         )}
 
-                        <form onSubmit={handleLogin} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-300 ml-1">Email Address</label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                                     placeholder="you@example.com"
                                     required
                                 />
                             </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="block text-sm font-bold text-gray-700">Password</label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setStep(1)}
-                                        className="text-xs text-brand-cyan font-bold hover:underline"
-                                    >
-                                        Forgot Password?
-                                    </button>
-                                </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-300 ml-1">Password</label>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                                     placeholder="••••••••"
                                     required
                                 />
+                                <div className="flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(1)}
+                                        className="text-sm font-bold text-brand-primary hover:text-white transition-colors"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
                             </div>
 
                             <button
                                 type="submit"
-                                className="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-[0.98]"
+                                className="w-full bg-brand-primary text-black font-bold text-lg py-4 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-brand-primary/20"
                             >
                                 Log In
                             </button>
                         </form>
 
-                        <div className="mt-8 text-center text-gray-500">
-                            <p>Don't have an account? <Link to="/signup" className="text-brand-cyan font-bold hover:underline">Sign Up</Link></p>
+                        <div className="mt-8 text-center text-gray-500 text-sm font-medium">
+                            Don't have an account?{' '}
+                            <Link to="/signup" className="text-brand-primary font-bold hover:text-white transition-colors">Sign Up</Link>
                         </div>
                     </>
                 )}
 
                 {step === 1 && (
                     <>
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-brand-cyan rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-                                <ShieldAlert size={32} />
-                            </div>
-                            <h2 className="text-3xl font-display font-bold text-brand-dark">Request Reset</h2>
-                            <p className="text-gray-500 mt-2">Enter your email to receive a reset code</p>
+                        <button
+                            onClick={() => setStep(0)}
+                            className="text-gray-500 hover:text-white transition-colors text-sm font-bold mb-8 flex items-center"
+                        >
+                            ← Back to Login
+                        </button>
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-display font-bold text-white mb-3">Reset Password</h2>
+                            <p className="text-gray-400">Enter your email to receive a code</p>
                         </div>
 
                         {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center space-x-3 text-sm font-medium">
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center space-x-3 text-sm font-bold">
                                 <ShieldAlert size={18} />
                                 <span>{error}</span>
                             </div>
                         )}
 
                         <form onSubmit={handleRequestReset} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Email Address</label>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-300 ml-1">Email Address</label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                                     placeholder="you@example.com"
                                     required
                                 />
@@ -184,17 +196,9 @@ const Login: React.FC = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-[0.98]"
+                                className="w-full bg-brand-primary text-black font-bold text-lg py-4 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-brand-primary/20"
                             >
                                 Send Reset Code
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => setStep(0)}
-                                className="w-full text-gray-500 font-medium hover:text-brand-dark transition-colors"
-                            >
-                                Back to Login
                             </button>
                         </form>
                     </>
@@ -202,68 +206,65 @@ const Login: React.FC = () => {
 
                 {step === 2 && (
                     <>
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white mx-auto mb-4">
-                                <ShieldCheck size={32} />
-                            </div>
-                            <h2 className="text-3xl font-display font-bold text-brand-dark">Set New Password</h2>
-                            <p className="text-gray-500 mt-2">Enter the code and your new password</p>
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-display font-bold text-white mb-3">Create New Password</h2>
+                            <p className="text-gray-400">Enter your code and new password</p>
                         </div>
 
                         {success && (
-                            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl flex items-center space-x-3 text-sm font-medium">
+                            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center space-x-3 text-sm font-bold">
                                 <ShieldCheck size={18} />
                                 <span>{success}</span>
                             </div>
                         )}
 
                         {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl flex items-center space-x-3 text-sm font-medium">
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center space-x-3 text-sm font-bold">
                                 <ShieldAlert size={18} />
                                 <span>{error}</span>
                             </div>
                         )}
 
                         {!success.includes('Updated') && (
-                            <form onSubmit={handleResetPassword} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Verification Code</label>
+                            <form onSubmit={handleResetPassword} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-300 ml-1">Verification Code</label>
                                     <input
                                         type="text"
                                         value={resetCode}
                                         onChange={(e) => setResetCode(e.target.value)}
-                                        className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                                         placeholder="123456"
                                         required
                                     />
-                                    <p className="text-xs text-brand-cyan mt-2">Tip: Use 123456 for demo</p>
+                                    <p className="text-xs text-gray-500 ml-1">Use 123456 for demo</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">New Password</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-300 ml-1">New Password</label>
                                     <input
                                         type="password"
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
-                                        placeholder="••••••••"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                        placeholder="New Password"
                                         required
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Confirm New Password</label>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-300 ml-1">Confirm Password</label>
                                     <input
                                         type="password"
                                         value={confirmNewPassword}
                                         onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                        className="w-full px-5 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-cyan outline-none transition-all"
-                                        placeholder="••••••••"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                        placeholder="Confirm Password"
                                         required
                                     />
                                 </div>
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-brand-dark text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-[0.98]"
+                                    className="w-full bg-brand-primary text-black font-bold text-lg py-4 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-brand-primary/20"
                                 >
                                     Update Password
                                 </button>

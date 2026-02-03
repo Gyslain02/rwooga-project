@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PORTFOLIO } from '../constants';
 
 const Portfolio: React.FC = () => {
@@ -12,81 +14,93 @@ const Portfolio: React.FC = () => {
     : PORTFOLIO.filter(item => item.category === activeFilter);
 
   return (
-    <div className="py-20 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-6">Our Work</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            A showcase of our journey through pixels and plastic. From photorealistic renders to functional 3D printed components.
-          </p>
+    <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
+          <div className="max-w-2xl">
+            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Creative Works</span>
+            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+              Selected <br />
+              <span className="text-gray-500">Projects</span>
+            </h1>
+          </div>
+
+          {/* Minimalist Filter Bar */}
+          <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4">
+            {filters.map(filter => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`text-sm font-bold uppercase tracking-widest transition-all pb-2 border-b-2 ${activeFilter === filter
+                  ? 'text-brand-primary border-brand-primary'
+                  : 'text-gray-500 border-transparent hover:text-white'
+                  }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex flex-wrap justify-center gap-3 mb-16">
-          {filters.map(filter => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-8 py-3 rounded-full font-bold uppercase text-xs tracking-[0.2em] transition-all ${activeFilter === filter
-                  ? 'bg-brand-dark text-white shadow-xl translate-y-[-2px]'
-                  : 'bg-white text-gray-400 border border-gray-100 hover:text-brand-dark hover:border-gray-200'
-                }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
+        {/* Grid (Agenko Staggered Style) */}
+        <motion.div
+          layout
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredItems.map((item, index) => (
+              <ProjectCard key={item.id} item={item} index={index} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredItems.map((item) => (
-            <div key={item.id} className="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500">
-              <div className="aspect-[4/3] overflow-hidden bg-gray-100">
-                {item.image.endsWith('.mp4') ? (
-                  <video
-                    src={item.image}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                )}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-8">
-                <span className="text-brand-cyan font-bold text-xs uppercase tracking-[0.2em] mb-2">{item.category}</span>
-                <h3 className="text-2xl font-bold text-white mb-2">{item.title}</h3>
-                <p className="text-white/70 text-sm mb-6 line-clamp-2">{item.description}</p>
-                <div className="flex items-center space-x-4">
-                  <button className="flex-grow bg-white text-brand-dark py-3 rounded-xl font-bold text-sm hover:bg-brand-cyan hover:text-white transition-all flex items-center justify-center">
-                    View Project <ExternalLink size={16} className="ml-2" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Portfolio CTA */}
-        <div className="mt-24 text-center">
-          <p className="text-gray-500 mb-8 font-medium">Want to see more of our experimental designs?</p>
-          <a
-            href="https://www.instagram.com/rwooga"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-2xl font-display font-extrabold text-brand-dark hover:text-brand-cyan transition-colors"
-          >
-            Follow us @rwooga
-          </a>
-        </div>
       </div>
     </div>
+  );
+};
+
+const ProjectCard: React.FC<{ item: any, index: number }> = ({ item, index }) => {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.6, delay: index * 0.05 }}
+      className="group relative"
+    >
+      <div className="aspect-[10/12] overflow-hidden rounded-[40px] bg-white/5 relative mb-6">
+        {item.image && (item.image.includes('.mp4') || item.image.includes('.webm')) ? (
+          <video
+            src={item.image}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : (
+          <img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+          />
+        )}
+        <div className="absolute inset-0 bg-brand-primary mix-blend-multiply opacity-0 group-hover:opacity-20 transition-opacity"></div>
+        <Link to="/portfolio" className="absolute inset-0 z-10"></Link>
+      </div>
+
+      <div className="flex justify-between items-start pr-4">
+        <div>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">{item.category}</span>
+          <h3 className="text-2xl font-bold text-white group-hover:text-brand-primary transition-colors uppercase tracking-tight">{item.title}</h3>
+        </div>
+        <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-brand-primary group-hover:text-black transition-all">
+          <ArrowRight size={20} />
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

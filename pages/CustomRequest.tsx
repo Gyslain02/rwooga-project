@@ -1,7 +1,10 @@
 
 import React, { useState } from 'react';
-import { Upload, Send, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Upload, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { WHATSAPP_NUMBER } from '../constants';
+import toast from 'react-hot-toast';
 
 const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -9,17 +12,16 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
     name: '',
     email: '',
     phone: '',
-    projectType: 'mechanical',
+    projectType: '',
     description: '',
     deadline: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate submission
     setTimeout(() => {
       setIsSubmitted(true);
-      // Construct WhatsApp message
+      toast.success('Request sent successfully!');
       const message = encodeURIComponent(
         `Hi Rwooga! I have a custom project request.\n\n` +
         `Name: ${formData.name}\n` +
@@ -33,143 +35,165 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
 
   if (!isEnabled) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center p-12 glass rounded-3xl">
-          <AlertTriangle size={64} className="mx-auto text-orange-500 mb-6" />
-          <h1 className="text-3xl font-display font-bold text-brand-dark mb-4">Service Paused</h1>
-          <p className="text-gray-600 mb-8">
-            We are currently not accepting new custom 3D printing requests. Please check back later or browse our shop for ready-made products.
+      <div className="bg-brand-dark min-h-screen flex items-center justify-center px-4 pt-20">
+        <div className="max-w-2xl w-full text-center p-20 bg-white/3 rounded-[60px] border border-white/5">
+          <AlertTriangle size={80} className="mx-auto text-brand-primary mb-10" />
+          <h1 className="text-4xl md:text-6xl font-display font-bold text-white mb-6 uppercase tracking-tighter">Current Capacity <span className="text-gray-500">Full</span></h1>
+          <p className="text-gray-400 text-lg mb-12 leading-relaxed">
+            We are currently executing high-priority commissions and have temporarily paused new custom intake. Please explore our shop for ready-to-ship products.
           </p>
-          <a href="/" className="inline-block bg-brand-dark text-white px-8 py-3 rounded-xl font-bold">
+          <Link to="/" className="inline-block px-10 py-5 bg-white text-black rounded-full font-bold hover:bg-brand-primary transition-all uppercase tracking-widest text-sm">
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="py-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-6">Custom Design Request</h1>
-          <p className="text-xl text-gray-600">
-            Have a unique idea or a complex problem? Upload your sketches or describe your project, and we'll handle the design and printing.
-          </p>
+    <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-32">
+          <div className="max-w-3xl">
+            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Bespoke Solutions</span>
+            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+              Custom <br />
+              <span className="text-gray-500">Requests</span>
+            </h1>
+          </div>
+          <div className="max-w-md mt-8 md:mt-0">
+            <p className="text-gray-400 text-lg leading-relaxed">
+              Bring us your complex problems. Our engineers will handle the R&D, design, and precision manufacturing.
+            </p>
+          </div>
         </div>
 
         {isSubmitted ? (
-          <div className="bg-white p-12 rounded-3xl shadow-xl text-center border border-gray-100 animate-in zoom-in duration-500">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-4xl mx-auto bg-white/10 p-12 rounded-[30px] border border-white/5 text-center backdrop-blur-sm"
+          >
+            <div className="w-20 h-20 bg-brand-primary text-black rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-brand-primary/20">
               <CheckCircle2 size={40} />
             </div>
-            <h2 className="text-3xl font-display font-bold text-brand-dark mb-4">Request Sent!</h2>
-            <p className="text-gray-600 mb-8">
-              Redirecting you to WhatsApp to finalize details and file sharing...
-            </p>
-            <button 
+            <h2 className="text-3xl font-display font-bold text-white mb-4 uppercase tracking-tight">Request Received</h2>
+            <p className="text-gray-400 text-lg mb-8">Redirecting to WhatsApp for file handover...</p>
+            <button
               onClick={() => setIsSubmitted(false)}
-              className="text-brand-cyan font-bold hover:underline"
+              className="px-8 py-4 bg-white text-black rounded-xl font-bold hover:bg-brand-primary transition-all uppercase tracking-widest text-sm"
             >
-              Send another request
+              Submit Another
             </button>
-          </div>
+          </motion.div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Full Name</label>
-                <input 
+          <div className="max-w-5xl mx-auto bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Full Name</label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Email Address</label>
+                  <input
+                    required
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                    placeholder="john@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Phone Number</label>
+                  <input
+                    required
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                    placeholder="07xx xxx xxx"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Product Category</label>
+                  <div className="relative">
+                    <select
+                      required
+                      value={formData.projectType}
+                      onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-brand-primary focus:bg-white/10 outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled className="bg-gray-900">Select a type</option>
+                      <option value="3d-visualization" className="bg-gray-900">3D Visualization</option>
+                      <option value="animation" className="bg-gray-900">Animation</option>
+                      <option value="custom-design" className="bg-gray-900">Custom Design</option>
+                      <option value="3d-printing" className="bg-gray-900">3D Printing</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                      <ArrowRight size={16} className="rotate-90" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Desired Deadline</label>
+                  <input
+                    type="date"
+                    value={formData.deadline}
+                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Project Description</label>
+                <textarea
                   required
-                  type="text" 
-                  className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Email Address</label>
-                <input 
-                  required
-                  type="email" 
-                  className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none"
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  rows={6}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all resize-none"
+                  placeholder="Describe what you need, dimensions, materials, etc."
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Phone Number</label>
-                <input
-                  required
-                  type="tel"
-                  className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none"
-                  placeholder="07xx xxx xxx"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                />
+              {/* Upload Area */}
+              <div className="relative border-2 border-dashed border-white/10 rounded-2xl p-12 text-center hover:bg-white/5 hover:border-brand-primary/50 transition-all cursor-pointer group">
+                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" multiple />
+                <div className="mb-4 text-gray-400 group-hover:text-brand-primary transition-colors">
+                  <Upload size={32} className="mx-auto" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Click to upload or drag files here</h3>
+                <p className="text-gray-500 text-sm">Images, Sketches, or CAD files (STL, OBJ)</p>
               </div>
 
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Product Category</label>
-                <select 
-                  className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none appearance-none"
-                  value={formData.projectType}
-                  onChange={(e) => setFormData({...formData, projectType: e.target.value})}
-                >
-                 <option value="">Select a type</option>
-                  <option value="3d-visualization">3D Visualization</option>
-                  <option value="animation">Animation</option>
-                  <option value="custom-design">Custom Design</option>
-                  <option value="3d-printing">3D Printing</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Desired Deadline</label>
-                <input 
-                  type="date" 
-                  className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none"
-                  value={formData.deadline}
-                  onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-8">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Project Description</label>
-              <textarea 
-                required
-                rows={5}
-                className="w-full px-5 py-4 bg-gray-50 border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-cyan transition-all outline-none"
-                placeholder="Describe what you need, dimensions, materials, etc."
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-              ></textarea>
-            </div>
-
-            <div className="mb-10 p-8 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50 text-center cursor-pointer hover:border-brand-cyan hover:bg-white transition-all">
-              <div className="flex flex-col items-center">
-                <Upload className="text-gray-400 mb-4" size={40} />
-                <p className="text-lg font-bold text-gray-700">Click to upload or drag files here</p>
-                <p className="text-gray-500 text-sm mt-1">Images, Sketches, or CAD files (STL, OBJ)</p>
-                <input type="file" className="hidden" multiple />
-              </div>
-            </div>
-
-            <button 
-              type="submit"
-              className="w-full bg-brand-dark text-white py-5 rounded-2xl font-bold text-xl flex items-center justify-center space-x-3 hover:bg-brand-cyan transition-all shadow-xl shadow-cyan-900/10"
-            >
-              <Send size={24} />
-              <span>Submit Request</span>
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="w-full bg-brand-primary text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-brand-primary/20"
+              >
+                <ArrowRight size={20} />
+                <span>Submit Request</span>
+              </button>
+            </form>
+          </div>
         )}
       </div>
     </div>

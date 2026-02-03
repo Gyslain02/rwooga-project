@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, MessageSquare, Clock, Send, CheckCircle2 } from 'lucide-react';
+import { Send, MapPin, Phone, Mail, Clock, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { WHATSAPP_NUMBER, BRAND_EMAIL } from '../constants';
+import toast from 'react-hot-toast';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -16,159 +18,140 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setStatus('submitting');
 
-    try {
-      const response = await fetch(`https://formspree.io/f/mqaeednr`, { // Note: Usually we use an ID here, but I will use the email if no ID is provided, however Formspree needs a form ID. I will use the email as a placeholder or advise the user to get an ID. 
-        // Actually, Formspree usage: fetch("https://formspree.io/f/YOUR_FORM_ID", ...)
-        // Since I don't have a form ID, I will use the email if possible or just log it.
-        // Wait, for Formspree you NEED an ID. Let's use a generic submission logic or provide a way for them to plug it in.
-        // I'll use the email directly in the fetch if they have a legacy account, but modern Formspree needs an ID.
-        // I will implement the logic and add a comment.
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+    // Simulate API call for now
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (response.ok) {
-        setStatus('success');
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      } else {
-        setStatus('error');
-      }
-    } catch (error) {
-      setStatus('error');
-    }
+    console.log('Form Submitted:', formData);
+    setStatus('success');
+    toast.success('Message sent! We will get back to you soon.');
+    setFormData({ name: '', email: '', subject: '', message: '' });
   };
 
   return (
-    <div className="py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-display font-extrabold text-brand-dark mb-6">Let's Connect</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Ready to start your next project? We're available for consulting and new commissions.
-          </p>
+    <div className="bg-[#0a0d10] min-h-screen pt-32 pb-20 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
+          <div className="max-w-3xl">
+            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Get In Touch</span>
+            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
+              Let's <br />
+              <span className="text-gray-500">Connect</span>
+            </h1>
+          </div>
+          <div className="max-w-md mt-8 md:mt-0">
+            <p className="text-gray-400 text-lg leading-relaxed">
+              We're available for consulting and new commissions.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Info Cards */}
-          <div className="lg:col-span-1 space-y-6">
-            <ContactCard
-              icon={<MessageSquare className="text-brand-cyan" />}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
+
+          {/* Left Panel: Staked Info Cards */}
+          <div className="w-full lg:w-[380px] space-y-4">
+            <ContactInfoCard
+              icon={<Phone className="text-[#00d1ff]" size={20} />}
               title="Chat with us"
-              detail="Fastest response time via WhatsApp"
-              action={WHATSAPP_NUMBER}
-              href={`https://wa.me/${WHATSAPP_NUMBER}`}
+              description="Fastest response time via WhatsApp"
+              value={WHATSAPP_NUMBER}
+              href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\+/g, '')}`}
             />
-            <ContactCard
-              icon={<Mail className="text-brand-cyan" />}
+            <ContactInfoCard
+              icon={<Mail className="text-[#00d1ff]" size={20} />}
               title="Email us"
-              detail="For detailed inquiries and quotes"
-              action={BRAND_EMAIL}
+              description="For detailed inquiries and quotes"
+              value={BRAND_EMAIL}
               href={`mailto:${BRAND_EMAIL}`}
             />
-            <ContactCard
-              icon={<Clock className="text-brand-cyan" />}
+            <ContactInfoCard
+              icon={<Clock className="text-brand-primary" size={20} />}
               title="Work hours"
-              detail="Mon - Sat: 9:00 AM - 6:00 PM"
-              action="Available for urgent requests"
+              description="Mon - Sat: 9:00 AM - 6:00 PM"
+              value="Available for urgent requests"
+              isBadge
             />
-            <ContactCard
-              icon={<MapPin className="text-brand-cyan" />}
+            <ContactInfoCard
+              icon={<MapPin className="text-brand-primary" size={20} />}
               title="Our Studio"
-              detail="Kigali, Rwanda"
-              action="Visit by appointment"
+              description="Kigali, Rwanda"
+              value="Visit by appointment"
             />
           </div>
 
-          {/* Contact Form */}
-          <div className="lg:col-span-2">
+          {/* Right Section: Form Card */}
+          <div className="w-full lg:max-w-[750px] bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl">
             {status === 'success' ? (
-              <div className="bg-white p-12 rounded-3xl shadow-xl border border-gray-100 text-center animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20"
+              >
+                <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 size={40} />
                 </div>
-                <h2 className="text-3xl font-display font-bold text-brand-dark mb-4">Message Sent!</h2>
-                <p className="text-gray-600 mb-8">
-                  Thank you for reaching out. We've received your message and will get back to you shortly.
-                </p>
+                <h2 className="text-3xl font-bold text-white mb-4">Message Sent!</h2>
+                <p className="text-gray-400 mb-8 max-w-sm mx-auto">We've received your inquiry and will get back to you as soon as possible.</p>
                 <button
                   onClick={() => setStatus('idle')}
-                  className="bg-brand-dark text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-cyan transition-all"
+                  className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all"
                 >
-                  Send another message
+                  Send Another Message
                 </button>
-              </div>
+              </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Full Name</label>
-                  <input
-                    required
-                    type="text"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-brand-cyan transition-all"
-                    placeholder="John Doe"
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormInput
+                    label="Full Name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Email Address</label>
-                  <input
+                    onChange={(v) => setFormData({ ...formData, name: v })}
+                    placeholder="John Doe"
                     required
-                    type="email"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-brand-cyan transition-all"
-                    placeholder="john@example.com"
+                  />
+                  <FormInput
+                    label="Email Address"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Subject</label>
-                  <input
+                    onChange={(v) => setFormData({ ...formData, email: v })}
+                    placeholder="john@example.com"
                     required
-                    type="text"
-                    className="w-full px-5 py-4 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-brand-cyan transition-all"
-                    placeholder="Project Inquiry"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   />
                 </div>
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Message</label>
+
+                <FormInput
+                  label="Subject"
+                  value={formData.subject}
+                  onChange={(v) => setFormData({ ...formData, subject: v })}
+                  placeholder="Project Inquiry"
+                  required
+                />
+
+                <div className="space-y-3">
+                  <div className="text-sm font-bold text-gray-300">
+                    Message
+                  </div>
                   <textarea
                     required
-                    rows={6}
-                    className="w-full px-5 py-4 bg-gray-50 rounded-xl outline-none focus:ring-2 focus:ring-brand-cyan transition-all"
-                    placeholder="How can we help you?"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  ></textarea>
+                    placeholder="How can we help you?"
+                    className="w-full bg-[#151719] border border-white/5 rounded-2xl px-6 py-4 text-white placeholder-gray-600 outline-none focus:border-emerald-500/50 transition-all h-[200px] md:h-[250px] resize-none"
+                  />
                 </div>
 
-                {status === 'error' && (
-                  <div className="md:col-span-2 text-red-500 text-sm font-bold bg-red-50 p-4 rounded-xl">
-                    Something went wrong. Please try again or contact us via WhatsApp.
-                  </div>
-                )}
-
-                <div className="md:col-span-2">
+                <div className="pt-4">
                   <button
                     type="submit"
                     disabled={status === 'submitting'}
-                    className="w-full bg-brand-dark text-white py-5 rounded-2xl font-bold text-lg hover:bg-brand-cyan transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#004d42] hover:bg-[#005d50] text-white py-5 rounded-2xl text-xl font-bold flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] shadow-lg disabled:opacity-50"
                   >
                     {status === 'submitting' ? (
-                      <span className="flex items-center space-x-2">
-                        <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        <span>Sending...</span>
-                      </span>
+                      'Sending...'
                     ) : (
                       <>
-                        <Send size={20} />
-                        <span>Send Message</span>
+                        <Send size={22} className="mt-1" />
+                        Send Message
                       </>
                     )}
                   </button>
@@ -178,41 +161,72 @@ const Contact: React.FC = () => {
           </div>
         </div>
 
-        {/* Map Section */}
-        <div className="mt-20">
-          <div className="bg-white p-4 rounded-3xl shadow-xl border border-gray-100 h-[450px] overflow-hidden group">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127602.40939515514!2d30.0125868!3d-1.930128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca429ed308f25%3A0x103681432f80164e!2sKigali!5e0!3m2!1sen!2srw!4v1714123456789!5m2!1sen!2srw"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500 rounded-2xl"
-              title="Rwooga Studio Location"
-            ></iframe>
-          </div>
+        {/* Studio Location (Map) */}
+        <div className="mt-32 rounded-[40px] overflow-hidden border border-white/5 h-[400px] md:h-[600px] shadow-2xl">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127602.40939515514!2d30.0125868!3d-1.930128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca429ed308f25%3A0x103681432f80164e!2sKigali!5e0!3m2!1sen!2srw!4v1714123456789!5m2!1sen!2srw"
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            className="w-full h-full"
+          ></iframe>
         </div>
       </div>
     </div>
   );
 };
 
-const ContactCard: React.FC<{ icon: React.ReactNode; title: string; detail: string; action: string; href?: string }> = ({ icon, title, detail, action, href }) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-100 flex items-start space-x-4">
-    <div className="w-12 h-12 bg-brand-cyan/10 rounded-xl flex items-center justify-center flex-shrink-0">
-      {icon}
+const ContactInfoCard: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  value: string;
+  href?: string;
+  isBadge?: boolean;
+}> = ({ icon, title, description, value, href, isBadge }) => (
+  <div className="bg-[#111418] border border-white/5 rounded-2xl p-6 hover:border-emerald-500/20 transition-all group">
+    <div className="flex items-start gap-4">
+      <div className="w-12 h-12 bg-[#1c232b] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#252e38] transition-colors">
+        {icon}
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-white font-bold leading-none">{title}</h3>
+        <p className="text-gray-500 text-sm">{description}</p>
+        {href ? (
+          <a href={href} className="block text-brand-primary font-bold hover:underline underline-offset-4 decoration-2">
+            {value}
+          </a>
+        ) : (
+          <p className={`font-bold ${isBadge ? 'text-emerald-400' : 'text-white'}`}>
+            {value}
+          </p>
+        )}
+      </div>
     </div>
-    <div>
-      <h3 className="font-bold text-brand-dark">{title}</h3>
-      <p className="text-sm text-gray-500 mb-2">{detail}</p>
-      {href ? (
-        <a href={href} className="text-brand-cyan font-bold hover:underline break-all">{action}</a>
-      ) : (
-        <span className="text-brand-dark font-bold">{action}</span>
-      )}
-    </div>
+  </div>
+);
+
+const FormInput: React.FC<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  required?: boolean;
+}> = ({ label, value, onChange, placeholder, required }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-bold text-gray-300">
+      {label} {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full h-[56px] bg-[#151719] border border-white/5 rounded-2xl px-6 text-white placeholder-gray-600 outline-none focus:border-emerald-500/30 transition-all font-medium"
+      required={required}
+    />
   </div>
 );
 

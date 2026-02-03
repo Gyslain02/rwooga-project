@@ -1,77 +1,93 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Twitter, Youtube } from 'lucide-react';
 import { BRAND_EMAIL, WHATSAPP_NUMBER } from '../constants';
 
 // Assets
 import logo from '../assets/Rwooga logo.png';
 
+const Tiktok: React.FC<{ size?: number }> = ({ size = 24 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
+
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-brand-dark text-white pt-20 pb-10">
+    <footer className="bg-black text-white pt-32 pb-12 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1">
-            <Link to="/" className="flex items-center mb-6" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <img src={logo} alt="Rwooga" className="h-10 w-auto object-contain brightness-0 invert" />
+            <Link to="/" className="flex items-center mb-10" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <img src={logo} alt="Rwooga" className="h-20 w-auto object-contain brightness-0 invert" />
             </Link>
-            <p className="text-emerald-100/70 leading-relaxed mb-6">
-              Professional 3D services bringing imagination to life through high-end visualizations, animation, and precision 3D printing.
+            <p className="text-gray-400 leading-relaxed mb-8 text-lg">
+              Elevating brands through high-end 3D visualization, animation, and precision manufacturing.
             </p>
-            <div className="flex space-x-4">
-              <SocialIcon icon={<Instagram size={20} />} href="#" />
-              <SocialIcon icon={<Facebook size={20} />} href="#" />
-              <SocialIcon icon={<Twitter size={20} />} href="#" />
+            <div className="flex space-x-6">
+              <SocialIcon icon={<Instagram size={20} />} href="https://www.instagram.com/rwooga.ent?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" />
+              <SocialIcon icon={<Twitter size={20} />} href="https://x.com/PhedoKat" />
+              <SocialIcon icon={<Youtube size={20} />} href="https://www.youtube.com/@phedokat9549" />
+              <SocialIcon icon={<Tiktok size={20} />} href="https://www.tiktok.com/@phedish?_r=1&_t=ZS-93aOKvDhzme" />
             </div>
           </div>
 
+
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-bold mb-6 font-display">Explore</h3>
-            <ul className="space-y-4 text-emerald-100/70">
-              <li><Link to="/services" className="hover:text-brand-cyan transition-colors">Services</Link></li>
-              <li><Link to="/portfolio" className="hover:text-brand-cyan transition-colors">Portfolio</Link></li>
-              <li><Link to="/shop" className="hover:text-brand-cyan transition-colors">Shop Products</Link></li>
-              <li><Link to="/custom-request" className="hover:text-brand-cyan transition-colors">Custom Request</Link></li>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Explore</h3>
+            <ul className="space-y-4 text-white font-bold text-lg">
+              <li><Link to="/services" className="hover:text-brand-primary transition-colors">OUR SERVICES</Link></li>
+              <li><Link to="/portfolio" className="hover:text-brand-primary transition-colors">PORTFOLIO</Link></li>
+              <li><Link to="/shop" className="hover:text-brand-primary transition-colors">SHOP PRODUCTS</Link></li>
+              <li><Link to="/custom-request" className="hover:text-brand-primary transition-colors">CUSTOM DESIGN</Link></li>
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Support */}
           <div>
-            <h3 className="text-xl font-bold mb-6 font-display">Company</h3>
-            <ul className="space-y-4 text-emerald-100/70">
-              <li><Link to="/about" className="hover:text-brand-cyan transition-colors">Our Story</Link></li>
-              <li><Link to="/careers" className="hover:text-brand-cyan transition-colors">Careers</Link></li>
-              <li><Link to="/privacy-policy" className="hover:text-brand-cyan transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms-of-service" className="hover:text-brand-cyan transition-colors">Terms of Service</Link></li>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Support</h3>
+            <ul className="space-y-4 text-white font-bold text-lg">
+              <li><Link to="/about" className="hover:text-brand-primary transition-colors">ABOUT US</Link></li>
+              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">CONTACT</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-brand-primary transition-colors">PRIVACY</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">TERMS</Link></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="text-xl font-bold mb-6 font-display">Get in Touch</h3>
-            <ul className="space-y-4 text-emerald-100/70">
-              <li className="flex items-start space-x-3">
-                <Mail className="text-brand-cyan flex-shrink-0" size={20} />
-                <span>{BRAND_EMAIL}</span>
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">Get in Touch</h3>
+            <ul className="space-y-8">
+              <li className="group">
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Email Us</span>
+                <a href={`mailto:${BRAND_EMAIL}`} className="text-xl font-bold group-hover:text-brand-primary transition-colors">{BRAND_EMAIL}</a>
               </li>
-              <li className="flex items-start space-x-3">
-                <Phone className="text-brand-cyan flex-shrink-0" size={20} />
-                <span>{WHATSAPP_NUMBER}</span>
-              </li>
-              <li className="flex items-start space-x-3">
-                <MapPin className="text-brand-cyan flex-shrink-0" size={20} />
-                <span>Kigali, Rwanda</span>
+              <li className="group">
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest block mb-2">Call Us</span>
+                <a href={`tel:${WHATSAPP_NUMBER}`} className="text-xl font-bold group-hover:text-brand-primary transition-all tracking-tight">{WHATSAPP_NUMBER}</a>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-emerald-800/50 pt-8 flex flex-col md:flex-row justify-between items-center text-emerald-100/50 text-sm">
-          <p>© {new Date().getFullYear()} Rwooga Studio. All rights reserved.</p>
-          <p className="mt-4 md:mt-0">Crafted with precision in Rwanda.</p>
+        {/* Copyright Info */}
+        <div className="border-t border-white/5 pt-12">
+          <div className="w-full flex flex-col md:flex-row justify-between items-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <p>© {new Date().getFullYear()} ALL RIGHTS RESERVED.</p>
+            <p className="mt-4 md:mt-0">DESIGNED BY PIXELFIT / RWANDA</p>
+          </div>
         </div>
       </div>
     </footer>
@@ -79,7 +95,7 @@ const Footer: React.FC = () => {
 };
 
 const SocialIcon: React.FC<{ icon: React.ReactNode; href: string }> = ({ icon, href }) => (
-  <a href={href} className="w-10 h-10 rounded-full border border-emerald-800 flex items-center justify-center hover:bg-brand-cyan hover:border-brand-cyan transition-all">
+  <a href={href} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-brand-primary hover:text-black hover:border-brand-primary transition-all">
     {icon}
   </a>
 );

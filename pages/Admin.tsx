@@ -5,6 +5,7 @@ import {
   MessageSquare, Files,
   Trash2, Edit2, Plus, X, Save
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const Admin = () => {
   const [isEnabled, setIsEnabled] = useState(true)
@@ -39,24 +40,28 @@ const Admin = () => {
   const handleToggle = (val: boolean) => {
     setIsEnabled(val)
     localStorage.setItem('custom_printing_enabled', val.toString())
+    toast.success(`Custom printing service ${val ? 'enabled' : 'disabled'}`)
   }
 
   const deleteRequest = (id: string | number) => {
     const updated = customRequests.filter((r: any) => r.id !== id)
     setCustomRequests(updated)
     localStorage.setItem('custom_requests', JSON.stringify(updated))
+    toast.success('Request deleted')
   }
 
   const deleteMessage = (id: string | number) => {
     const updated = contactMessages.filter((m: any) => m.id !== id)
     setContactMessages(updated)
     localStorage.setItem('contact_messages', JSON.stringify(updated))
+    toast.success('Message deleted')
   }
 
   const deleteProduct = (id: string | number) => {
     const updated = products.filter((p: any) => p.id !== id)
     setProducts(updated)
     localStorage.setItem('rwooga_products', JSON.stringify(updated))
+    toast.success('Product deleted')
   }
 
   const handleProductSubmit = (e: React.FormEvent) => {
@@ -82,6 +87,7 @@ const Admin = () => {
     localStorage.setItem('rwooga_products', JSON.stringify(updated))
     setProductForm({ name: '', price: '', description: '', available: true })
     setShowProductForm(false)
+    toast.success(editingProduct ? 'Product updated' : 'Product created')
   }
 
   const editProduct = (product: any) => {
@@ -124,8 +130,8 @@ const Admin = () => {
               <button
                 onClick={() => handleToggle(!isEnabled)}
                 className={`flex items-center space-x-3 px-8 py-4 rounded-2xl font-bold transition-all ${isEnabled
-                    ? 'bg-brand-cyan text-white shadow-lg shadow-cyan-100'
-                    : 'bg-gray-200 text-gray-500'
+                  ? 'bg-brand-cyan text-white shadow-lg shadow-cyan-100'
+                  : 'bg-gray-200 text-gray-500'
                   }`}
               >
                 {isEnabled ? (

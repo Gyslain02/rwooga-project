@@ -1,47 +1,86 @@
-
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rwooga - 3D Visuals & Custom Printing</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              brand: {
-                dark: '#064e3b',
-                cyan: '#06b6d4',
-                orange: '#f97316',
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rwooga - 3D Visuals & Custom Printing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0a0d10', // Deeper, more sophisticated dark
+              primary: '#10b981', // Dark Green (Emerald)
+              secondary: '#2ecc71', // Professional Green
+              lime: '#afff45', // Agenko Lime
+              gray: {
+                100: '#f8f9fa',
+                200: '#e9ecef',
+                800: '#343a40',
+                900: '#212529',
               }
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              display: ['Montserrat', 'sans-serif'],
-            },
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Montserrat', 'sans-serif'],
+          },
+          animation: {
+            'spin-slow': 'spin 8s linear infinite',
+            'bounce-slow': 'bounce 3s infinite',
           }
         }
       }
-    </script>
-    <style>
-      body {
-        background-color: #ffffff;
-        color: #1f2937;
-      }
-      .glass {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-      .gradient-text {
-        background: linear-gradient(to right, #06b6d4, #064e3b);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-    </style>
+    }
+  </script>
+  <style>
+    :root {
+      --brand-dark: #0a0d10;
+      --brand-primary: #10b981;
+    }
+
+    body {
+      background-color: #0a0d10;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .font-display {
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #10b981, #2ecc71);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .border-gradient {
+      border-image: linear-gradient(135deg, #10b981, #2ecc71) 1;
+    }
+
+    .reveal-text {
+      overflow: hidden;
+    }
+
+    .reveal-text span {
+      display: block;
+      transform: translateY(100%);
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -53,10 +92,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

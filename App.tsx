@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Menu, X, MessageCircle, Settings } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Pages
 import Home from './pages/Home';
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('rwooga_user');
     setUser(null);
+    toast.success('Successfully logged out');
     window.location.hash = '/';
   };
 
@@ -55,19 +57,20 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="flex flex-col min-h-screen font-sans selection:bg-brand-cyan selection:text-white">
         {/* Navigation */}
-        <nav className="fixed w-full z-50 bg-[#eef1f2] shadow-lg border-b border-gray-100">
+        <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-24">
               <div className="flex items-center">
-                <Link to="/" className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                  <img src={logo} alt="Rwooga" className="h-24 w-auto object-contain" />
+                <Link to="/" className="flex items-center group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <img src={logo} alt="Rwooga" className="h-16 w-auto object-contain" />
                 </Link>
               </div>
 
               {/* Desktop Nav */}
-              <div className="hidden md:flex items-center space-x-8">
+              <div className="hidden md:flex items-center space-x-10">
                 <NavLink to="/">Home</NavLink>
                 <NavLink to="/about">About</NavLink>
                 <NavLink to="/services">Services</NavLink>
@@ -78,56 +81,56 @@ const App: React.FC = () => {
                 {isCustomPrintingEnabled && (
                   <Link
                     to="/custom-request"
-                    className="bg-brand-cyan text-white px-8 py-3 rounded-full font-bold hover:bg-opacity-90 transition-all shadow-xl shadow-cyan-900/40"
+                    className="bg-brand-primary text-black px-8 py-3 rounded-full font-bold hover:scale-105 transition-all shadow-lg shadow-cyan-500/20 flex items-center"
                   >
                     Custom Design
                   </Link>
                 )}
+              </div>
 
-                <div className="h-6 w-px bg-gray-200" />
+              <div className="h-6 w-px bg-white/10" />
 
-                {user ? (
-                  <div className="flex items-center space-x-4">
-                    <div className="flex flex-col items-end">
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{user.role}</span>
-                      <span className="text-sm font-bold text-brand-dark">{user.name}</span>
-                    </div>
-                    {user.role === 'admin' && (
-                      <Link to="/admin" className="p-2 bg-gray-100 rounded-lg text-gray-600 hover:text-brand-dark transition-colors">
-                        <Settings size={20} />
-                      </Link>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors"
-                    >
-                      Logout
-                    </button>
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</span>
+                    <span className="text-sm font-bold text-white">{user.name}</span>
                   </div>
-                ) : (
-                  <div className="flex items-center space-x-4">
-                    <Link to="/login" className="border border-brand-cyan text-brand-cyan px-8 py-3 rounded-full font-bold hover:bg-brand-cyan hover:text-white transition-all">
-                      Login
+                  {user.role === 'admin' && (
+                    <Link to="/admin" className="p-2 bg-white/5 rounded-lg text-gray-400 hover:text-brand-primary transition-colors">
+                      <Settings size={20} />
                     </Link>
-                  </div>
-                )}
-              </div>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs font-bold text-red-400 hover:text-red-500 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <Link to="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                    Login
+                  </Link>
+                </div>
+              )}
+            </div>
 
-              {/* Mobile Menu Button */}
-              <div className="md:hidden flex items-center">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="text-brand-dark p-2"
-                >
-                  {isMenuOpen ? <X size={32} /> : <Menu size={32} />}
-                </button>
-              </div>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-white p-2"
+              >
+                {isMenuOpen ? <X size={32} /> : <Menu size={32} />}
+              </button>
             </div>
           </div>
 
           {/* Mobile Nav Overlay */}
           {isMenuOpen && (
-            <div className="md:hidden bg-[#eef1f2] border-t border-gray-100 animate-in slide-in-from-top duration-300">
+            <div className="md:hidden bg-black border-t border-white/5 animate-in slide-in-from-top duration-300">
               <div className="px-4 pt-2 pb-6 space-y-1">
                 <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>Home</MobileNavLink>
                 <MobileNavLink to="/about" onClick={() => setIsMenuOpen(false)}>About</MobileNavLink>
@@ -136,7 +139,7 @@ const App: React.FC = () => {
                 <MobileNavLink to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</MobileNavLink>
                 <MobileNavLink to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</MobileNavLink>
                 {isCustomPrintingEnabled && (
-                  <MobileNavLink to="/custom-request" onClick={() => setIsMenuOpen(false)}>Custom Request</MobileNavLink>
+                  <MobileNavLink to="/custom-request" onClick={() => setIsMenuOpen(false)}>Custom Design</MobileNavLink>
                 )}
 
 
@@ -144,8 +147,8 @@ const App: React.FC = () => {
                   {user ? (
                     <>
                       <div className="px-3 py-2">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{user.role}</p>
-                        <p className="text-lg font-bold text-brand-dark">{user.name}</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</p>
+                        <p className="text-xl font-bold text-white">{user.name}</p>
                       </div>
                       {user.role === 'admin' && (
                         <MobileNavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</MobileNavLink>
@@ -162,7 +165,7 @@ const App: React.FC = () => {
                       <Link
                         to="/login"
                         onClick={() => setIsMenuOpen(false)}
-                        className="block px-3 py-4 text-lg font-semibold text-gray-700 hover:bg-gray-50 rounded-lg"
+                        className="block px-3 py-4 text-lg font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-lg"
                       >
                         Login
                       </Link>
@@ -205,8 +208,8 @@ const App: React.FC = () => {
           <MessageCircle size={28} />
         </a>
 
-      </div>
-    </Router>
+      </div >
+    </Router >
   );
 };
 
@@ -217,7 +220,7 @@ const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, chil
   return (
     <Link
       to={to}
-      className={`font-medium transition-colors ${isActive ? 'text-brand-cyan' : 'text-gray-600 hover:text-brand-dark'}`}
+      className={`font-semibold text-sm uppercase tracking-widest transition-all ${isActive ? 'text-brand-primary' : 'text-gray-400 hover:text-white'}`}
     >
       {children}
     </Link>
@@ -231,7 +234,7 @@ const MobileNavLink: React.FC<{ to: string; onClick: () => void; children: React
     <Link
       to={to}
       onClick={onClick}
-      className={`block px-3 py-4 text-lg font-semibold rounded-lg ${isActive ? 'bg-brand-cyan/10 text-brand-cyan' : 'text-gray-700 hover:bg-gray-50'}`}
+      className={`block px-3 py-4 text-lg font-bold rounded-lg transition-all ${isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
     >
       {children}
     </Link>
