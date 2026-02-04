@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Instagram, Youtube } from 'lucide-react';
 import { BRAND_EMAIL, WHATSAPP_NUMBER } from '../constants';
 
-// Assets
+
 import logo from '../assets/Rwooga logo.png';
 
 const XIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
@@ -55,7 +55,6 @@ const Footer: React.FC = () => {
           </div>
 
 
-          {/* Quick Links */}
           <div>
             <h3 className="text-xs font-bold text-brand-primary uppercase tracking-[0.3em] mb-10">Explore</h3>
             <ul className="space-y-4 text-white font-bold text-lg">
@@ -66,7 +65,6 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
             <h3 className="text-xs font-bold text-brand-primary uppercase tracking-[0.3em] mb-10">Support</h3>
             <ul className="space-y-4 text-white font-bold text-lg">
@@ -77,7 +75,7 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+         
           <div>
             <h3 className="text-xs font-bold text-brand-primary uppercase tracking-[0.3em] mb-10">Get in Touch</h3>
             <ul className="space-y-8">
@@ -93,7 +91,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Copyright Info */}
+       
         <div className="border-t border-white/5 pt-12">
           <div className="w-full flex flex-col md:flex-row justify-between items-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">
             <p>© {new Date().getFullYear()} ALL RIGHTS RESERVED.</p>

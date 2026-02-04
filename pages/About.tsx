@@ -4,7 +4,7 @@ import { Target, Users, Zap, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
-// Assets
+
 import teamImg from '../assets/Maguru and mom 2.png';
 import memberImg from '../assets/image (1).png';
 
@@ -28,7 +28,6 @@ const About: React.FC = () => {
     <div ref={containerRef} className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-        {/* Intro Section */}
         <motion.div style={{ y: introY, opacity: introOpacity }} className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-2xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Identity</span>
@@ -44,7 +43,7 @@ const About: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Stats Section */}
+      
         <div className="mb-40 flex flex-col items-center">
           <Link
             to="/portfolio"
