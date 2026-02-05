@@ -102,5 +102,14 @@ export const authService = {
             headers: { 'Content-Type': 'application/json' },
         });
         return handleResponse(response);
+    },
+
+    async checkEmailExists(email: string) {
+        const response = await fetch(`${API_BASE_URL}/auth/check-email/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        return handleResponse(response);
     }
 };

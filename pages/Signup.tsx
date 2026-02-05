@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/authService';
 
 const Signup: React.FC = () => {
     const { register, loading, error: authError, clearError } = useAuth();
@@ -44,6 +45,25 @@ const Signup: React.FC = () => {
             if (cleanedPhone.length < 10) {
                 setError('Please enter a valid 10-digit phone number');
                 return;
+            }
+
+            // Check if email already exists
+            try {
+                await authService.checkEmailExists(formData.email);
+                // If we get here without error, email exists
+                setError('This email is already registered. Please use a different email or try logging in.');
+                toast.error('Email already registered');
+                return;
+            } catch (err: any) {
+                // If error is "not found" or "does not exist", that's good - we can proceed
+                if (err.message && err.message.includes('does not exist')) {
+                    // Email is available, proceed
+                } else if (err.message && err.message.includes('not found')) {
+                    // Email is available, proceed
+                } else {
+                    // Some other error occurred
+                    console.log('Email check result:', err.message);
+                }
             }
 
             clearError();
