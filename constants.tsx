@@ -15,7 +15,7 @@ import { Service, PortfolioItem, Product } from './types';
 import vizImg from './assets/Ruti v4_Room 1.jpg.jpeg';
 import animImg from './assets/sp.mp4';
 import customImg from './assets/sp2.png';
-import printImg from './assets/sp1.png';
+import printImg from './assets/Maguru.jpg';
 
 // Portfolio Imports
 import ruti1 from './assets/Ruti v4_Room 1.jpg.jpeg';

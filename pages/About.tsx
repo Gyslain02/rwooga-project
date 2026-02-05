@@ -139,13 +139,39 @@ const About: React.FC = () => {
         </div>
 
         {/* Tools Section */}
-        <section className="py-24 border-t border-white/5">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="text-gray-500 font-bold uppercase tracking-[0.4em] text-xs">The Tech Stack</div>
-            <div className="flex flex-wrap justify-center gap-x-12 gap-y-8">
-              {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool) => (
-                <span key={tool} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter">{tool}</span>
-              ))}
+        <section className="py-24 border-t border-white/5 overflow-hidden">
+          <div className="flex items-center gap-12">
+            {/* Static label */}
+            <div className="font-bold uppercase tracking-[0.4em] text-2xl flex-shrink-0" style={{ color: '#006400' }}>The Tech Stack</div>
+
+            {/* Scrolling tools */}
+            <div className="relative flex-1 overflow-hidden">
+              <style>{`
+                @keyframes scroll {
+                  0% {
+                    transform: translateX(0);
+                  }
+                  100% {
+                    transform: translateX(-50%);
+                  }
+                }
+                .animate-scroll {
+                  animation: scroll 30s linear infinite;
+                }
+                .animate-scroll:hover {
+                  animation-play-state: paused;
+                }
+              `}</style>
+              <div className="flex animate-scroll">
+                {/* First set of tools */}
+                {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
+                  <span key={`first-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
+                ))}
+                {/* Duplicate set for seamless loop */}
+                {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
+                  <span key={`second-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
+                ))}
+              </div>
             </div>
           </div>
         </section>

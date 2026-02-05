@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center mb-10" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <img src={logo} alt="Rwooga" className="h-20 w-auto object-contain brightness-0 invert" />
+              <img src={logo} alt="Rwooga" className="h-20 w-auto object-contain" />
             </Link>
             <p className="text-gray-400 leading-relaxed mb-8 text-lg">
               Elevating brands through high-end 3D visualization, animation, and precision manufacturing.

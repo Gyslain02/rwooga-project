@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2 } from 'lucide-react'
@@ -25,6 +24,11 @@ const Shop = () => {
 
   // --- Cart Logic ---
   const handleAddToCart = (product: any) => {
+    const exists = cart.some(item => item.id === product.id);
+    if (exists) {
+      toast.error(`${product.name} is already in your cart!`);
+      return;
+    }
     dispatch(addToCart(product))
     setShowCart(true)
     toast.success(`${product.name} added to cart!`)
@@ -109,18 +113,7 @@ const Shop = () => {
           </div>
         )}
 
-        {/* Note on Shipping */}
-        <div className="mt-40 p-12 rounded-[40px] bg-white/3 border border-white/5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="max-w-xl">
-              <h4 className="text-2xl font-bold text-white mb-4 uppercase tracking-tight"> Secure Delivery & Payments </h4>
-              <p className="text-gray-400 leading-relaxed"> All payments are handled securely via Mobile Money or Card. We offer national delivery across Rwanda. </p>
-            </div>
-            <Link to="/contact" className="px-10 py-5 bg-white text-black rounded-full font-bold hover:bg-brand-primary transition-all text-center">
-              INQUIRE NOW
-            </Link>
-          </div>
-        </div>
+
       </div>
 
       {/* --- CART SIDEBAR --- */}
@@ -204,6 +197,7 @@ const Shop = () => {
           </>
         )}
       </AnimatePresence>
+
     </div>
   )
 }

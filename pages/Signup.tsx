@@ -47,19 +47,24 @@ const Signup: React.FC = () => {
             }
 
             clearError();
-            await register({
+            const res = await register({
                 full_name: formData.name,
                 email: formData.email,
                 phone_number: cleanedPhone,
                 password: formData.password,
                 password_confirm: formData.confirmPassword
             });
+            console.log("Response", res)
+            if (res.message == "success") {
 
-            setSuccess(true);
-            toast.success('Account created! Please check your email for verification.');
-            setTimeout(() => {
-                navigate('/login');
-            }, 5000);
+                toast.success('Account created! Please check your email for verification.');
+                setSuccess(true);
+                setTimeout(() => {
+                    navigate('/login');
+                }, 5000);
+            } else {
+                toast.error(res.message || 'Registration failed');
+            }
         } catch (err: any) {
             console.error('Signup Error:', err);
             setError(err || 'Registration failed');
