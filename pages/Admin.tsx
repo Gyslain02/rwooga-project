@@ -26,14 +26,13 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     available: true
   })
 
-  // Simulated Printer Stats for Mockup Accuracy
   const printers = [
-    { name: 'ENDER 3 PRO (A1)', status: '85% COMPLETE', color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
-    { name: 'PRUSA MK3S (B1)', status: 'IDLE', color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
-    { name: 'FORMLABS 3 (C1)', status: 'HEATING', color: 'text-brand-orange', bg: 'bg-brand-orange/10' },
+    { name: 'ENDER 3 PRO (A1)', status: '85% COMPLETE', progress: 85, color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
+    { name: 'PRUSA MK3S (B1)', status: 'IDLE', progress: 100, color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
+    { name: 'FORMLABS 3 (C1)', status: 'HEATING', progress: 100, color: 'text-brand-orange', bg: 'bg-brand-orange/10' },
   ]
 
-  // Load data from localStorage
+
   useEffect(() => {
 
 
@@ -136,7 +135,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Management Portal</p>
             </div>
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-500">
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-500" aria-label="Close sidebar" title="Close sidebar">
             <X size={20} />
           </button>
         </div>
@@ -163,6 +162,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
           <button
             onClick={handleLogout}
             className="w-full py-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all flex items-center justify-center gap-2"
+            title="Logout session"
           >
             <Plus className="rotate-45" size={14} />
             LOGOUT SESSION
@@ -175,7 +175,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         {/* Top Navigation */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 bg-slate-100 rounded-xl text-slate-600">
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 bg-slate-100 rounded-xl text-slate-600" aria-label="Open sidebar" title="Open sidebar">
               <Menu size={20} />
             </button>
             <div>
@@ -203,12 +203,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               <button
                 onClick={() => onToggle(!isEnabled)}
                 className={`w-8 md:w-12 h-4 md:h-6 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300'}`}
+                aria-label="Toggle public service mode"
+                title="Toggle public service mode"
               >
                 <div className={`absolute top-0.5 md:top-1 w-3 md:w-4 h-3 md:h-4 bg-white rounded-full transition-all ${isEnabled ? 'left-4.5 md:left-7' : 'left-0.5 md:left-1'}`} />
               </button>
             </div>
 
-            <button className="w-10 h-10 rounded-xl border border-gray-100 hidden md:flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all">
+            <button className="w-10 h-10 rounded-xl border border-gray-100 hidden md:flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-all" aria-label="Notifications" title="Notifications">
               <Bell size={20} />
             </button>
 
@@ -285,7 +287,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                               <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]">{req.files?.[0] || 'No file attached'}</p>
                             </td>
                             <td className="py-5 text-right">
-                              <button className="bg-slate-100 hover:bg-brand-primary hover:text-white p-2 rounded-lg text-slate-500 transition-all">
+                              <button className="bg-slate-100 hover:bg-brand-primary hover:text-white p-2 rounded-lg text-slate-500 transition-all" aria-label="Download file" title="Download file">
                                 <Download size={16} />
                               </button>
                             </td>
@@ -304,7 +306,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
                       <h3 className="text-lg font-bold text-slate-800">Shop Orders</h3>
-                      <button onClick={() => setActiveTab('orders')} className="text-slate-500 hover:text-slate-600 transition-colors">
+                      <button onClick={() => setActiveTab('orders')} className="text-slate-500 hover:text-slate-600 transition-colors" aria-label="More options" title="More options">
                         <MoreVertical size={20} />
                       </button>
                     </div>
@@ -344,8 +346,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           </div>
                           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${printer.color === 'text-brand-primary' ? 'bg-brand-primary' : printer.color === 'text-brand-primary' ? 'bg-brand-primary' : 'bg-brand-orange'}`}
-                              style={{ width: printer.status.includes('%') ? printer.status.split('%')[0] + '%' : '100%' }}
+                              className={`h-full transition-all ${printer.color === 'text-brand-primary' ? 'bg-brand-primary' : printer.color === 'text-brand-primary' ? 'bg-brand-primary' : 'bg-brand-orange'} ${printer.progress === 85 ? 'w-[85%]' : 'w-full'}`}
                             />
                           </div>
                         </div>
@@ -391,7 +392,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 >
                   <div className="flex justify-between items-center mb-8">
                     <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">{editingProduct ? 'Edit Product' : 'New Product'}</h3>
-                    <button type="button" onClick={() => setShowProductForm(false)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 transition-all">
+                    <button type="button" onClick={() => setShowProductForm(false)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 transition-all" aria-label="Close form" title="Close form">
                       <X size={20} />
                     </button>
                   </div>
@@ -482,12 +483,16 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           <button
                             onClick={() => editProduct(p)}
                             className="bg-slate-50 text-slate-500 hover:text-brand-primary hover:bg-brand-primary/10 p-2.5 rounded-xl transition-all"
+                            aria-label="Edit product"
+                            title="Edit product"
                           >
                             <Edit2 size={18} />
                           </button>
                           <button
                             onClick={() => deleteProduct(p.id)}
                             className="bg-slate-50 text-slate-500 hover:text-red-500 hover:bg-red-50/50 p-2.5 rounded-xl transition-all"
+                            aria-label="Delete product"
+                            title="Delete product"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -562,6 +567,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           <button
                             onClick={() => deleteMessage(m.id)}
                             className="w-10 h-10 bg-white text-slate-300 hover:text-red-500 rounded-xl flex items-center justify-center border border-gray-100 transition-all opacity-0 group-hover:opacity-100"
+                            aria-label="Delete message"
+                            title="Delete message"
                           >
                             <Trash2 size={20} />
                           </button>
@@ -604,6 +611,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   <button
                     onClick={() => onToggle(!isEnabled)}
                     className={`w-14 h-8 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300'}`}
+                    aria-label="Toggle public service mode"
+                    title="Toggle public service mode"
                   >
                     <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isEnabled ? 'left-7' : 'left-1'}`} />
                   </button>
@@ -672,7 +681,7 @@ const ProjectRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
           <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">{request.projectType}</p>
         </div>
       </div>
-      <button onClick={onDelete} className="w-10 h-10 bg-white text-slate-300 hover:text-red-500 rounded-xl flex items-center justify-center border border-gray-100 transition-all">
+      <button onClick={onDelete} className="w-10 h-10 bg-white text-slate-300 hover:text-red-500 rounded-xl flex items-center justify-center border border-gray-100 transition-all" aria-label="Delete request" title="Delete request">
         <Trash2 size={20} />
       </button>
     </div>
@@ -692,7 +701,7 @@ const ProjectRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
       <div className="flex flex-wrap gap-4 items-center">
         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mr-2">Attached Files:</span>
         {request.files.map((f: string, idx: number) => (
-          <button key={idx} className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl border border-gray-100 hover:border-brand-primary/30 text-[10px] font-bold text-slate-600 transition-all shadow-sm">
+          <button key={idx} className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl border border-gray-100 hover:border-brand-primary/30 text-[10px] font-bold text-slate-600 transition-all shadow-sm" aria-label={`Download ${f}`} title={`Download ${f}`}>
             <Download size={14} className="text-brand-primary" />
             <span className="truncate max-w-[120px]">{f}</span>
           </button>

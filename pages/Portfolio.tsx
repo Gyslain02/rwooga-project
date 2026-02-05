@@ -25,7 +25,7 @@ const Portfolio: React.FC = () => {
             </h1>
           </div>
 
-          {/* Minimalist Filter Bar */}
+        
           <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4">
             {filters.map(filter => (
               <button
@@ -42,7 +42,7 @@ const Portfolio: React.FC = () => {
           </div>
         </div>
 
-        {/* Grid (Agenko Staggered Style) */}
+      
         <motion.div
           layout
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"

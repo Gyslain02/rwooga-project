@@ -25,7 +25,7 @@ const Services: React.FC = () => {
     <div ref={containerRef} className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-        {/* Header Section */}
+       
         <motion.div style={{ y: headerY, opacity: headerOpacity }} className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-2xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Capabilities</span>
@@ -41,7 +41,7 @@ const Services: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Detailed Services */}
+       
         <div className="space-y-48">
           {SERVICES.map((service, index) => (
             <ServiceDetail

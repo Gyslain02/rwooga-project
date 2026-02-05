@@ -18,7 +18,7 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setStatus('submitting');
 
-    // Simulate API call for now
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     console.log('Form Submitted:', formData);
@@ -31,7 +31,7 @@ const Contact: React.FC = () => {
     <div className="bg-[#0a0d10] min-h-screen pt-32 pb-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-        {/* Header Section */}
+
         <div className="flex flex-col md:flex-row justify-between items-end mb-24">
           <div className="max-w-3xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Get In Touch</span>
@@ -49,7 +49,7 @@ const Contact: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
 
-          {/* Left Panel: Staked Info Cards */}
+        
           <div className="w-full lg:w-[380px] space-y-4">
             <ContactInfoCard
               icon={<Phone className="text-[#00d1ff]" size={20} />}
@@ -169,10 +169,11 @@ const Contact: React.FC = () => {
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127602.40939515514!2d30.0125868!3d-1.930128!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca429ed308f25%3A0x103681432f80164e!2sKigali!5e0!3m2!1sen!2srw!4v1714123456789!5m2!1sen!2srw"
           width="100%"
           height="100%"
-          style={{ border: 0 }}
+          className="w-full h-full border-0"
           allowFullScreen
           loading="lazy"
-          className="w-full h-full"
+          title="Rwooga Studio Location - Kigali, Rwanda"
+          referrerPolicy="no-referrer-when-downgrade"
         ></iframe>
       </div>
     </div>

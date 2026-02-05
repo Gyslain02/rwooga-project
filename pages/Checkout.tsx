@@ -35,14 +35,14 @@ const Checkout: React.FC = () => {
 
         setIsProcessing(true);
 
-        // Simulate payment processing
+     
         setTimeout(() => {
             setIsProcessing(false);
             setIsSuccess(true);
             dispatch(clearCart());
             toast.success('Payment successful! Your order is being processed.');
 
-            // Redirect after delay
+           
             setTimeout(() => {
                 navigate('/');
             }, 5000);
@@ -98,7 +98,7 @@ const Checkout: React.FC = () => {
                 </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-                    {/* Left Side: Forms */}
+                   
                     <div className="space-y-12">
                         <section>
                             <div className="flex items-center gap-4 mb-8">

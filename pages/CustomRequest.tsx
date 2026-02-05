@@ -64,7 +64,7 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
     <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-        {/* Header Section */}
+
         <div className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-3xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Bespoke Solutions</span>
@@ -136,19 +136,23 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                     placeholder="07xx xxx xxx"
+                    title="Phone Number"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Product Category</label>
+                  <label htmlFor="product-category" className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Product Category</label>
                   <div className="relative">
                     <select
+                      id="product-category"
                       required
                       value={formData.projectType}
                       onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-brand-primary focus:bg-white/10 outline-none transition-all appearance-none cursor-pointer"
+                      title="Select Product Category"
+                      aria-label="Product Category"
                     >
                       <option value="" disabled className="bg-gray-900">Select a type</option>
                       <option value="3d-visualization" className="bg-gray-900">3D Visualization</option>
@@ -169,6 +173,8 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                    title="Desired Deadline"
+                    placeholder="Select a date"
                   />
                 </div>
               </div>
@@ -194,6 +200,8 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                     multiple
                     onChange={handleFileChange}
                     accept="image/*,.stl,.obj"
+                    aria-label="Upload project files"
+                    title="Upload project files"
                   />
                   <div className="mb-4 text-gray-400 group-hover:text-brand-primary transition-colors">
                     <Upload size={32} className="mx-auto" />
@@ -260,6 +268,8 @@ const FilePreviewItem: React.FC<{ file: File; onRemove: () => void }> = ({ file,
         type="button"
         onClick={onRemove}
         className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="Remove file"
+        title="Remove file"
       >
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3 h-3">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

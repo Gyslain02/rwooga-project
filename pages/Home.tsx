@@ -5,7 +5,7 @@ import { ArrowRight, ChevronRight, CheckCircle2, Play } from 'lucide-react';
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { SERVICES, PORTFOLIO, getIcon } from '../constants';
 
-// Assets
+
 import heroImg from '../assets/Maguru photoshoot.png';
 import heroVideo from '../assets/MAGURU N_INSIBIKA MOVIE first look.mp4';
 import planetsBg from '../assets/20 Strange Planets That Are Both Interesting And Terrifying (1).jpg';
@@ -29,9 +29,9 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
 
   return (
     <div className="bg-brand-dark overflow-hidden">
-      {/* Redesigned Hero Section */}
+  
       <section ref={heroRef} className="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        {/* Background Image Limited to Upper Section */}
+    
         <div className="absolute top-0 left-0 w-full h-[80vh] z-0 pointer-events-none overflow-hidden">
           <motion.img
             src={planetsBg}
