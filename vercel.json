@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "https://awful-carlina-solvitafrica-ac088785.koyeb.app/$1"
+            "destination": "https://delicious-elk-rwooga-9385c071.koyeb.app/$1"
         },
         {
             "source": "/(.*)",
