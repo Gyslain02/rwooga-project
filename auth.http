@@ -1,0 +1,29 @@
+
+POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/register/
+Content-Type: application/json
+
+{
+    "email": "rugambagislain@gmail.com",
+    "password": "Rugamba123!",
+    "full_name": "Rugamba Gislain",
+    "phone_number": "0788123456",
+    "password_confirm": "Rugamba123!"
+}
+
+### Verify email
+POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/verify_email/
+Content-Type: application/json
+
+{
+    "email": "rugambagislain@gmail.com",
+    "token": "bf7d6e23-a3a0-4259-b161-1f95a70e6078"
+}
+
+### Login 
+POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/login/
+Content-Type: application/json
+
+{
+    "email": "rugambagislain@gmail.com",
+    "password": "Rugamba123!"
+}

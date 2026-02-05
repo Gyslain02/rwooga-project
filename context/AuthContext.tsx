@@ -37,10 +37,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setError(null);
         try {
             const data = await authService.login(credentials);
-            setUser(data.user);
-            localStorage.setItem('access_token', data.access);
-            localStorage.setItem('refresh_token', data.refresh);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.data.user);
+            // TODO: Store in session storage instead of localStorage for better security, or use httpOnly cookies
+            localStorage.setItem('access_token', data.data.access);
+            localStorage.setItem('refresh_token', data.data.refresh);
+            localStorage.setItem('user', JSON.stringify(data.data.user));
         } catch (err: any) {
             setError(err.message || 'Login failed');
             throw err.message || 'Login failed';
@@ -67,7 +68,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(true);
         setError(null);
         try {
-            await authService.verifyEmail(email, token);
+           const res = await authService.verifyEmail(email, token);
+           console.log("Verification response", res);
         } catch (err: any) {
             setError(err.message || 'Verification failed');
             throw err.message || 'Verification failed';

@@ -74,8 +74,8 @@ const Signup: React.FC = () => {
                 password: formData.password,
                 password_confirm: formData.confirmPassword
             });
-            console.log("Response", res)
-            if (res.message == "success") {
+ 
+            if (res.ok) {
 
                 toast.success('Account created! Please check your email for verification.');
                 setSuccess(true);

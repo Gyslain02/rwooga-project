@@ -1,41 +1,13 @@
 
 import { API_BASE_URL } from '../constants';
 
-const handleResponse = async (response: Response) => {
-    let data;
-    const contentType = response.headers.get("content-type");
+const handleResponse = async (response: Response): Promise<{ ok: boolean, status: number, data: any }> => {
 
-    try {
-        if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-        } else {
-            const text = await response.text();
-            data = { message: text || `Server responded with ${response.status}` };
-        }
-    } catch (e) {
-        data = { message: "Could not parse response" };
-    }
-
-    if (!response.ok) {
-        console.error(`API Error [${response.status}]:`, data);
-
-        // Extract better error messages from potentially nested objects
-        let errorMessage = "Something went wrong";
-        if (typeof data === 'object') {
-            // Check common Django/Django-Rest-Framework error structures
-            const firstKey = Object.keys(data)[0];
-            const firstValue = data[firstKey];
-
-            if (data.message) errorMessage = data.message;
-            else if (data.detail) errorMessage = data.detail;
-            else if (data.error) errorMessage = data.error;
-            else if (Array.isArray(firstValue)) errorMessage = `${firstValue[0]}`;
-            else if (typeof firstValue === 'string') errorMessage = firstValue;
-        }
-
-        throw new Error(errorMessage);
-    }
-    return data;
+    return {
+        ok: response.ok,
+        status: response.status,
+        data: await response.json()
+    };
 };
 
 export const authService = {
@@ -97,9 +69,10 @@ export const authService = {
     },
 
     async verifyEmail(email: string, token: string) {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-email/${email}/${token}/`, {
-            method: 'GET', // Or POST, but usually GET for direct links. Keeping it flexible.
+        const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+            method: 'POST', // Or POST, but usually GET for direct links. Keeping it flexible.
             headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, token }), // Some APIs expect data in the body even for verification links
         });
         return handleResponse(response);
     },

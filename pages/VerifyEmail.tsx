@@ -1,13 +1,17 @@
-
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const VerifyEmail: React.FC = () => {
-    const { email, token } = useParams<{ email: string; token: string }>();
+    const [searchParams] = useSearchParams(); // Fix: destructure the array correctly
+    const email = searchParams.get('email');
+    const token = searchParams.get('token');
+    
+    console.log({ email, token }); // Now this will work
+    
     const navigate = useNavigate();
     const { verifyEmail, loading, error } = useAuth();
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
