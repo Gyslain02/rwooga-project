@@ -16,7 +16,7 @@ interface AuthContextType {
     loading: boolean;
     error: string | null;
     login: (credentials: any) => Promise<void>;
-    register: (userData: any) => Promise<void>;
+    register: (userData: any) => Promise<any>;
     verifyEmail: (id: string, token: string) => Promise<void>;
     logout: () => void;
     clearError: () => void;
@@ -53,7 +53,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(true);
         setError(null);
         try {
-            await authService.register(userData);
+            const data = await authService.register(userData);
+            return data;
         } catch (err: any) {
             setError(err.message || 'Registration failed');
             throw err.message || 'Registration failed';
