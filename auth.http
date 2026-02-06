@@ -1,5 +1,5 @@
 
-POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/register/
+POST https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/auth/register/
 Content-Type: application/json
 
 {
@@ -11,7 +11,7 @@ Content-Type: application/json
 }
 
 ### Verify email
-POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/verify_email/
+POST https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/auth/verify_email/
 Content-Type: application/json
 
 {
@@ -20,7 +20,7 @@ Content-Type: application/json
 }
 
 ### Login 
-POST https://delicious-elk-rwooga-9385c071.koyeb.app/auth/login/
+POST https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/auth/login/
 Content-Type: application/json
 
 {
