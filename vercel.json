@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://delicious-elk-rwooga-9385c071.koyeb.app/$1"
+      "destination": "https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/$1"
     }
   ]
 }

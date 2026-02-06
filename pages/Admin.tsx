@@ -222,7 +222,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               className="bg-brand-primary text-white p-2.5 md:px-6 md:py-2.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg shadow-brand-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Plus size={18} />
-              <span className="hidden md:block">New Project</span>
+              <span className="hidden md:block">New Product</span>
             </button>
           </div>
         </header>
@@ -240,7 +240,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   bg="bg-emerald-50"
                 />
                 <DashboardStat
-                  label="Active Projects"
+                  label="Active Products"
                   value="14"
                   trend="5 machines running"
                   icon={<Monitor className="text-brand-primary" />}
@@ -281,7 +281,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                               <p className="text-[10px] text-slate-500">{req.email}</p>
                             </td>
                             <td className="py-5">
-                              <span className="px-3 py-1 rounded-lg bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase">{req.projectType}</span>
+                              <span className="px-3 py-1 rounded-lg bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase">{req.productType}</span>
                             </td>
                             <td className="py-5">
                               <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]">{req.files?.[0] || 'No file attached'}</p>
@@ -334,28 +334,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </div>
                   </div>
 
-                  {/* Printer Fleet Status */}
-                  <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-800 mb-8">Printer Fleet Status</h3>
-                    <div className="space-y-6">
-                      {printers.map((printer, idx) => (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            <span>{printer.name}</span>
-                            <span className={printer.color}>{printer.status}</span>
-                          </div>
-                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all ${printer.color === 'text-brand-primary' ? 'bg-brand-primary' : printer.color === 'text-brand-primary' ? 'bg-brand-primary' : 'bg-brand-orange'} ${printer.progress === 85 ? 'w-[85%]' : 'w-full'}`}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <button className="w-full mt-10 py-3 border border-gray-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                      Manage Fleet Settings
-                    </button>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -521,7 +500,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               <div className="flex items-center justify-between mb-12">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800">{activeTab === 'requests' ? 'Custom Requests' : 'Direct Messages'}</h2>
-                  <p className="text-sm text-slate-500">Handle client inquiries and project submissions</p>
+                  <p className="text-sm text-slate-500">Handle client inquiries and product submissions</p>
                 </div>
                 <div className="flex bg-slate-100 p-1 rounded-xl md:rounded-2xl overflow-x-auto">
                   <button
@@ -542,10 +521,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               <div className="space-y-6">
                 {activeTab === 'requests' ? (
                   customRequests.length === 0 ? (
-                    <EmptyState icon={<ClipboardList size={40} />} text="No project requests yet." />
+                    <EmptyState icon={<ClipboardList size={40} />} text="No product requests yet." />
                   ) : (
                     customRequests.map((r: any) => (
-                      <ProjectRequestCard key={r.id} request={r} onDelete={() => deleteRequest(r.id)} />
+                      <ProductRequestCard key={r.id} request={r} onDelete={() => deleteRequest(r.id)} />
                     ))
                   )
                 ) : (
@@ -669,7 +648,7 @@ const DashboardStat: React.FC<{ label: string; value: string; trend: string; ico
   </div>
 )
 
-const ProjectRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ request, onDelete }) => (
+const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ request, onDelete }) => (
   <div className="p-8 bg-slate-50 rounded-[40px] border border-gray-100 group">
     <div className="flex justify-between items-start mb-8">
       <div className="flex items-center space-x-6">
@@ -678,7 +657,7 @@ const ProjectRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
         </div>
         <div>
           <h3 className="text-xl font-bold text-slate-800 leading-tight">{request.name}</h3>
-          <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">{request.projectType}</p>
+          <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">{request.productType}</p>
         </div>
       </div>
       <button onClick={onDelete} className="w-10 h-10 bg-white text-slate-300 hover:text-red-500 rounded-xl flex items-center justify-center border border-gray-100 transition-all" aria-label="Delete request" title="Delete request">
@@ -693,7 +672,7 @@ const ProjectRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
     </div>
 
     <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm mb-8">
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Project Requirement</p>
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Product Requirement</p>
       <p className="text-sm text-slate-600 leading-relaxed">{request.description}</p>
     </div>
 

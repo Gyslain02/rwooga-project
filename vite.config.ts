@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'https://delicious-elk-rwooga-9385c071.koyeb.app',
+          target: 'https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
