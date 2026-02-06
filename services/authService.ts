@@ -50,7 +50,7 @@ export const authService = {
     },
 
     async refreshToken(refresh: string) {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh_token/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh }),
@@ -59,7 +59,7 @@ export const authService = {
     },
 
     async requestPasswordReset(email: string) {
-        const response = await fetch(`${API_BASE_URL}/auth/password-reset/`, {
+        const response = await fetch(`${API_BASE_URL}/auth/password_reset_request/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
@@ -68,7 +68,7 @@ export const authService = {
     },
 
     async confirmPasswordReset(data: any) {
-        const response = await fetch(`${API_BASE_URL}/auth/password-reset/confirm/`, {
+        const response = await fetch(`${API_BASE_URL}/auth/password_reset_confirm/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
@@ -77,7 +77,7 @@ export const authService = {
     },
 
     async verifyEmail(email: string, token: string) {
-        const response = await fetch(`${API_BASE_URL}/auth/verify-email/`, {
+        const response = await fetch(`${API_BASE_URL}/auth/verify_email/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, token }),

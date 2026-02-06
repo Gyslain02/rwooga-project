@@ -10,7 +10,7 @@ const VerifyEmail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const email = searchParams.get('email') || emailParam;
     const token = searchParams.get('token') || tokenParam;
-    
+
     const navigate = useNavigate();
     const { verifyEmail, loading, error } = useAuth();
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
@@ -27,7 +27,7 @@ const VerifyEmail: React.FC = () => {
                 })
                 .catch((err) => {
                     setStatus('error');
-                    toast.error(err || 'Verification failed');
+                    toast.error(err.message || 'Verification failed');
                 });
         } else {
             setStatus('error');

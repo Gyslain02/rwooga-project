@@ -74,7 +74,7 @@ const Signup: React.FC = () => {
                 password: formData.password,
                 password_confirm: formData.confirmPassword
             });
- 
+
             if (res.ok) {
 
                 toast.success('Account created! Please check your email for verification.');
@@ -87,8 +87,9 @@ const Signup: React.FC = () => {
             }
         } catch (err: any) {
             console.error('Signup Error:', err);
-            setError(err || 'Registration failed');
-            toast.error(err || 'Registration failed');
+            const msg = err.message || 'Registration failed';
+            setError(msg);
+            toast.error(msg);
         }
     };
 
