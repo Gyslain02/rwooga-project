@@ -76,17 +76,26 @@ export const authService = {
         return handleResponse(response);
     },
 
-    async verifyEmail(email: string, token: string) {
+    async verifyEmail(token: string) {
         const response = await fetch(`${API_BASE_URL}/auth/verify_email/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, token }),
+            body: JSON.stringify({ token }),
         });
         return handleResponse(response);
     },
 
     async checkEmailExists(email: string) {
         const response = await fetch(`${API_BASE_URL}/auth/check-email/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        return handleResponse(response);
+    },
+
+    async resendVerification(email: string) {
+        const response = await fetch(`${API_BASE_URL}/auth/resend_verification/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),

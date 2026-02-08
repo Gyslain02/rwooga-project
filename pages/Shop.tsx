@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2 } from 'lucide-react'
+import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PRODUCTS } from '../constants'
+import { productsService } from '../services/productsService'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../store'
@@ -11,16 +12,61 @@ import { addToCart, removeFromCart } from '../store/slices/cartSlice'
 const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [showCart, setShowCart] = useState(false)
+  const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
   const dispatch = useDispatch<AppDispatch>()
   const { items: cart, total } = useSelector((state: RootState) => state.cart)
 
-  const categories = ['All', ...new Set(PRODUCTS.map(p => p.category))]
+  // Fetch products and categories on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError('')
+        
+        // Fetch products and categories in parallel
+        const [productsRes, categoriesRes] = await Promise.all([
+          productsService.getProducts({ published: true }),
+          productsService.getCategories()
+        ])
+
+        if (productsRes.ok && productsRes.data) {
+          // Handle both paginated and non-paginated responses
+          const productsList = productsRes.data.results || productsRes.data
+          setProducts(productsList)
+        }
+
+        if (categoriesRes.ok && categoriesRes.data) {
+          const categoriesList = categoriesRes.data.results || categoriesRes.data
+          setCategories(categoriesList.filter((cat: any) => cat.is_active))
+        }
+      } catch (err: any) {
+        console.error('Error fetching products:', err)
+        setError('Failed to load products. Using sample data.')
+        toast.error('Could not load products from server')
+        // Fallback to static products
+        setProducts(PRODUCTS)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const categoryNames = ['All', ...categories.map(c => c.name)]
 
   const filteredProducts =
     selectedCategory === 'All'
-      ? PRODUCTS
-      : PRODUCTS.filter(p => p.category === selectedCategory)
+      ? products
+      : products.filter(p => {
+          // Handle both category object and category_name field
+          const categoryName = typeof p.category === 'object' ? p.category.name : p.category_name
+          return categoryName === selectedCategory
+        })
 
   const handleAddToCart = (product: any) => {
     const exists = cart.some(item => item.id === product.id);
@@ -59,7 +105,7 @@ const Shop = () => {
           </div>
 
           <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4 items-center">
-            {categories.map((cat) => (
+            {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -86,25 +132,42 @@ const Shop = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-40">
+            <Loader2 className="w-16 h-16 text-brand-primary animate-spin mb-6" />
+            <p className="text-gray-500 font-bold uppercase tracking-widest">Loading products...</p>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && !loading && (
+          <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-2xl text-center">
+            {error}
+          </div>
+        )}
+
         {/* product grid */}
-        <motion.div
-          layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                index={index}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        {!loading && (
+          <motion.div
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={index}
+                  onAddToCart={handleAddToCart}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* No Products */}
-        {filteredProducts.length === 0 && (
+        {!loading && filteredProducts.length === 0 && (
           <div className="text-center py-40 border-2 border-dashed border-white/5 rounded-[40px]">
             <p className="text-gray-500 font-bold uppercase tracking-widest">
               No products found in this category.
@@ -208,6 +271,16 @@ const ProductCard: React.FC<{
   index: number;
   onAddToCart: (product: any) => void;
 }> = ({ product, index, onAddToCart }) => {
+  // Handle both API format (unit_price) and static format (price)
+  const price = product.unit_price || product.price || 0
+  const currency = product.currency || 'RWF'
+  const image = product.thumbnail || product.image
+  const category = typeof product.category === 'object' ? product.category.name : product.category_name || product.category
+  
+  // For variants, handle both API format and static format
+  const materialText = product.material || (product.variants?.material && product.variants.material[0]) || 'PLA'
+  const colorCount = product.available_colors?.length || product.variants?.color?.length || 0
+
   return (
     <motion.div
       layout
@@ -219,12 +292,12 @@ const ProductCard: React.FC<{
     >
       <div className="aspect-square rounded-[40px] overflow-hidden bg-white/5 relative mb-6">
         <img
-          src={product.image}
+          src={image}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
         />
         <div className="absolute top-6 left-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{product.category}</span>
+          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{category}</span>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
@@ -240,9 +313,11 @@ const ProductCard: React.FC<{
       <div className="px-2">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-2xl font-bold text-white uppercase tracking-tight">{product.name}</h3>
-          <p className="text-brand-primary font-bold text-xl">{product.price.toLocaleString()} RWF</p>
+          <p className="text-brand-primary font-bold text-xl">{price.toLocaleString()} {currency}</p>
         </div>
-        <p className="text-gray-500 text-sm font-medium">Available in {product.variants.material[0]} & {product.variants.color.length} colors</p>
+        <p className="text-gray-500 text-sm font-medium">
+          {colorCount > 0 ? `Available in ${materialText} & ${colorCount} colors` : `Made with ${materialText}`}
+        </p>
       </div>
     </motion.div>
   )

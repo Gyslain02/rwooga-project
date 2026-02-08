@@ -4,6 +4,8 @@ import { Send, MapPin, Phone, Mail, Clock, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { WHATSAPP_NUMBER, BRAND_EMAIL } from '../constants';
 import toast from 'react-hot-toast';
+import GlassCard from '../components/GlassCard';
+import GlassButton from '../components/GlassButton';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -51,37 +53,45 @@ const Contact: React.FC = () => {
 
         
           <div className="w-full lg:w-[380px] space-y-4">
-            <ContactInfoCard
-              icon={<Phone className="text-[#00d1ff]" size={20} />}
-              title="Chat with us"
-              description="Fastest response time via WhatsApp"
-              value={WHATSAPP_NUMBER}
-              href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\+/g, '')}`}
-            />
-            <ContactInfoCard
-              icon={<Mail className="text-[#00d1ff]" size={20} />}
-              title="Email us"
-              description="For detailed inquiries and quotes"
-              value={BRAND_EMAIL}
-              href={`mailto:${BRAND_EMAIL}`}
-            />
-            <ContactInfoCard
-              icon={<Clock className="text-brand-primary" size={20} />}
-              title="Work hours"
-              description="Mon - Sat: 9:00 AM - 6:00 PM"
-              value="Available for urgent requests"
-              isBadge
-            />
-            <ContactInfoCard
-              icon={<MapPin className="text-brand-primary" size={20} />}
-              title="Our Studio"
-              description="Kigali, Rwanda"
-              value="Visit by appointment"
-            />
+            <GlassCard variant="default" hover className="p-6 rounded-2xl">
+              <ContactInfoCard
+                icon={<Phone className="text-[#00d1ff]" size={20} />}
+                title="Chat with us"
+                description="Fastest response time via WhatsApp"
+                value={WHATSAPP_NUMBER}
+                href={`https://wa.me/${WHATSAPP_NUMBER.replace(/\+/g, '')}`}
+              />
+            </GlassCard>
+            <GlassCard variant="default" hover className="p-6 rounded-2xl">
+              <ContactInfoCard
+                icon={<Mail className="text-[#00d1ff]" size={20} />}
+                title="Email us"
+                description="For detailed inquiries and quotes"
+                value={BRAND_EMAIL}
+                href={`mailto:${BRAND_EMAIL}`}
+              />
+            </GlassCard>
+            <GlassCard variant="default" hover className="p-6 rounded-2xl">
+              <ContactInfoCard
+                icon={<Clock className="text-brand-primary" size={20} />}
+                title="Work hours"
+                description="Mon - Sat: 9:00 AM - 6:00 PM"
+                value="Available for urgent requests"
+                isBadge
+              />
+            </GlassCard>
+            <GlassCard variant="default" hover className="p-6 rounded-2xl">
+              <ContactInfoCard
+                icon={<MapPin className="text-brand-primary" size={20} />}
+                title="Our Studio"
+                description="Kigali, Rwanda"
+                value="Visit by appointment"
+              />
+            </GlassCard>
           </div>
 
           {/* Right Section: Form Card */}
-          <div className="w-full lg:max-w-[750px] bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl">
+          <GlassCard className="w-full lg:max-w-[750px] p-8 md:p-12 rounded-[32px] shadow-2xl" variant="strong" hover>
             {status === 'success' ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -136,29 +146,26 @@ const Contact: React.FC = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="How can we help you?"
-                    className="w-full bg-[#151719] border border-white/5 rounded-2xl px-6 py-4 text-white placeholder-gray-600 outline-none focus:border-emerald-500/50 transition-all h-[200px] md:h-[250px] resize-none"
+                    className="glass-textarea w-full h-[200px] md:h-[250px]"
                   />
                 </div>
 
                 <div className="pt-4">
-                  <button
+                  <GlassButton
                     type="submit"
+                    variant="primary"
+                    size="lg"
+                    loading={status === 'submitting'}
                     disabled={status === 'submitting'}
-                    className="w-full bg-[#004d42] hover:bg-[#005d50] text-white py-5 rounded-2xl text-xl font-bold flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] shadow-lg disabled:opacity-50"
+                    icon={<Send size={22} />}
+                    className="w-full"
                   >
-                    {status === 'submitting' ? (
-                      'Sending...'
-                    ) : (
-                      <>
-                        <Send size={22} className="mt-1" />
-                        Send Message
-                      </>
-                    )}
-                  </button>
+                    {status === 'submitting' ? 'Sending...' : 'Send Message'}
+                  </GlassButton>
                 </div>
               </form>
             )}
-          </div>
+          </GlassCard>
         </div>
 
       </div>
@@ -188,24 +195,22 @@ const ContactInfoCard: React.FC<{
   href?: string;
   isBadge?: boolean;
 }> = ({ icon, title, description, value, href, isBadge }) => (
-  <div className="bg-[#111418] border border-white/5 rounded-2xl p-6 hover:border-emerald-500/20 transition-all group">
-    <div className="flex items-start gap-4">
-      <div className="w-12 h-12 bg-[#1c232b] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#252e38] transition-colors">
-        {icon}
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-white font-bold leading-none">{title}</h3>
-        <p className="text-gray-500 text-sm">{description}</p>
-        {href ? (
-          <a href={href} className="block text-brand-primary font-bold hover:underline underline-offset-4 decoration-2">
-            {value}
-          </a>
-        ) : (
-          <p className={`font-bold ${isBadge ? 'text-emerald-400' : 'text-white'}`}>
-            {value}
-          </p>
-        )}
-      </div>
+  <div className="flex items-start gap-4">
+    <div className="w-12 h-12 bg-[#1c232b] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#252e38] transition-colors">
+      {icon}
+    </div>
+    <div className="space-y-1">
+      <h3 className="text-white font-bold leading-none">{title}</h3>
+      <p className="text-gray-500 text-sm">{description}</p>
+      {href ? (
+        <a href={href} className="block text-brand-primary font-bold hover:underline underline-offset-4 decoration-2">
+          {value}
+        </a>
+      ) : (
+        <p className={`font-bold ${isBadge ? 'text-emerald-400' : 'text-white'}`}>
+          {value}
+        </p>
+      )}
     </div>
   </div>
 );
@@ -226,7 +231,7 @@ const FormInput: React.FC<{
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full h-[56px] bg-[#151719] border border-white/5 rounded-2xl px-6 text-white placeholder-gray-600 outline-none focus:border-emerald-500/30 transition-all font-medium"
+      className="glass-input w-full"
       required={required}
     />
   </div>

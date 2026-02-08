@@ -4,6 +4,8 @@ import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
+import GlassCard from '../components/GlassCard';
+import GlassButton from '../components/GlassButton';
 
 const Signup: React.FC = () => {
     const { register, loading, error: authError, clearError } = useAuth();
@@ -47,25 +49,6 @@ const Signup: React.FC = () => {
                 return;
             }
 
-            // Check if email already exists
-            try {
-                await authService.checkEmailExists(formData.email);
-                // If we get here without error, email exists
-                setError('This email is already registered. Please use a different email or try logging in.');
-                toast.error('Email already registered');
-                return;
-            } catch (err: any) {
-                // If error is "not found" or "does not exist", that's good - we can proceed
-                if (err.message && err.message.includes('does not exist')) {
-                    // Email is available, proceed
-                } else if (err.message && err.message.includes('not found')) {
-                    // Email is available, proceed
-                } else {
-                    // Some other error occurred
-                    console.log('Email check result:', err.message);
-                }
-            }
-
             clearError();
             const res = await register({
                 full_name: formData.name,
@@ -76,8 +59,7 @@ const Signup: React.FC = () => {
             });
 
             if (res.ok) {
-
-                toast.success('Account created! Please check your email for verification.');
+                toast.success(`Verification email sent to ${formData.email}`);
                 setSuccess(true);
                 setTimeout(() => {
                     navigate('/login');
@@ -97,7 +79,7 @@ const Signup: React.FC = () => {
         <div className="bg-brand-dark min-h-screen flex items-center justify-center px-4 pt-20 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-            <div className="max-w-md w-full bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl relative z-10 transition-all duration-300">
+            <GlassCard className="max-w-md w-full p-8 md:p-12 rounded-[32px] shadow-2xl relative z-10" variant="strong">
                 <div className="text-center mb-10">
                     <h2 className="text-3xl font-display font-bold text-white mb-3">Create Account</h2>
                     <p className="text-gray-400">Join our studio to start your journey</p>
@@ -126,7 +108,7 @@ const Signup: React.FC = () => {
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                className="glass-input w-full"
                                 placeholder="John Doe"
                             />
                         </div>
@@ -138,7 +120,7 @@ const Signup: React.FC = () => {
                                 type="tel"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                className="glass-input w-full"
                                 placeholder="07..."
                             />
                         </div>
@@ -150,7 +132,7 @@ const Signup: React.FC = () => {
                                 type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                className="glass-input w-full"
                                 placeholder="you@example.com"
                             />
                         </div>
@@ -163,7 +145,7 @@ const Signup: React.FC = () => {
                                     type={showPassword ? "text" : "password"}
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                    className="glass-input w-full pr-12"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -190,7 +172,7 @@ const Signup: React.FC = () => {
                                     type={showConfirmPassword ? "text" : "password"}
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pr-12 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                                    className="glass-input w-full pr-12"
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -203,18 +185,16 @@ const Signup: React.FC = () => {
                             </div>
                         </div>
 
-                        <button
+                        <GlassButton
                             type="submit"
+                            variant="primary"
+                            size="lg"
+                            loading={loading}
                             disabled={loading}
-                            className="w-full bg-brand-primary text-black font-bold text-lg py-4 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-brand-primary/20 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="w-full mt-4"
                         >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin mr-2" />
-                                    Creating Account...
-                                </>
-                            ) : 'Create Account'}
-                        </button>
+                            {loading ? 'Creating Account...' : 'Create Account'}
+                        </GlassButton>
                     </form>
                 )}
 
@@ -224,7 +204,7 @@ const Signup: React.FC = () => {
                         <Link to="/login" className="text-brand-primary font-bold hover:text-white transition-colors">Log In</Link>
                     </div>
                 )}
-            </div>
+            </GlassCard>
         </div>
     );
 };

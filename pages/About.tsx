@@ -3,7 +3,8 @@ import React, { useRef } from 'react';
 import { Target, Users, Zap, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-
+import GlassCard from '../components/GlassCard';
+import GlassButton from '../components/GlassButton';
 
 import teamImg from '../assets/Maguru and mom 2.png';
 import memberImg from '../assets/image (1).png';
@@ -45,38 +46,41 @@ const About: React.FC = () => {
 
       
         <div className="mb-40 flex flex-col items-center">
-          <Link
-            to="/portfolio"
-            className="bg-brand-primary/[0.08] hover:bg-brand-primary/[0.15] text-brand-primary px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all mb-20 border border-brand-primary/20"
+          <GlassButton
+            variant="outline"
+            size="md"
+            onClick={() => window.location.href = '/portfolio'}
           >
             View our Work
-          </Link>
+          </GlassButton>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24 w-full">
-            <StatItem
-              number="500+"
-              label="Projects Delivered"
-            />
-            <StatItem
-              number="99%"
-              label="Client Satisfaction"
-            />
-            <StatItem
-              number="24h"
-              label="Quote Turnaround"
-            />
-            <StatItem
-              number="4K"
-              label="Native Resolution"
-            />
-          </div>
+          <GlassCard className="mt-20 p-12 rounded-[40px]" variant="subtle" hover>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24 w-full">
+              <StatItem
+                number="500+"
+                label="Projects Delivered"
+              />
+              <StatItem
+                number="99%"
+                label="Client Satisfaction"
+              />
+              <StatItem
+                number="24h"
+                label="Quote Turnaround"
+              />
+              <StatItem
+                number="4K"
+                label="Native Resolution"
+              />
+            </div>
+          </GlassCard>
         </div>
 
         {/* Content Block 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-40">
           <ParallaxImage src={teamImg} alt="Team" />
 
-          <div className="space-y-12">
+          <GlassCard className="space-y-12 p-12 rounded-[40px]" variant="default" hover>
             <h2 className="text-4xl md:text-5xl font-display font-bold text-white leading-tight uppercase tracking-tighter">
               Custom Problems Require <span className="text-brand-primary">Unique Solutions.</span>
             </h2>
@@ -84,12 +88,12 @@ const About: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
               <div>
                 <h4 className="text-brand-primary font-bold uppercase tracking-widest text-xs mb-4">Our Mission</h4>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">Our approach is simple: we don’t believe in one-size-fits-all solutions. Every project starts with understanding the problem, then designing a solution specifically for it — visually, functionally, and strategically.</p>
-                <p className="text-gray-500 text-sm leading-relaxed">From concept to final render or physical product, we combine creativity, storytelling, and technical precision to deliver high-quality, custom-made results.</p>
+                <p className="text-gray-400 text-sm leading-relaxed mb-4">Our approach is simple: we don't believe in one-size-fits-all solutions. Every project starts with understanding the problem, then designing a solution specifically for it — visually, functionally, and strategically.</p>
+                <p className="text-gray-400 text-sm leading-relaxed">From concept to final render or physical product, we combine creativity, storytelling, and technical precision to deliver high-quality, custom-made results.</p>
               </div>
 
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Core Values / Features */}
@@ -139,40 +143,42 @@ const About: React.FC = () => {
 
         {/* Tools Section */}
         <section className="py-24 border-t border-white/5 overflow-hidden">
-          <div className="flex items-center gap-12">
-            {/* Static label */}
-            <div className="font-bold uppercase tracking-[0.4em] text-2xl flex-shrink-0" style={{ color: '#006400' }}>The Tech Stack</div>
+          <GlassCard className="p-12 rounded-[40px]" variant="subtle">
+            <div className="flex items-center gap-12">
+              {/* Static label */}
+              <div className="font-bold uppercase tracking-[0.4em] text-2xl flex-shrink-0" style={{ color: '#006400' }}>The Tech Stack</div>
 
-            {/* Scrolling tools */}
-            <div className="relative flex-1 overflow-hidden">
-              <style>{`
-                @keyframes scroll {
-                  0% {
-                    transform: translateX(0);
+              {/* Scrolling tools */}
+              <div className="relative flex-1 overflow-hidden">
+                <style>{`
+                  @keyframes scroll {
+                    0% {
+                      transform: translateX(0);
+                    }
+                    100% {
+                      transform: translateX(-50%);
+                    }
                   }
-                  100% {
-                    transform: translateX(-50%);
+                  .animate-scroll {
+                    animation: scroll 30s linear infinite;
                   }
-                }
-                .animate-scroll {
-                  animation: scroll 30s linear infinite;
-                }
-                .animate-scroll:hover {
-                  animation-play-state: paused;
-                }
-              `}</style>
-              <div className="flex animate-scroll">
-                {/* First set of tools */}
-                {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
-                  <span key={`first-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
-                ))}
-                {/* Duplicate set for seamless loop */}
-                {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
-                  <span key={`second-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
-                ))}
+                  .animate-scroll:hover {
+                    animation-play-state: paused;
+                  }
+                `}</style>
+                <div className="flex animate-scroll">
+                  {/* First set of tools */}
+                  {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
+                    <span key={`first-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
+                  ))}
+                  {/* Duplicate set for seamless loop */}
+                  {['BLENDER', 'UNREAL ENGINE', 'SOLIDWORKS', 'MAYA', 'PRUSA SLICER'].map((tool, index) => (
+                    <span key={`second-${index}`} className="text-2xl font-display font-black text-white/20 hover:text-brand-primary transition-colors cursor-default tracking-tighter whitespace-nowrap mx-12">{tool}</span>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </GlassCard>
         </section>
       </div>
     </div>
@@ -193,10 +199,10 @@ const StatItem: React.FC<{ number: string; label: string }> = ({ number, label }
 );
 
 const AboutFeature: React.FC<{ icon: React.ReactNode; title: string; desc: string }> = ({ icon, title, desc }) => (
-  <div className="p-12 hover:bg-white/5 transition-colors group">
+  <div className="p-12 glass-card glass-card-hover transition-all group cursor-pointer">
     <div className="mb-8 text-brand-primary group-hover:scale-110 transition-transform duration-500">{icon}</div>
     <h3 className="text-xl font-bold text-white mb-4 uppercase tracking-tight">{title}</h3>
-    <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
+    <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
   </div>
 );
 
@@ -217,7 +223,7 @@ const TeamMember: React.FC<{ image: string; name: string; role: string }> = ({ i
       viewport={{ once: true }}
       className="group"
     >
-      <div className="aspect-square rounded-[32px] overflow-hidden bg-white/5 mb-6 relative">
+      <div className="aspect-square rounded-[32px] overflow-hidden glass-card glass-card-hover mb-6 relative border border-white/10">
         <motion.img
           src={image}
           style={{ y }}
@@ -226,7 +232,7 @@ const TeamMember: React.FC<{ image: string; name: string; role: string }> = ({ i
         />
       </div>
       <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">{name}</h3>
-      <p className="text-gray-500 text-sm font-medium">{role}</p>
+      <p className="text-gray-400 text-sm font-medium">{role}</p>
     </motion.div>
   );
 };

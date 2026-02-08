@@ -17,7 +17,7 @@ interface AuthContextType {
     error: string | null;
     login: (credentials: any) => Promise<void>;
     register: (userData: any) => Promise<any>;
-    verifyEmail: (email: string, token: string) => Promise<void>;
+    verifyEmail: (token: string) => Promise<void>;
     logout: () => void;
     clearError: () => void;
 }
@@ -65,29 +65,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setError(null);
         try {
             const response = await authService.register(userData);
-            toast.success('Registration successful! Please check your email.');
+            // Toast is shown in the Signup component, not here
             return response;
         } catch (err: any) {
             const msg = err.message || 'Registration failed';
             setError(msg);
-            toast.error(msg);
+            // Let the component handle error toast
             throw err;
         } finally {
             setLoading(false);
         }
     };
 
-    const verifyEmail = useCallback(async (email: string, token: string) => {
+    const verifyEmail = useCallback(async (token: string) => {
         setLoading(true);
         setError(null);
         try {
-            await authService.verifyEmail(email, token);
-            toast.success('Email verified successfully!');
+            await authService.verifyEmail(token);
+            // Toast is shown in the component, not here
         } catch (err: any) {
             const message = err.message || 'Verification failed';
             setError(message);
-            toast.error(message);
-            throw err; // Re-throw to let component know it failed
+            // Error toast is shown in the component
+            throw err;
         } finally {
             setLoading(false);
         }

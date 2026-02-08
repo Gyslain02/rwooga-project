@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import React, { useRef } from 'react';
 import { SERVICES } from '../constants';
+import GlassCard from '../components/GlassCard';
+import GlassButton from '../components/GlassButton';
 
 const Services: React.FC = () => {
   const containerRef = useRef(null);
@@ -78,26 +80,33 @@ const ServiceDetail: React.FC<{
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      className="lg:w-1/2 space-y-10"
+      className="lg:w-1/2"
     >
-      <div className="text-brand-primary p-4 bg-white/5 inline-block rounded-2xl">{icon}</div>
-      <h3 className="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter leading-none">{title}</h3>
-      <p className="text-xl text-gray-400 leading-relaxed font-medium">{description}</p>
+      <GlassCard className="space-y-10 p-12 rounded-[40px]" variant="default" hover>
+        <div className="glass-card p-4 rounded-2xl text-brand-primary inline-block">{icon}</div>
+        <h3 className="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter leading-none">{title}</h3>
+        <p className="text-xl text-gray-400 leading-relaxed font-medium">{description}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 pt-6">
-        {features.map((f, idx) => (
-          <div key={idx} className="group-hover-trigger">
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">0{idx + 1}</span>
-            <p className="text-white font-bold uppercase tracking-tight text-lg">{f}</p>
-          </div>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6 pt-6">
+          {features.map((f, idx) => (
+            <div key={idx} className="group-hover-trigger">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">0{idx + 1}</span>
+              <p className="text-white font-bold uppercase tracking-tight text-lg">{f}</p>
+            </div>
+          ))}
+        </div>
 
-      <div className="pt-8">
-        <Link to="/contact" className="inline-flex items-center font-bold text-white border-b-2 border-brand-primary pb-2 hover:text-brand-primary transition-all group uppercase tracking-widest text-sm">
-          Request Quotation <ArrowRight size={18} className="ml-3 group-hover:translate-x-2 transition-transform" />
-        </Link>
-      </div>
+        <div className="pt-8">
+          <GlassButton
+            variant="outline"
+            size="md"
+            onClick={() => window.location.href = '/contact'}
+            icon={<ArrowRight size={18} />}
+          >
+            Request Quotation
+          </GlassButton>
+        </div>
+      </GlassCard>
     </motion.div>
 
     <div className="lg:w-1/2 relative group rounded-[40px] overflow-hidden aspect-[4/3]">

@@ -1,117 +1,107 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PORTFOLIO } from '../constants';
+import ProjectCard from '../components/ProjectCard';
 
 const Portfolio: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all');
+  const navigate = useNavigate();
   const filters = ['all', 'visualization', 'animation', 'product', 'print'];
 
   const filteredItems = activeFilter === 'all'
     ? PORTFOLIO
     : PORTFOLIO.filter(item => item.category === activeFilter);
 
+  const handleProjectClick = (id: string | number) => {
+    // Navigate to project detail page when implemented
+    // navigate(`/portfolio/${id}`);
+    console.log('Project clicked:', id);
+  };
+
   return (
     <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
+      {/* Background Gradient Glow */}
+      <div className="absolute inset-0 bg-gradient-green-radial opacity-30 pointer-events-none" />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
-          <div className="max-w-2xl">
-            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Creative Works</span>
-            <h1 className="text-5xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
-              Selected <br />
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-20">
+          <div className="max-w-2xl mb-8 md:mb-0">
+            <motion.span 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block"
+            >
+              Our Creative Works
+            </motion.span>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-[100px] font-display font-extrabold leading-[0.85] tracking-tighter uppercase"
+            >
+              <span className="gradient-text-reverse">Selected</span>
+              <br />
               <span className="text-gray-500">Projects</span>
-            </h1>
+            </motion.h1>
           </div>
 
-        
-          <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4">
+          {/* Glass Tab Filters */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-wrap gap-3"
+          >
             {filters.map(filter => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`text-sm font-bold uppercase tracking-widest transition-all pb-2 border-b-2 ${activeFilter === filter
-                  ? 'text-brand-primary border-brand-primary'
-                  : 'text-gray-500 border-transparent hover:text-white'
-                  }`}
+                className={`glass-tab ${activeFilter === filter ? 'active' : ''}`}
               >
                 {filter}
               </button>
             ))}
-          </div>
+          </motion.div>
         </div>
 
-      
+        {/* Project Grid */}
         <motion.div
           layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+          className="project-grid"
         >
           <AnimatePresence mode="popLayout">
             {filteredItems.map((item, index) => (
-              <ProjectCard key={item.id} item={item} index={index} />
+              <ProjectCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                category={item.category}
+                image={item.image}
+                description={item.description}
+                onClick={handleProjectClick}
+                index={index}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
 
-
+        {/* Empty State */}
+        {filteredItems.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-40 glass-card rounded-[40px]"
+          >
+            <p className="text-gray-500 font-bold uppercase tracking-widest">
+              No projects found in this category.
+            </p>
+          </motion.div>
+        )}
       </div>
     </div>
-  );
-};
-
-const ProjectCard: React.FC<{ item: any, index: number }> = ({ item, index }) => {
-  const cardRef = React.useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: cardRef,
-    offset: ["start end", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], [20, -20]);
-
-  return (
-    <motion.div
-      ref={cardRef}
-      layout
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.6, delay: index * 0.05 }}
-      className="group relative"
-    >
-      <div className="aspect-[10/12] overflow-hidden rounded-[40px] bg-white/5 relative mb-6">
-        <motion.div style={{ y }} className="w-full h-[120%] -top-[10%] absolute">
-          {item.image && (item.image.includes('.mp4') || item.image.includes('.webm')) ? (
-            <video
-              src={item.image}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            <img
-              src={item.image}
-              alt={item.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
-            />
-          )}
-        </motion.div>
-        <div className="absolute inset-0 bg-brand-primary mix-blend-multiply opacity-0 group-hover:opacity-20 transition-opacity"></div>
-        <Link to="/portfolio" className="absolute inset-0 z-10"></Link>
-      </div>
-
-      <div className="flex justify-between items-start pr-4">
-        <div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">{item.category}</span>
-          <h3 className="text-2xl font-bold text-white group-hover:text-brand-primary transition-colors uppercase tracking-tight">{item.title}</h3>
-        </div>
-        <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:bg-brand-primary group-hover:text-black transition-all">
-          <ArrowRight size={20} />
-        </div>
-      </div>
-    </motion.div>
   );
 };
 

@@ -55,8 +55,7 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-5xl md:text-[100px] font-brand font-bold leading-tight mb-8 tracking-[-0.02em]"
-              style={{ color: '#008000' }}
+              className="text-5xl md:text-[100px] font-brand font-bold leading-tight mb-8 tracking-[-0.02em] gradient-text-reverse"
             >
               Visualize the future
             </motion.h1>
@@ -77,13 +76,13 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
             >
               <Link
                 to="/portfolio"
-                className="bg-brand-primary text-black px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white transition-all flex items-center gap-2 group"
+                className="bg-brand-primary text-white px-8 py-4 rounded-full font-bold text-lg hover:glow-green hover:scale-105 transition-all flex items-center gap-2 group shadow-lg shadow-brand-primary/20"
               >
                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /> View Portfolio
               </Link>
               <Link
                 to="/shop"
-                className="border-2 border-brand-primary/20 text-brand-primary px-8 py-4 rounded-2xl font-bold text-lg hover:bg-brand-primary/5 transition-all"
+                className="glass-card text-white px-8 py-4 rounded-full font-bold text-lg hover-glow-green hover:scale-105 transition-all"
               >
                 Shop Products
               </Link>
@@ -109,7 +108,7 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.8, duration: 1 }}
-              className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 p-12 rounded-[40px] space-y-8 shadow-2xl"
+              className="glass-card p-12 rounded-[40px] space-y-8 shadow-2xl hover-glow-green"
             >
               <HeroServiceLink text="3D Visualization" to="/services" />
               <HeroServiceLink text="Custom 3D Design" to="/services" />
