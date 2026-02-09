@@ -43,6 +43,34 @@ import prod1 from './assets/sample 3.png';
 import prod2 from './assets/sp1.png';
 import prod3 from './assets/0300.png';
 
+// Video Imports
+import herMajestyVideo from './assets/Her Majesty.mp4';
+import rwAstronautsVideo from './assets/Rwandan astronotes.mp4';
+import nescafeVideo from './assets/nESCAFE.mp4';
+
+// New Image Imports
+import abstractArt from './assets/tttvftc.png';
+import futuristicConcept from './assets/gaxc.png';
+
+// Additional Video Imports
+import akarushoVideo from './assets/AKARUSHO 2.mp4';
+import iyaweVideo from './assets/IYAWE.mp4';
+import sinaGerardVideo from './assets/SINA GERARD.mp4';
+import whatsappVideo from './assets/WhatsApp Video 2024-11-01 at 13.16.35_ca37b94f.mp4';
+
+// Additional Image Imports
+import bblImg from './assets/bbl.png';
+import fffImg from './assets/fff.png';
+import ttImg from './assets/tt.png';
+import unknownImg1 from './assets/untiledd.png';
+import unknownImg2 from './assets/untitled.png';
+import unknownImg3 from './assets/untitled2.png';
+import unknownImg4 from './assets/untitled3.png';
+import unknownImgA from './assets/untitleda.png';
+import unknownImgB from './assets/untitledb.png';
+import unknownImgBC from './assets/untitledbc.png';
+
+
 export const WHATSAPP_NUMBER = "+250784269593";
 export const BRAND_EMAIL = "phedokat@gmail.com";
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app";
@@ -80,28 +108,47 @@ export const SERVICES: Service[] = [
 
 export const PORTFOLIO: PortfolioItem[] = [
   // Visualization
-  { id: 'v1', title: 'Ruti Room 1', category: 'visualization', image: ruti1, description: 'High-end architectural interior visualization.' },
-  { id: 'v2', title: 'Ruti Room 1 (Alt)', category: 'visualization', image: ruti2, description: 'Modern interior design rendering.' },
-  { id: 'v3', title: 'Ruti Room 1 (Detail)', category: 'visualization', image: ruti3, description: 'Detailed architectural render.' },
-  { id: 'v4', title: 'Ruti Room 2', category: 'visualization', image: ruti4, description: 'Luxury bedroom visualization.' },
-  { id: 'v5', title: 'Ruti Room 2 (Alt)', category: 'visualization', image: ruti5, description: 'Elegant interior design visualization.' },
-  { id: 'v6', title: 'Ruti Room 2 (Detail)', category: 'visualization', image: ruti6, description: 'Photorealistic architectural rendering.' },
+  { id: 'v1', title: 'Ruti Room 1', category: 'visualization', type: 'image', image: ruti1, description: 'High-end architectural interior visualization.' },
+  { id: 'v2', title: 'Ruti Room 1 (Alt)', category: 'visualization', type: 'image', image: ruti2, description: 'Modern interior design rendering.' },
+  { id: 'v3', title: 'Ruti Room 1 (Detail)', category: 'visualization', type: 'image', image: ruti3, description: 'Detailed architectural render.' },
+  { id: 'v4', title: 'Ruti Room 2', category: 'visualization', type: 'image', image: ruti4, description: 'Luxury bedroom visualization.' },
+  { id: 'v5', title: 'Ruti Room 2 (Alt)', category: 'visualization', type: 'image', image: ruti5, description: 'Elegant interior design visualization.' },
+  { id: 'v6', title: 'Ruti Room 2 (Detail)', category: 'visualization', type: 'image', image: ruti6, description: 'Photorealistic architectural rendering.' },
+  { id: 'v7', title: 'Futuristic Concept', category: 'visualization', type: 'image', image: futuristicConcept, description: 'Advanced futuristic environment design.' },
+  { id: 'v8', title: 'Concept Art FFF', category: 'visualization', type: 'image', image: fffImg, description: 'Creative visualization concept.' },
+  { id: 'v9', title: 'Artistic Render TT', category: 'visualization', type: 'image', image: ttImg, description: 'Surreal artistic visualization.' },
+  { id: 'v10', title: 'Project Untitled A', category: 'visualization', type: 'image', image: unknownImgA, description: 'Modern design concept.' },
 
   // Animation
-  { id: 'a1', title: 'Insibika Movie', category: 'animation', image: movieVideo, description: 'First look at the MAGURU N_INSIBIKA movie.' },
-  { id: 'a2', title: 'Promotional Motion', category: 'animation', image: spVideo, description: 'Dynamic 3D character/product animation.' },
+  { id: 'a1', title: 'Insibika Movie', category: 'animation', type: 'video', image: movieVideo, description: 'First look at the MAGURU N_INSIBIKA movie.' },
+  { id: 'a2', title: 'Promotional Motion', category: 'animation', type: 'video', image: spVideo, description: 'Dynamic 3D character/product animation.' },
+  { id: 'a3', title: 'Her Majesty', category: 'animation', type: 'video', image: herMajestyVideo, description: 'Cinematic character animation showcase.' },
+  { id: 'a4', title: 'Rwandan Astronauts', category: 'animation', type: 'video', image: rwAstronautsVideo, description: 'Space exploration concept animation.' },
+  { id: 'a5', title: 'Nescafe Commercial', category: 'animation', type: 'video', image: nescafeVideo, description: 'High-energy product commercial.' },
+  { id: 'a6', title: 'Akarusho Animation', category: 'animation', type: 'video', image: akarushoVideo, description: 'Engaging promotional animation.' },
+  { id: 'a7', title: 'Iyawe Music Visual', category: 'animation', type: 'video', image: iyaweVideo, description: 'Visual accompaniment for music based project.' },
+  { id: 'a8', title: 'Sina Gerard Commercial', category: 'animation', type: 'video', image: sinaGerardVideo, description: 'Promotional video for Sina Gerard product.' },
+  { id: 'a9', title: 'WhatsApp Project', category: 'animation', type: 'video', image: whatsappVideo, description: 'Social media video project.' },
 
   // Products
-  { id: 'p1', title: 'Maguru Photoshoot', category: 'product', image: maguru1, description: 'Professional product photography showcase.' },
-  { id: 'p2', title: 'Maguru & Mom', category: 'product', image: maguru2, description: 'Heartfelt 3D printed/designed character showcase.' },
-  { id: 'p3', title: 'Maguru Portrait', category: 'product', image: maguru3, description: 'Clean product portrait.' },
-  { id: 'p4', title: 'Artistic Sculpture', category: 'product', image: sample3, description: 'Detailed 3D printed artistic piece.' },
-  { id: 'p5', title: 'Tech Component', category: 'product', image: img0300, description: 'Precision engineered 3D printed part.' },
+  { id: 'p1', title: 'Maguru Photoshoot', category: 'product', type: 'image', image: maguru1, description: 'Professional product photography showcase.' },
+  { id: 'p2', title: 'Maguru & Mom', category: 'product', type: 'image', image: maguru2, description: 'Heartfelt 3D printed/designed character showcase.' },
+  { id: 'p3', title: 'Maguru Portrait', category: 'product', type: 'image', image: maguru3, description: 'Clean product portrait.' },
+  { id: 'p4', title: 'Artistic Sculpture', category: 'product', type: 'image', image: sample3, description: 'Detailed 3D printed artistic piece.' },
+  { id: 'p5', title: 'Tech Component', category: 'product', type: 'image', image: img0300, description: 'Precision engineered 3D printed part.' },
+  { id: 'p6', title: 'Product Concept BBL', category: 'product', type: 'image', image: bblImg, description: 'Innovative product design render.' },
+  { id: 'p7', title: 'Project Untitled 1', category: 'product', type: 'image', image: unknownImg1, description: 'Conceptual product design.' },
+  { id: 'p8', title: 'Project Untitled 2', category: 'product', type: 'image', image: unknownImg2, description: 'Detailed product visualization.' },
 
   // Print / Custom
-  { id: 'pr1', title: 'Custom Model A', category: 'print', image: sp1, description: 'Custom precision 3D printed model.' },
-  { id: 'pr2', title: 'Functional Design B', category: 'print', image: sp2, description: 'Mechanical part prototyping.' },
-  { id: 'pr3', title: 'Experimental Print C', category: 'print', image: sp3, description: 'Advanced material 3D printing test.' },
+  { id: 'pr1', title: 'Custom Model A', category: 'print', type: 'image', image: sp1, description: 'Custom precision 3D printed model.' },
+  { id: 'pr2', title: 'Functional Design B', category: 'print', type: 'image', image: sp2, description: 'Mechanical part prototyping.' },
+  { id: 'pr3', title: 'Experimental Print C', category: 'print', type: 'image', image: sp3, description: 'Advanced material 3D printing test.' },
+  { id: 'pr4', title: 'Abstract Art Print', category: 'print', type: 'image', image: abstractArt, description: 'Complex geometry 3D print.' },
+  { id: 'pr6', title: 'Project Untitled 3', category: 'print', type: 'image', image: unknownImg3, description: 'Prototype model print.' },
+  { id: 'pr7', title: 'Project Untitled 4', category: 'print', type: 'image', image: unknownImg4, description: 'Testing material properties.' },
+  { id: 'pr8', title: 'Project Untitled B', category: 'print', type: 'image', image: unknownImgB, description: 'Mechanical assembly print.' },
+  { id: 'pr9', title: 'Project Untitled BC', category: 'print', type: 'image', image: unknownImgBC, description: 'Complex multi-part print.' },
 ];
 
 export const PRODUCTS: Product[] = [

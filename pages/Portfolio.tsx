@@ -24,19 +24,19 @@ const Portfolio: React.FC = () => {
     <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       {/* Background Gradient Glow */}
       <div className="absolute inset-0 bg-gradient-green-radial opacity-30 pointer-events-none" />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-20">
           <div className="max-w-2xl mb-8 md:mb-0">
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block"
             >
               Our Creative Works
             </motion.span>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -49,7 +49,7 @@ const Portfolio: React.FC = () => {
           </div>
 
           {/* Glass Tab Filters */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -79,6 +79,7 @@ const Portfolio: React.FC = () => {
                 id={item.id}
                 title={item.title}
                 category={item.category}
+                type={item.type}
                 image={item.image}
                 description={item.description}
                 onClick={handleProjectClick}

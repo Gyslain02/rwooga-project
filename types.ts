@@ -11,6 +11,7 @@ export interface PortfolioItem {
   id: string;
   title: string;
   category: 'visualization' | 'animation' | 'product' | 'print';
+  type?: 'image' | 'video';
   image: string;
   description: string;
 }

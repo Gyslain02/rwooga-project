@@ -6,6 +6,7 @@ interface ProjectCardProps {
   id: string | number;
   title: string;
   category?: string;
+  type?: 'image' | 'video';
   image: string;
   description?: string;
   onClick?: (id: string | number) => void;
@@ -16,6 +17,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   id,
   title,
   category,
+  type = 'image',
   image,
   description,
   onClick,
@@ -36,14 +38,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       className="group cursor-pointer project-card"
       onClick={handleClick}
     >
-      {/* Image Container with Glass Overlay */}
+      {/* Image/Video Container with Glass Overlay */}
       <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-white/5 mb-6">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-        />
-        
+        {type === 'video' ? (
+          <video
+            src={image}
+            poster={image} // Fallback if regular image is passed as poster, but usually we want a specific poster or just the first frame
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            muted
+            loop
+            playsInline
+            autoPlay
+          />
+        ) : (
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+          />
+        )}
+
         {/* Category Badge */}
         {category && (
           <div className="absolute top-4 left-4 px-4 py-2 glass-card rounded-full">
