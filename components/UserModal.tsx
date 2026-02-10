@@ -137,7 +137,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">Password {user && '(leave blank to keep current)'}</label>
+                                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1">Password</label>
                                 <div className="relative">
                                     <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <input
