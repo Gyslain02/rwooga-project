@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Menu, X, MessageCircle, Settings } from 'lucide-react';
+import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
@@ -110,21 +110,42 @@ const AppContent: React.FC<{
                   </Link>
                 )}
 
-                {user ? (
-                  <div className="hidden md:flex items-center space-x-4">
-                    <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</span>
-                      <span className="text-sm font-bold text-white">{user.name}</span>
-                    </div>
+                {user && !user.is_admin ? (
+                  <div className="hidden md:flex items-center">
+                    <div className="relative group">
+                      <button className="flex items-center space-x-2 py-2 pl-4 ml-4 border-l border-white/10 group-hover:text-brand-primary transition-all duration-300">
+                        <span className="text-sm font-bold text-white group-hover:text-brand-primary transition-colors">{user.full_name || user.name}</span>
+                        <ChevronDown size={14} className="text-gray-500 group-hover:text-brand-primary group-hover:rotate-180 transition-all duration-300" />
+                      </button>
 
-                    <button
-                      onClick={handleLogout}
-                      className="text-xs font-bold text-red-400 hover:text-red-500 transition-colors uppercase tracking-[0.2em] border-l border-white/10 pl-4 ml-4"
-                    >
-                      Logout
-                    </button>
+                      {/* Dropdown Menu */}
+                      <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[60]">
+                        <div className="glass-card border border-white/10 py-2 w-52 shadow-2xl rounded-2xl overflow-hidden backdrop-blur-xl">
+                          <div className="px-5 py-3 border-b border-white/5 mb-1 bg-white/5">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
+                            <p className="text-xs font-bold text-white truncate">{user.email || user.name}</p>
+                          </div>
+
+                          <Link
+                            to="/profile"
+                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                          >
+                            <UserIcon size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                            Profile
+                          </Link>
+
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center px-5 py-3 text-sm font-bold text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all border-t border-white/5 group/item"
+                          >
+                            <LogOut size={16} className="mr-3 text-red-400/70 group-hover/item:text-red-500" />
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
+                ) : !user ? (
                   <div className="hidden md:block">
                     <Link
                       to="/login"
@@ -133,7 +154,7 @@ const AppContent: React.FC<{
                       Login
                     </Link>
                   </div>
-                )}
+                ) : null}
 
                 {/* Mobile Menu Button - Now inside the flex container */}
                 <div className="md:hidden flex items-center">
