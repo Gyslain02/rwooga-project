@@ -88,7 +88,7 @@ export const SERVICES: Service[] = [
     title: 'Animated Movies & Ads',
     description: 'Engaging promotional content and storytelling through high-end 3D animation.',
     icon: 'Video',
-    image: animImg
+    image: rwAstronautsVideo
   },
   {
     id: 'custom',
@@ -102,7 +102,7 @@ export const SERVICES: Service[] = [
     title: '3D Printing',
     description: 'Precision manufacturing of custom designs and ready-made products in various materials.',
     icon: 'Printer',
-    image: printImg
+    image: unknownImg4
   }
 ];
 

@@ -1,5 +1,5 @@
 
-import { ArrowRight, Box, Video, Palette, Printer } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import React, { useRef } from 'react';
@@ -27,7 +27,7 @@ const Services: React.FC = () => {
     <div ref={containerRef} className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-       
+
         <motion.div style={{ y: headerY, opacity: headerOpacity }} className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-2xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Our Capabilities</span>
@@ -43,13 +43,12 @@ const Services: React.FC = () => {
           </div>
         </motion.div>
 
-       
+
         <div className="space-y-48">
           {SERVICES.map((service, index) => (
             <ServiceDetail
               key={service.id}
               id={service.id}
-              icon={getServiceIcon(service.id)}
               title={service.title}
               description={service.description}
               features={getServiceFeatures(service.id)}
@@ -67,13 +66,12 @@ const Services: React.FC = () => {
 
 const ServiceDetail: React.FC<{
   id: string;
-  icon: React.ReactNode;
   title: string;
   description: string;
   features: string[];
   image: string;
   reverse: boolean;
-}> = ({ icon, title, description, features, image, reverse }) => (
+}> = ({ title, description, features, image, reverse }) => (
   <div className={`flex flex-col lg:flex-row gap-24 items-center ${reverse ? 'lg:flex-row-reverse' : ''}`}>
     <motion.div
       initial={{ opacity: 0, x: reverse ? 60 : -60 }}
@@ -83,7 +81,6 @@ const ServiceDetail: React.FC<{
       className="lg:w-1/2"
     >
       <GlassCard className="space-y-10 p-12 rounded-[40px]" variant="default" hover>
-        <div className="glass-card p-4 rounded-2xl text-brand-primary inline-block">{icon}</div>
         <h3 className="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter leading-none">{title}</h3>
         <p className="text-xl text-gray-400 leading-relaxed font-medium">{description}</p>
 
@@ -149,15 +146,7 @@ const ServiceParallaxImage: React.FC<{ src: string; alt: string }> = ({ src, alt
   );
 };
 
-const getServiceIcon = (id: string) => {
-  switch (id) {
-    case 'viz': return <Box size={32} />;
-    case 'anim': return <Video size={32} />;
-    case 'custom': return <Palette size={32} />;
-    case 'print': return <Printer size={32} />;
-    default: return <Box size={32} />;
-  }
-};
+
 
 const getServiceFeatures = (id: string) => {
   switch (id) {

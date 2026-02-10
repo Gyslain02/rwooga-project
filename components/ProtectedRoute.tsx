@@ -26,7 +26,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+    if (requiredRole && !user.is_admin) {
         // If a specific role is required and the user doesn't have it (and isn't admin), redirect to home
         return <Navigate to="/" replace />;
     }

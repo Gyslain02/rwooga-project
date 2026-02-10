@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Instagram, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from 'lucide-react';
 import { BRAND_EMAIL, WHATSAPP_NUMBER } from '../constants';
 
 
@@ -51,6 +51,7 @@ const Footer: React.FC = () => {
               <SocialIcon icon={<XIcon size={18} />} href="https://x.com/PhedoKat" />
               <SocialIcon icon={<Youtube size={20} />} href="https://www.youtube.com/@phedokat9549" />
               <SocialIcon icon={<Tiktok size={20} />} href="https://www.tiktok.com/@phedish?_r=1&_t=ZS-93aOKvDhzme" />
+              <SocialIcon icon={<Linkedin size={20} />} href="https://www.linkedin.com/in/phedo-kat-007a29298/?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
             </div>
           </div>
 
@@ -75,7 +76,7 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-         
+
           <div>
             <h3 className="text-xs font-bold text-brand-primary uppercase tracking-[0.3em] mb-10">Get in Touch</h3>
             <ul className="space-y-8">
@@ -91,7 +92,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-       
+
         <div className="border-t border-white/5 pt-12">
           <div className="w-full flex flex-col md:flex-row justify-between items-center text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">
             <p>© {new Date().getFullYear()} ALL RIGHTS RESERVED.</p>

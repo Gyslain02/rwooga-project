@@ -5,8 +5,11 @@ import { Upload, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { WHATSAPP_NUMBER } from '../constants';
 import toast from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { setRequests } from '../store/slices/requestsSlice';
 
 const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
+  const dispatch = useDispatch();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,6 +33,17 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTimeout(() => {
+      const newRequest = {
+        id: Date.now(),
+        ...formData,
+        status: 'pending',
+        date: new Date().toLocaleDateString(),
+      };
+
+      // Update Redux state (which also updates localStorage)
+      const existing = JSON.parse(localStorage.getItem('custom_requests') || '[]');
+      dispatch(setRequests([...existing, newRequest]));
+
       setIsSubmitted(true);
       toast.success('Request sent successfully!');
       const message = encodeURIComponent(

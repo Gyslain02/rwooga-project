@@ -20,42 +20,37 @@ const Shop = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { items: cart, total } = useSelector((state: RootState) => state.cart)
 
+  const { items: reduxProducts } = useSelector((state: RootState) => state.products)
+
   // Fetch products and categories on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
         setError('')
-        
-        // Fetch products and categories in parallel
-        const [productsRes, categoriesRes] = await Promise.all([
-          productsService.getProducts({ published: true }),
-          productsService.getCategories()
-        ])
 
-        if (productsRes.ok && productsRes.data) {
-          // Handle both paginated and non-paginated responses
-          const productsList = productsRes.data.results || productsRes.data
-          setProducts(productsList)
-        }
+        // Fetch categories (keep API for categories if intended)
+        const categoriesRes = await productsService.getCategories()
 
         if (categoriesRes.ok && categoriesRes.data) {
           const categoriesList = categoriesRes.data.results || categoriesRes.data
           setCategories(categoriesList.filter((cat: any) => cat.is_active))
         }
+
+        // Use Redux products primarily
+        setProducts(reduxProducts)
+
       } catch (err: any) {
-        console.error('Error fetching products:', err)
-        setError('Failed to load products. Using sample data.')
-        toast.error('Could not load products from server')
-        // Fallback to static products
-        setProducts(PRODUCTS)
+        console.error('Error fetching categories:', err)
+        setError('Failed to load categories. Using sample products.')
+        setProducts(reduxProducts)
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [reduxProducts])
 
   const categoryNames = ['All', ...categories.map(c => c.name)]
 
@@ -63,10 +58,10 @@ const Shop = () => {
     selectedCategory === 'All'
       ? products
       : products.filter(p => {
-          // Handle both category object and category_name field
-          const categoryName = typeof p.category === 'object' ? p.category.name : p.category_name
-          return categoryName === selectedCategory
-        })
+        // Handle both category object and category_name field
+        const categoryName = typeof p.category === 'object' ? p.category.name : p.category_name
+        return categoryName === selectedCategory
+      })
 
   const handleAddToCart = (product: any) => {
     const exists = cart.some(item => item.id === product.id);
@@ -276,7 +271,7 @@ const ProductCard: React.FC<{
   const currency = product.currency || 'RWF'
   const image = product.thumbnail || product.image
   const category = typeof product.category === 'object' ? product.category.name : product.category_name || product.category
-  
+
   // For variants, handle both API format and static format
   const materialText = product.material || (product.variants?.material && product.variants.material[0]) || 'PLA'
   const colorCount = product.available_colors?.length || product.variants?.color?.length || 0

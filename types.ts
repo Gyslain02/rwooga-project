@@ -22,6 +22,7 @@ export interface Product {
   price: number;
   currency: string;
   image: string;
+  description?: string;
   category: string;
   variants: {
     size: string[];
