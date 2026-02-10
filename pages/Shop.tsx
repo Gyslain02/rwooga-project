@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PRODUCTS } from '../constants'
-import { productsService } from '../services/productsService'
+import { PRODUCTS } from '@/constants'
+import { productsService } from '@/services/productsService'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
-import { AppDispatch, RootState } from '../store'
-import { addToCart, removeFromCart } from '../store/slices/cartSlice'
+import { AppDispatch, RootState } from '@/store'
+import { addToCart, removeFromCart } from '@/store/slices/cartSlice'
 
 const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('All')

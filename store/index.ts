@@ -1,10 +1,11 @@
 
 import { configureStore } from '@reduxjs/toolkit';
-import cartReducer from './slices/cartSlice';
-import wishlistReducer from './slices/wishlistSlice';
-import productsReducer from './slices/productsSlice';
-import requestsReducer from './slices/requestsSlice';
-import settingsReducer from './slices/settingsSlice';
+import cartReducer from '@/store/slices/cartSlice';
+import wishlistReducer from '@/store/slices/wishlistSlice';
+import productsReducer from '@/store/slices/productsSlice';
+import requestsReducer from '@/store/slices/requestsSlice';
+import settingsReducer from '@/store/slices/settingsSlice';
+import usersReducer from '@/store/slices/usersSlice';
 
 export const store = configureStore({
     reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
         products: productsReducer,
         requests: requestsReducer,
         settings: settingsReducer,
+        users: usersReducer,
     },
 });
 

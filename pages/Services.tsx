@@ -3,9 +3,9 @@ import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import React, { useRef } from 'react';
-import { SERVICES } from '../constants';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import { SERVICES } from '@/constants';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
 const Services: React.FC = () => {
   const containerRef = useRef(null);

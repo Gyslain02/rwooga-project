@@ -2,10 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from 'lucide-react';
-import { BRAND_EMAIL, WHATSAPP_NUMBER } from '../constants';
+import { BRAND_EMAIL, WHATSAPP_NUMBER } from '@/constants';
 
 
-import logo from '../assets/Rwooga logo.png';
+import logo from '@/assets/Rwooga logo.png';
 
 const XIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
   <svg

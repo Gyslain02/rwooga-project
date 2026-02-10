@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { authService } from '../services/authService';
+import { authService } from '@/services/authService';
 import toast from 'react-hot-toast';
 
 interface User {

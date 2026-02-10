@@ -3,11 +3,11 @@ import React, { useRef } from 'react';
 import { Target, Users, Zap, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
-import teamImg from '../assets/Maguru and mom 2.png';
-import memberImg from '../assets/image (1).png';
+import teamImg from '@/assets/Maguru and mom 2.png';
+import memberImg from '@/assets/image (1).png';
 
 const About: React.FC = () => {
   const containerRef = useRef(null);
@@ -44,7 +44,7 @@ const About: React.FC = () => {
           </div>
         </motion.div>
 
-      
+
         <div className="mb-40 flex flex-col items-center">
           <GlassButton
             variant="outline"

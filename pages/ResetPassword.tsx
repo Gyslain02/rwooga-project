@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { authService } from '@/services/authService';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
 const ResetPassword: React.FC = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const navigate = useNavigate();
-    
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showNewPassword, setShowNewPassword] = useState(false);

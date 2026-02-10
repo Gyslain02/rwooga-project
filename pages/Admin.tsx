@@ -6,16 +6,27 @@ import {
   Trash2, Edit2, Plus, X, Save,
   LayoutDashboard, Briefcase, ShoppingBag, ClipboardList, Settings,
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
-  Truck, MessageCircle, MoreVertical, Menu, Moon, Sun
+  Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
+  Mail, Phone
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import logo from '../assets/Rwooga logo.png'
+import logo from '@/assets/Rwooga logo.png'
 import { useSelector, useDispatch } from 'react-redux'
-import { RootState } from '../store'
-import { addProduct, updateProduct, deleteProduct as removeProduct } from '../store/slices/productsSlice'
-import { deleteRequest as removeRequest } from '../store/slices/requestsSlice'
-import { setAdminTheme } from '../store/slices/settingsSlice'
+import { RootState } from '@/store'
+import { addProduct, updateProduct, deleteProduct as removeProduct } from '@/store/slices/productsSlice'
+import { deleteRequest as removeRequest } from '@/store/slices/requestsSlice'
+import { setAdminTheme } from '@/store/slices/settingsSlice'
+import {
+  fetchUsers,
+  addUser,
+  editUser,
+  removeUser,
+  toggleUserStatus,
+  clearUserError
+} from '@/store/slices/usersSlice';
+import UserModal from '@/components/UserModal'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
   const dispatch = useDispatch()
@@ -35,10 +46,19 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     available: true
   })
 
-  // Initial load is now handled by slice initialState
+  // Users Management State
+  const { users, count, loading: usersLoading } = useSelector((state: RootState) => state.users)
+  const [userSearch, setUserSearch] = useState('')
+  const [userPage, setUserPage] = useState(1)
+  const usersPerPage = 5
+  const [showUserModal, setShowUserModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [userToDelete, setUserToDelete] = useState<any>(null)
+
+  // Initial load
   useEffect(() => {
-    // We could dispatch a fetch action here if we were using an API
-  }, [])
+    dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+  }, [dispatch, userPage, userSearch])
 
   useEffect(() => {
     localStorage.setItem('admin_theme', theme)
@@ -101,6 +121,48 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     setShowProductForm(true)
   }
 
+  const handleToggleStatus = (id: string | number, currentStatus: boolean) => {
+    dispatch(toggleUserStatus({ id, is_active: currentStatus }) as any)
+    toast.success('Status updated')
+  }
+
+  const handleUserSubmitLocal = async (userData: any) => {
+    try {
+      if (editingUser) {
+        await dispatch(editUser({ id: editingUser.id, userData }) as any).unwrap()
+        toast.success('User updated successfully')
+      } else {
+        await dispatch(addUser(userData) as any).unwrap()
+        toast.success('User created successfully')
+      }
+      setShowUserModal(false)
+      setEditingUser(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Action failed')
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (userToDelete) {
+      try {
+        await dispatch(removeUser(userToDelete.id) as any).unwrap()
+        toast.success('User deleted')
+        setUserToDelete(null)
+      } catch (err: any) {
+        toast.error(err.message || 'Delete failed')
+      }
+    }
+  }
+
+  // Filter Users (Local fallback if needed, though API handles it)
+  const filteredUsers = users.filter((u: any) =>
+    u.full_name.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.phone_number.includes(userSearch)
+  )
+  const totalUserPages = Math.ceil(count / usersPerPage)
+  const paginatedUsers = users // API already paginates, so we show the current set
+
   return (
     <div className={`flex h-screen bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden lg:static text-slate-800 dark:text-slate-100 transition-colors duration-300 ${theme}`}>
       {/* Mobile Sidebar Overlay */}
@@ -137,6 +199,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
         <nav className="flex-1 w-full space-y-2 px-3">
           <SidebarLink active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} icon={<LayoutDashboard size={20} />} label="Dashboard" />
+          <SidebarLink active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<UsersIcon size={20} />} label="Users" />
           <SidebarLink active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Briefcase size={20} />} label="Products" />
           <SidebarLink active={activeTab === 'orders'} onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={20} />} label="Shop Orders" />
           <SidebarLink active={activeTab === 'requests'} onClick={() => { setActiveTab('requests'); setIsSidebarOpen(false); }} icon={<ClipboardList size={20} />} label="Custom Requests" />
@@ -489,6 +552,156 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             </div>
           )}
 
+          {activeTab === 'users' && (
+            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">User Management</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Manage administrator and client accounts</p>
+                </div>
+                <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+                  <div className="relative flex-1 sm:min-w-[300px]">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Filter by name, email, or phone..."
+                      value={userSearch}
+                      onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
+                    />
+                  </div>
+                  <button
+                    onClick={() => { setEditingUser(null); setShowUserModal(true); }}
+                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-primary/20"
+                  >
+                    <UserPlus size={20} />
+                    <span>Add User</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                <table className="w-full min-w-[900px]">
+                  <thead>
+                    <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">User Details</th>
+                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Contact Info</th>
+                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Role</th>
+                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Status</th>
+                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                    {paginatedUsers.map((u) => (
+                      <tr key={u.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                        <td className="py-5 pl-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary font-bold">
+                              {u.full_name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800 dark:text-white">{u.full_name}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">ID: {u.id.substring(0, 8)}...</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-6 px-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                              <Mail size={12} className="mr-2 text-slate-400" />
+                              {u.email}
+                            </div>
+                            <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                              <Phone size={12} className="mr-2 text-slate-400" />
+                              {u.phone_number}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-6 px-4">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${u.user_type === 'ADMIN' ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' : u.user_type === 'STAFF' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                            {u.user_type}
+                          </span>
+                        </td>
+                        <td className="py-6 px-4">
+                          <button
+                            onClick={() => handleToggleStatus(u.id, u.is_active)}
+                            className={`w-12 h-6 rounded-full relative transition-all ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+                          >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${u.is_active ? 'left-7' : 'left-1'}`} />
+                          </button>
+                        </td>
+                        <td className="py-5 text-right pr-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => { setEditingUser(u); setShowUserModal(true); }}
+                              className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                              title="Edit User"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => setUserToDelete(u)}
+                              className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                              title="Delete User"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-20 text-center">
+                          <div className="flex flex-col items-center">
+                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
+                              <UsersIcon size={32} />
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-400 font-bold">No users found matching your search</p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalUserPages > 1 && (
+                <div className="mt-10 flex items-center justify-between border-t border-gray-50 dark:border-slate-800 pt-8">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                    Showing {Math.min(filteredUsers.length, (userPage - 1) * usersPerPage + 1)}-{Math.min(filteredUsers.length, userPage * usersPerPage)} of {filteredUsers.length} Users
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={userPage === 1}
+                      onClick={() => setUserPage(p => p - 1)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
+                    >
+                      Previous
+                    </button>
+                    {[...Array(totalUserPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setUserPage(i + 1)}
+                        className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${userPage === i + 1 ? 'bg-brand-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      disabled={userPage === totalUserPages}
+                      onClick={() => setUserPage(p => p + 1)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'requests' && (
             <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-[500px] transition-colors">
               <div className="flex items-center justify-between mb-12">
@@ -553,6 +766,23 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
           )}
         </div>
       </main>
+
+      <UserModal
+        isOpen={showUserModal}
+        onClose={() => { setShowUserModal(false); setEditingUser(null); }}
+        onSubmit={handleUserSubmitLocal}
+        user={editingUser}
+        loading={usersLoading}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`}
+        loading={usersLoading}
+      />
     </div>
   )
 }

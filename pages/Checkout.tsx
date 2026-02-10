@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { RootState, AppDispatch } from '../store';
-import { clearCart } from '../store/slices/cartSlice';
+import { RootState, AppDispatch } from '@/store';
+import { clearCart } from '@/store/slices/cartSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Smartphone, CheckCircle, ArrowLeft, Loader2, ShieldCheck, MapPin, User, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 const Checkout: React.FC = () => {
     const { items: cart, total } = useSelector((state: RootState) => state.cart);
@@ -35,14 +35,14 @@ const Checkout: React.FC = () => {
 
         setIsProcessing(true);
 
-     
+
         setTimeout(() => {
             setIsProcessing(false);
             setIsSuccess(true);
             dispatch(clearCart());
             toast.success('Payment successful! Your order is being processed.');
 
-           
+
             setTimeout(() => {
                 navigate('/');
             }, 5000);
@@ -98,7 +98,7 @@ const Checkout: React.FC = () => {
                 </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-                   
+
                     <div className="space-y-12">
                         <section>
                             <div className="flex items-center gap-4 mb-8">

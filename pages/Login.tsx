@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../context/AuthContext';
-import { authService } from '../services/authService';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
-import logImage from '../assets/log.png';
-import loginImage from '../assets/login.png';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/authService';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
+import logImage from '@/assets/log.png';
+import loginImage from '@/assets/login.png';
 
 const Login: React.FC = () => {
     const images = [logImage, loginImage];

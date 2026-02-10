@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Upload, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { WHATSAPP_NUMBER } from '../constants';
+import { WHATSAPP_NUMBER } from '@/constants';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
-import { setRequests } from '../store/slices/requestsSlice';
+import { setRequests } from '@/store/slices/requestsSlice';
 
 const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
   const dispatch = useDispatch();

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { authService } from '../services/authService';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/authService';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
 const VerifyEmail: React.FC = () => {
     const { token: tokenParam } = useParams<{ token?: string }>();

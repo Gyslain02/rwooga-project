@@ -3,34 +3,37 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Menu, X, MessageCircle, Settings } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from './store';
-import { setPrintingEnabled } from './store/slices/settingsSlice';
+import { RootState } from '@/store';
+import { setPrintingEnabled } from '@/store/slices/settingsSlice';
 
 // Pages
-import Home from './pages/Home';
-import About from './pages/About';
-import Services from './pages/Services';
-import Portfolio from './pages/Portfolio';
-import Shop from './pages/Shop';
-import CustomRequest from './pages/CustomRequest';
-import Contact from './pages/Contact';
-import Admin from './pages/Admin';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import VerifyEmail from './pages/VerifyEmail';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Checkout from './pages/Checkout';
-import { authService } from './services/authService';
+// Pages
+import Home from '@/pages/Home';
+import About from '@/pages/About';
+import Services from '@/pages/Services';
+import Portfolio from '@/pages/Portfolio';
+import Shop from '@/pages/Shop';
+import CustomRequest from '@/pages/CustomRequest';
+import Contact from '@/pages/Contact';
+import Admin from '@/pages/Admin';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import VerifyEmail from '@/pages/VerifyEmail';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import Checkout from '@/pages/Checkout';
+import { authService } from '@/services/authService';
 
 // Assets
-import logo from './assets/Rwooga logo.png';
+// Assets
+import logo from '@/assets/Rwooga logo.png';
 
 // Components
-import Footer from './components/Footer';
-import ProtectedRoute from './components/ProtectedRoute';
+// Components
+import Footer from '@/components/Footer';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const App: React.FC = () => {
   const dispatch = useDispatch();

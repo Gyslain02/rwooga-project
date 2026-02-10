@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { authService } from '@/services/authService';
 import { motion } from 'framer-motion';
 import { Mail, ShieldCheck, ShieldAlert, Loader2, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
 const ForgotPassword: React.FC = () => {
     const [email, setEmail] = useState('');

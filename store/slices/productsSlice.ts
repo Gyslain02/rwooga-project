@@ -1,6 +1,6 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { PRODUCTS } from '../../constants';
+import { PRODUCTS } from '@/constants';
 
 interface Product {
     id: string | number;

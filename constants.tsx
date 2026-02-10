@@ -9,66 +9,66 @@ import {
   Palette,
   Cpu
 } from 'lucide-react';
-import { Service, PortfolioItem, Product } from './types';
+import { Service, PortfolioItem, Product } from '@/types';
 
 // Asset Imports
-import vizImg from './assets/Ruti v4_Room 1.jpg.jpeg';
-import animImg from './assets/sp.mp4';
-import customImg from './assets/sp2.png';
-import printImg from './assets/Maguru.jpg';
+import vizImg from '@/assets/Ruti v4_Room 1.jpg.jpeg';
+import animImg from '@/assets/sp.mp4';
+import customImg from '@/assets/sp2.png';
+import printImg from '@/assets/Maguru.jpg';
 
 // Portfolio Imports
-import ruti1 from './assets/Ruti v4_Room 1.jpg.jpeg';
-import ruti2 from './assets/Ruti v4_Room 1 (2).jpg.jpeg';
-import ruti3 from './assets/Ruti v4_Room 1 (3).jpg.jpeg';
-import ruti4 from './assets/Ruti v4_Room 2.jpg.jpeg';
-import ruti5 from './assets/Ruti v4_Room 2 (2).jpg.jpeg';
-import ruti6 from './assets/Ruti v4_Room 2 (3).jpg.jpeg';
+import ruti1 from '@/assets/Ruti v4_Room 1.jpg.jpeg';
+import ruti2 from '@/assets/Ruti v4_Room 1 (2).jpg.jpeg';
+import ruti3 from '@/assets/Ruti v4_Room 1 (3).jpg.jpeg';
+import ruti4 from '@/assets/Ruti v4_Room 2.jpg.jpeg';
+import ruti5 from '@/assets/Ruti v4_Room 2 (2).jpg.jpeg';
+import ruti6 from '@/assets/Ruti v4_Room 2 (3).jpg.jpeg';
 
-import maguru1 from './assets/Maguru photoshoot.png';
-import maguru2 from './assets/Maguru and mom 2.png';
-import maguru3 from './assets/Maguru.jpg';
+import maguru1 from '@/assets/Maguru photoshoot.png';
+import maguru2 from '@/assets/Maguru and mom 2.png';
+import maguru3 from '@/assets/Maguru.jpg';
 
-import sp1 from './assets/sp1.png';
-import sp2 from './assets/sp2.png';
-import sp3 from './assets/sp3.png';
-import spVideo from './assets/sp.mp4';
-import movieVideo from './assets/MAGURU N_INSIBIKA MOVIE first look.mp4';
+import sp1 from '@/assets/sp1.png';
+import sp2 from '@/assets/sp2.png';
+import sp3 from '@/assets/sp3.png';
+import spVideo from '@/assets/sp.mp4';
+import movieVideo from '@/assets/MAGURU N_INSIBIKA MOVIE first look.mp4';
 
-import sample3 from './assets/sample 3.png';
-import img0300 from './assets/0300.png';
+import sample3 from '@/assets/sample 3.png';
+import img0300 from '@/assets/0300.png';
 
 // Product Imports
-import prod1 from './assets/sample 3.png';
-import prod2 from './assets/sp1.png';
-import prod3 from './assets/0300.png';
+import prod1 from '@/assets/sample 3.png';
+import prod2 from '@/assets/sp1.png';
+import prod3 from '@/assets/0300.png';
 
 // Video Imports
-import herMajestyVideo from './assets/Her Majesty.mp4';
-import rwAstronautsVideo from './assets/Rwandan astronotes.mp4';
-import nescafeVideo from './assets/nESCAFE.mp4';
+import herMajestyVideo from '@/assets/Her Majesty.mp4';
+import rwAstronautsVideo from '@/assets/Rwandan astronotes.mp4';
+import nescafeVideo from '@/assets/nESCAFE.mp4';
 
 // New Image Imports
-import abstractArt from './assets/tttvftc.png';
-import futuristicConcept from './assets/gaxc.png';
+import abstractArt from '@/assets/tttvftc.png';
+import futuristicConcept from '@/assets/gaxc.png';
 
 // Additional Video Imports
-import akarushoVideo from './assets/AKARUSHO 2.mp4';
-import iyaweVideo from './assets/IYAWE.mp4';
-import sinaGerardVideo from './assets/SINA GERARD.mp4';
-import whatsappVideo from './assets/WhatsApp Video 2024-11-01 at 13.16.35_ca37b94f.mp4';
+import akarushoVideo from '@/assets/AKARUSHO 2.mp4';
+import iyaweVideo from '@/assets/IYAWE.mp4';
+import sinaGerardVideo from '@/assets/SINA GERARD.mp4';
+import whatsappVideo from '@/assets/WhatsApp Video 2024-11-01 at 13.16.35_ca37b94f.mp4';
 
 // Additional Image Imports
-import bblImg from './assets/bbl.png';
-import fffImg from './assets/fff.png';
-import ttImg from './assets/tt.png';
-import unknownImg1 from './assets/untiledd.png';
-import unknownImg2 from './assets/untitled.png';
-import unknownImg3 from './assets/untitled2.png';
-import unknownImg4 from './assets/untitled3.png';
-import unknownImgA from './assets/untitleda.png';
-import unknownImgB from './assets/untitledb.png';
-import unknownImgBC from './assets/untitledbc.png';
+import bblImg from '@/assets/bbl.png';
+import fffImg from '@/assets/fff.png';
+import ttImg from '@/assets/tt.png';
+import unknownImg1 from '@/assets/untiledd.png';
+import unknownImg2 from '@/assets/untitled.png';
+import unknownImg3 from '@/assets/untitled2.png';
+import unknownImg4 from '@/assets/untitled3.png';
+import unknownImgA from '@/assets/untitleda.png';
+import unknownImgB from '@/assets/untitledb.png';
+import unknownImgBC from '@/assets/untitledbc.png';
 
 
 export const WHATSAPP_NUMBER = "+250784269593";

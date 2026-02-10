@@ -1,20 +1,4 @@
-import { API_BASE_URL } from '../constants';
-
-const handleResponse = async (response: Response) => {
-    const isJson = response.headers.get('content-type')?.includes('application/json');
-    const data = isJson ? await response.json() : null;
-
-    if (!response.ok) {
-        const error = (data && (data.message || data.detail || (typeof data === 'string' ? data : JSON.stringify(data)))) || response.statusText;
-        throw new Error(error);
-    }
-
-    return {
-        ok: true,
-        status: response.status,
-        data: data
-    };
-};
+import api from '@/services/api';
 
 export const productsService = {
     async getProducts(params?: {
@@ -25,52 +9,52 @@ export const productsService = {
         search?: string;
         ordering?: string;
     }) {
-        const queryParams = new URLSearchParams();
-        if (params?.category) queryParams.append('category', params.category);
-        if (params?.published !== undefined) queryParams.append('published', String(params.published));
-        if (params?.min_price) queryParams.append('min_price', String(params.min_price));
-        if (params?.max_price) queryParams.append('max_price', String(params.max_price));
-        if (params?.search) queryParams.append('search', params.search);
-        if (params?.ordering) queryParams.append('ordering', params.ordering);
-
-        const url = `${API_BASE_URL}/products/products/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
-        return handleResponse(response);
+        const response = await api.get('/products/products/', { params });
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     },
 
     async getProduct(id: string | number) {
-        const response = await fetch(`${API_BASE_URL}/products/products/${id}/`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
-        return handleResponse(response);
+        const response = await api.get(`/products/products/${id}/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     },
 
     async getCategories() {
-        const response = await fetch(`${API_BASE_URL}/products/categories/`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
-        return handleResponse(response);
+        const response = await api.get('/products/categories/');
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     },
 
     async getProductMedia(productId: string | number) {
-        const response = await fetch(`${API_BASE_URL}/products/media/?product=${productId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await api.get('/products/media/', {
+            params: { product: productId }
         });
-        return handleResponse(response);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     },
 
     async getProductFeedback(productId: string | number) {
-        const response = await fetch(`${API_BASE_URL}/products/feedback/?product=${productId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await api.get('/products/feedback/', {
+            params: { product: productId }
         });
-        return handleResponse(response);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     },
 
     async createFeedback(data: {
@@ -78,14 +62,13 @@ export const productsService = {
         rating: number;
         comment: string;
     }, token: string) {
-        const response = await fetch(`${API_BASE_URL}/products/feedback/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data),
-        });
-        return handleResponse(response);
+        // The token is now automatically handled by the interceptor in api.ts
+        // but we can still pass it explicitly if needed, or rely on the interceptor.
+        const response = await api.post('/products/feedback/', data);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     }
 };

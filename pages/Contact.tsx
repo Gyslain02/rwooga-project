@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { Send, MapPin, Phone, Mail, Clock, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { WHATSAPP_NUMBER, BRAND_EMAIL } from '../constants';
+import { WHATSAPP_NUMBER, BRAND_EMAIL } from '@/constants';
 import toast from 'react-hot-toast';
-import GlassCard from '../components/GlassCard';
-import GlassButton from '../components/GlassButton';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -20,7 +20,7 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setStatus('submitting');
 
-    
+
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     console.log('Form Submitted:', formData);
@@ -51,7 +51,7 @@ const Contact: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
 
-        
+
           <div className="w-full lg:w-[380px] space-y-4">
             <GlassCard variant="default" hover className="p-6 rounded-2xl">
               <ContactInfoCard
