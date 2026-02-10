@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User as UserIcon, UserCheck, Mail, Phone, Shield, Power } from 'lucide-react';
+import { X, Save, User as UserIcon, UserCheck, Mail, Phone, Shield, Power, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlassButton from '@/components/GlassButton';
 
@@ -32,6 +32,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
         password: '',
         password_confirm: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -139,13 +141,20 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
                                 <div className="relative">
                                     <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required={!user}
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-12 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
                                         placeholder="••••••••"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -170,13 +179,20 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
                                 <div className="relative">
                                     <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? "text" : "password"}
                                         required={!user}
                                         value={formData.password_confirm}
                                         onChange={(e) => setFormData({ ...formData, password_confirm: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-12 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
                                         placeholder="••••••••"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
