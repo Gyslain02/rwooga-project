@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Briefcase, ShoppingBag, ClipboardList, Settings,
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
   Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
-  Mail, Phone
+  Mail, Phone, LogOut
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -227,8 +227,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             className="w-full py-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
             title="Logout session"
           >
-            <Plus className="rotate-45" size={14} />
-            LOGOUT SESSION
+            <LogOut size={16} />
+            Logout
           </button>
         </div>
       </aside>
