@@ -215,15 +215,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         </nav>
 
         <div className="mt-auto px-6 w-full pt-8 border-t border-gray-50 dark:border-slate-800 flex flex-col space-y-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-brand-primary">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{user?.name || 'Admin User'}</p>
 
-            </div>
-          </div>
           <button
             onClick={() => navigate('/')}
             className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
