@@ -121,9 +121,15 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     setShowProductForm(true)
   }
 
-  const handleToggleStatus = (id: string | number, currentStatus: boolean) => {
-    dispatch(toggleUserStatus({ id, is_active: currentStatus }) as any)
-    toast.success('Status updated')
+  const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
+    try {
+      await dispatch(toggleUserStatus({ id, is_active: currentStatus }) as any).unwrap()
+      // Refetch users to ensure UI is in sync with backend
+      await dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+      toast.success('Status updated successfully')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update status')
+    }
   }
 
   const handleUserSubmitLocal = async (userData: any) => {
@@ -623,12 +629,15 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           </span>
                         </td>
                         <td className="py-6 px-4">
+
                           <button
                             onClick={() => handleToggleStatus(u.id, u.is_active)}
                             className={`w-12 h-6 rounded-full relative transition-all ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+
                           >
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${u.is_active ? 'left-7' : 'left-1'}`} />
                           </button>
+
                         </td>
                         <td className="py-5 text-right pr-4">
                           <div className="flex items-center justify-end gap-2">
