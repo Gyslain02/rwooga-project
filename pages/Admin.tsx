@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ToggleLeft, ToggleRight,
   ShieldCheck, ShoppingCart,
@@ -7,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, ShoppingBag, ClipboardList, Settings,
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
   Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
-  Mail, Phone, LogOut
+  Mail, Phone, LogOut, Home
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -30,6 +31,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const activeTabFromStore = 'dashboard' // Keep as local state if simple, or move to slice if needed
   const [activeTab, setActiveTab] = useState('dashboard')
   const { adminTheme: theme } = useSelector((state: RootState) => state.settings)
@@ -222,6 +224,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
             </div>
           </div>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+            title="Back to home page"
+          >
+            <Home size={16} />
+            Back to Home
+          </button>
           <button
             onClick={handleLogout}
             className="w-full py-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
