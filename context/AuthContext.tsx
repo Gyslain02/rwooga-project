@@ -16,9 +16,9 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     error: string | null;
-    login: (credentials: any) => Promise<void>;
+    login: (credentials: any) => Promise<User | void>;
     register: (userData: any) => Promise<any>;
-    verifyEmail: (token: string) => Promise<void>;
+    verifyEmail: (email: string, code: string) => Promise<any>;
     logout: () => void;
     clearError: () => void;
 }
@@ -50,6 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.setItem('refresh_token', data.refresh);
             localStorage.setItem('user', JSON.stringify(data.user));
             toast.success('Logged in successfully!');
+            return data.user;
         } catch (err: any) {
             console.error('Login error:', err);
             const msg = err.message || 'Login failed';
@@ -78,11 +79,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const verifyEmail = useCallback(async (token: string) => {
+    const verifyEmail = useCallback(async (email: string, code: string) => {
         setLoading(true);
         setError(null);
         try {
-            await authService.verifyEmail(token);
+            const response = await authService.verifyEmail(email, code);
+            return response;
             // Toast is shown in the component, not here
         } catch (err: any) {
             const message = err.message || 'Verification failed';

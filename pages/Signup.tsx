@@ -75,8 +75,8 @@ const Signup: React.FC = () => {
                 toast.success(`Verification email sent to ${formData.email}`);
                 setSuccess(true);
                 setTimeout(() => {
-                    navigate('/login');
-                }, 5000);
+                    navigate('/verify-email', { state: { email: formData.email } });
+                }, 2000);
             } else {
                 toast.error(res.message || 'Registration failed');
             }
@@ -111,7 +111,7 @@ const Signup: React.FC = () => {
                                 <ShieldCheck size={40} />
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-4">Account Created</h3>
-                            <p className="text-gray-400">Please check your email to verify your account. Redirecting to login...</p>
+                            <p className="text-gray-400">Please check your email for the verification code. Redirecting...</p>
                         </div>
                     ) : (
                         <form onSubmit={handleSignup} className="space-y-5">

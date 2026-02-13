@@ -4,10 +4,10 @@ Content-Type: application/json
 
 {
     "email": "rugambagislain@gmail.com",
-    "password": "Rugamba123!",
-    "full_name": "Rugamba Gislain",
-    "phone_number": "0788123456",
-    "password_confirm": "Rugamba123!"
+    "password": "Rugamba@123",
+    "full_name": "Gislain RUGAMBA",
+    "phone_number": "0780750980",
+    "password_confirm": "Rugamba@123"
 }
 
 ### Verify email
@@ -15,8 +15,9 @@ POST https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/auth/verify_email/
 Content-Type: application/json
 
 {
-    "email": "rugambagislain@gmail.com",
-    "token": "bf7d6e23-a3a0-4259-b161-1f95a70e6078"
+    "email": "gislain222007024@gmail.com",
+    "otp": "435997"
+
 }
 
 ### Login 
@@ -25,5 +26,5 @@ Content-Type: application/json
 
 {
     "email": "rugambagislain@gmail.com",
-    "password": "Rugamba123!"
+    "password": "Rugamba@123"
 }

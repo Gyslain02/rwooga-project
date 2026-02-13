@@ -216,14 +216,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
         <div className="mt-auto px-6 w-full pt-8 border-t border-gray-50 dark:border-slate-800 flex flex-col space-y-4">
 
-          <button
-            onClick={() => navigate('/')}
-            className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
-            title="Back to home page"
-          >
-            <Home size={16} />
-            Back to Home
-          </button>
+
           <button
             onClick={handleLogout}
             className="w-full py-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"

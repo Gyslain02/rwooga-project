@@ -34,10 +34,15 @@ const Login: React.FC = () => {
         clearError();
 
         try {
-            await login({ email, password });
+            const user = await login({ email, password });
 
             toast.success(`Welcome back!`);
-            navigate('/');
+
+            if (user?.is_admin) {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (err: any) {
             const errorMessage = err.message || 'Invalid email or password';
             setError(errorMessage);
