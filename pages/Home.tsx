@@ -92,6 +92,14 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
               >
                 Shop Products
               </Link>
+              {isPrintingEnabled && (
+                <Link
+                  to="/custom-request"
+                  className="glass-card text-white px-8 py-4 rounded-full font-bold text-lg hover-glow-green hover:scale-105 transition-all"
+                >
+                  Custom Request
+                </Link>
+              )}
             </motion.div>
 
             {/* Customer Account Cards - Modern Floating Design */}
@@ -269,15 +277,7 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
               loop
               playsInline
             />
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-700 flex items-center justify-center">
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="w-24 h-24 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-black shadow-2xl cursor-pointer"
-              >
-                <Play fill="currentColor" size={32} className="ml-1" />
-              </motion.div>
-            </div>
+            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-700" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
           </motion.div>
         </div>
