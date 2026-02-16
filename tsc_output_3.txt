@@ -1,1 +1,0 @@
-﻿components/ThreeDViewer.tsx(78,7): error TS2339: Property 'model-viewer' does not exist on type 'JSX.IntrinsicElements'.
