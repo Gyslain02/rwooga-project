@@ -118,7 +118,6 @@ export const productsService = {
         description?: string;
         requires_dimensions?: boolean;
         requires_material?: boolean;
-        pricing_type?: string;
         is_active?: boolean;
     }) {
         const response = await api.post('/api/v1/products/categories/', categoryData);
@@ -137,7 +136,6 @@ export const productsService = {
         description?: string;
         requires_dimensions?: boolean;
         requires_material?: boolean;
-        pricing_type?: string;
         is_active?: boolean;
     }) {
         const response = await api.patch(`/api/v1/products/categories/${id}/`, categoryData);

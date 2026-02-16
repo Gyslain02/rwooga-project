@@ -73,7 +73,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     description: '',
     requires_dimensions: false,
     requires_material: false,
-    pricing_type: 'custom',
     is_active: true
   })
   const [categoriesLoading, setCategoriesLoading] = useState(false)
@@ -84,15 +83,18 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [userPage, setUserPage] = useState(1)
   const usersPerPage = 5
   const [showUserModal, setShowUserModal] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
   const [userToDelete, setUserToDelete] = useState<any>(null)
 
   // Initial load - fetch users, categories, and products
   useEffect(() => {
     dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+  }, [dispatch, userPage, userSearch])
+
+  useEffect(() => {
     loadCategories()
     loadProducts()
-  }, [dispatch, userPage, userSearch])
+  }, [])
 
   // Load categories for product form
   const loadCategories = async () => {
@@ -100,7 +102,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       const response = await productsService.getCategories()
       if (response.ok && response.data) {
         const categoriesList = response.data.results || response.data
-        setCategories(categoriesList.filter((cat: any) => cat.is_active))
+        setCategories(categoriesList)
       }
     } catch (error) {
       console.error('Error loading categories:', error)
@@ -111,14 +113,16 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const loadProducts = async () => {
     try {
       setProductsLoading(true)
-      const response = await adminProductService.getAllProducts()
+      const response = await productsService.getProducts()
       if (response.ok && response.data) {
         const productsList = response.data.results || response.data
         setAdminProducts(productsList)
+      } else {
+        toast.error('Failed to load products')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading products:', error)
-      toast.error('Failed to load products')
+      toast.error('for products: ' + error.message)
     } finally {
       setProductsLoading(false)
     }
@@ -127,7 +131,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   // Category Management Functions
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       const response = editingCategory
         ? await productsService.updateCategory(editingCategory.id, categoryForm)
@@ -154,7 +158,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       description: category.description || '',
       requires_dimensions: category.requires_dimensions || false,
       requires_material: category.requires_material || false,
-      pricing_type: category.pricing_type || 'custom',
       is_active: category.is_active !== undefined ? category.is_active : true
     })
     setShowCategoryForm(true)
@@ -184,7 +187,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       description: '',
       requires_dimensions: false,
       requires_material: false,
-      pricing_type: 'custom',
       is_active: true
     })
     setEditingCategory(null)
@@ -193,7 +195,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const toggleCategoryStatus = async (category: any) => {
     try {
       const response = await productsService.updateCategory(category.id, {
-        ...category,
         is_active: !category.is_active
       })
 
@@ -251,7 +252,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       const productData = {
         name: productForm.name,
@@ -279,16 +280,16 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         // Upload multiple images if provided
         if (productImages.length > 0 && response.data.id) {
           toast.loading('Uploading images...', { id: 'upload-progress' });
-          
+
           const uploadResult = await adminProductService.uploadMultipleProductImages(
             response.data.id,
             productImages,
             mainImageIndex,
             productForm.name
           )
-          
+
           toast.dismiss('upload-progress');
-          
+
           if (!uploadResult.ok) {
             toast.error(uploadResult.error || 'Some images failed to upload');
           } else {
@@ -324,7 +325,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       width: product.width?.toString() || '',
       height: product.height?.toString() || ''
     })
-    
+
     // Load existing images
     if (product.media && product.media.length > 0) {
       setExistingImages(product.media)
@@ -332,7 +333,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       const mainIndex = product.media.findIndex((m: any) => m.display_order === 0)
       setMainImageIndex(mainIndex >= 0 ? mainIndex : 0)
     }
-    
+
     setShowProductForm(true)
   }
 
@@ -362,7 +363,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     if (files && files.length > 0) {
       const fileArray = Array.from(files) as File[]
       setProductImages(prev => [...prev, ...fileArray])
-      
+
       // Generate previews for all new files
       fileArray.forEach(file => {
         const reader = new FileReader()
@@ -444,15 +445,15 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   const handleUserSubmitLocal = async (userData: any) => {
     try {
-      if (editingUser) {
-        await dispatch(editUser({ id: editingUser.id, userData }) as any).unwrap()
+      if (selectedUser) {
+        await dispatch(editUser({ id: selectedUser.id, userData }) as any).unwrap()
         toast.success('User updated successfully')
       } else {
         await dispatch(addUser(userData) as any).unwrap()
         toast.success('User created successfully')
       }
       setShowUserModal(false)
-      setEditingUser(null)
+      setSelectedUser(null)
     } catch (err: any) {
       toast.error(err.message || 'Action failed')
     }
@@ -733,13 +734,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Category Name <span className="text-red-500">*</span></label>
                       <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white" placeholder="e.g., 3D Printing" required />
                     </div>
-                    <div>
-                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Pricing Type</label>
-                      <select value={categoryForm.pricing_type} onChange={(e) => setCategoryForm({ ...categoryForm, pricing_type: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white">
-                        <option value="custom">Custom Quote</option>
-                        <option value="fixed">Fixed Price</option>
-                      </select>
-                    </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Description <span className="text-red-500">*</span></label>
                       <textarea rows={4} value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white" placeholder="Describe this category and what types of products it includes..." required />
@@ -776,7 +770,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           <div className="flex items-center gap-4 mb-3">
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white">{cat.name}</h3>
                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cat.is_active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>{cat.is_active ? 'Active' : 'Inactive'}</span>
-                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-brand-primary/10 text-brand-primary">{cat.pricing_type === 'fixed' ? 'Fixed Price' : 'Custom Quote'}</span>
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{cat.description}</p>
                           <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400">
@@ -797,7 +790,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               </div>
             </div>
           )}
-
 
           {activeTab === 'products' && (
             <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
@@ -837,7 +829,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     {/* Product Images Upload */}
                     <div className="md:col-span-2">
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Product Images</label>
-                      
+
                       {/* Image Gallery */}
                       {(existingImages.length > 0 || imagePreviews.length > 0) && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -874,7 +866,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                               </div>
                             </div>
                           ))}
-                          
+
                           {/* New Images */}
                           {imagePreviews.map((preview, index) => {
                             const actualIndex = existingImages.length + index;
@@ -916,7 +908,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           })}
                         </div>
                       )}
-                      
+
                       {/* Upload Button */}
                       <label className="flex flex-col items-center justify-center px-6 py-8 bg-white dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-brand-primary transition-all">
                         <Upload className="w-8 h-8 text-slate-400 mb-2" />
@@ -964,7 +956,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     {/* Dimensions (Conditionally Rendered) */}
                     {categories.find(c => c.id === productForm.category)?.requires_dimensions && (
                       <div className="md:col-span-2 grid grid-cols-3 gap-4">
-                         <div>
+                        <div>
                           <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Length (cm)</label>
                           <input
                             type="number"
@@ -1118,8 +1110,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       {/* Product Image Thumbnail */}
                       {p.media && p.media.length > 0 && p.media[0].image ? (
                         <div className="w-full h-48 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-                          <img 
-                            src={p.media[0].image} 
+                          <img
+                            src={p.media[0].image}
                             alt={p.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
@@ -1161,11 +1153,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         <span className="text-lg font-black text-slate-800 dark:text-white">{p.unit_price?.toLocaleString() || 0} <span className="text-xs font-bold text-slate-500 dark:text-slate-400">RWF</span></span>
                         <button
                           onClick={() => toggleProductPublish(p)}
-                          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
-                            p.published 
-                              ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' 
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
-                          }`}
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${p.published
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
+                            }`}
                         >
                           {p.published ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                           <span className="text-xs font-bold">{p.published ? 'Published' : 'Unpublished'}</span>
@@ -1178,229 +1169,236 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             </div>
           )}
 
-          {activeTab === 'users' && (
-            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">User Management</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Manage administrator and client accounts</p>
-                </div>
-                <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-                  <div className="relative flex-1 sm:min-w-[300px]">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input
-                      type="text"
-                      placeholder="Filter by name, email, or phone..."
-                      value={userSearch}
-                      onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
-                    />
+          {
+            activeTab === 'users' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">User Management</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage administrator and client accounts</p>
                   </div>
-                  <button
-                    onClick={() => { setEditingUser(null); setShowUserModal(true); }}
-                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-primary/20"
-                  >
-                    <UserPlus size={20} />
-                    <span>Add User</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                <table className="w-full min-w-[900px]">
-                  <thead>
-                    <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
-                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">User Details</th>
-                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Contact Info</th>
-                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Role</th>
-                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Status</th>
-                      <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-                    {paginatedUsers.map((u) => (
-                      <tr key={u.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
-                        <td className="py-5 pl-4">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary font-bold">
-                              {u.full_name.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-bold text-slate-800 dark:text-white">{u.full_name}</p>
-                              <p className="text-[10px] text-slate-400 font-medium">ID: {u.id.substring(0, 8)}...</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-6 px-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
-                              <Mail size={12} className="mr-2 text-slate-400" />
-                              {u.email}
-                            </div>
-                            <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
-                              <Phone size={12} className="mr-2 text-slate-400" />
-                              {u.phone_number}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-6 px-4">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${u.user_type === 'ADMIN' ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' : u.user_type === 'STAFF' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
-                            {u.user_type}
-                          </span>
-                        </td>
-                        <td className="py-6 px-4">
-
-                          <button
-                            onClick={() => handleToggleStatus(u.id, u.is_active)}
-                            className={`w-12 h-6 rounded-full relative transition-all ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
-
-                          >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${u.is_active ? 'left-7' : 'left-1'}`} />
-                          </button>
-
-                        </td>
-                        <td className="py-5 text-right pr-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => { setEditingUser(u); setShowUserModal(true); }}
-                              className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
-                              title="Edit User"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => setUserToDelete(u)}
-                              className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
-                              title="Delete User"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredUsers.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-20 text-center">
-                          <div className="flex flex-col items-center">
-                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
-                              <UsersIcon size={32} />
-                            </div>
-                            <p className="text-slate-500 dark:text-slate-400 font-bold">No users found matching your search</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              {totalUserPages > 1 && (
-                <div className="mt-10 flex items-center justify-between border-t border-gray-50 dark:border-slate-800 pt-8">
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
-                    Showing {Math.min(filteredUsers.length, (userPage - 1) * usersPerPage + 1)}-{Math.min(filteredUsers.length, userPage * usersPerPage)} of {filteredUsers.length} Users
-                  </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
+                    <div className="relative flex-1 sm:min-w-[300px]">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Filter by name, email, or phone..."
+                        value={userSearch}
+                        onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
+                      />
+                    </div>
                     <button
-                      disabled={userPage === 1}
-                      onClick={() => setUserPage(p => p - 1)}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
+                      onClick={() => { setSelectedUser(null); setShowUserModal(true); }}
+                      className="flex items-center justify-center space-x-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-primary/20"
                     >
-                      Previous
+                      <UserPlus size={20} />
+                      <span>Add User</span>
                     </button>
-                    {[...Array(totalUserPages)].map((_, i) => (
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[900px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">User Details</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Contact Info</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Role</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {paginatedUsers.map((u) => (
+                        <tr key={u.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary font-bold">
+                                {u.full_name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 dark:text-white">{u.full_name}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">ID: {u.id.substring(0, 8)}...</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-6 px-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                                <Mail size={12} className="mr-2 text-slate-400" />
+                                {u.email}
+                              </div>
+                              <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                                <Phone size={12} className="mr-2 text-slate-400" />
+                                {u.phone_number}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-6 px-4">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${u.user_type === 'ADMIN' ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400' : u.user_type === 'STAFF' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                              {u.user_type}
+                            </span>
+                          </td>
+                          <td className="py-6 px-4">
+
+                            <button
+                              onClick={() => handleToggleStatus(u.id, u.is_active)}
+                              className={`w-12 h-6 rounded-full relative transition-all ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'}`}
+
+                            >
+                              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${u.is_active ? 'left-7' : 'left-1'}`} />
+                            </button>
+
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => { setSelectedUser(u); setShowUserModal(true); }}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="Edit User"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => setUserToDelete(u)}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Delete User"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredUsers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center">
+                            <div className="flex flex-col items-center">
+                              <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
+                                <UsersIcon size={32} />
+                              </div>
+                              <p className="text-slate-500 dark:text-slate-400 font-bold">No users found matching your search</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {totalUserPages > 1 && (
+                  <div className="mt-10 flex items-center justify-between border-t border-gray-50 dark:border-slate-800 pt-8">
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                      Showing {Math.min(filteredUsers.length, (userPage - 1) * usersPerPage + 1)}-{Math.min(filteredUsers.length, userPage * usersPerPage)} of {filteredUsers.length} Users
+                    </p>
+                    <div className="flex items-center gap-2">
                       <button
-                        key={i}
-                        onClick={() => setUserPage(i + 1)}
-                        className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${userPage === i + 1 ? 'bg-brand-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}
+                        disabled={userPage === 1}
+                        onClick={() => setUserPage(p => p - 1)}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
                       >
-                        {i + 1}
+                        Previous
                       </button>
-                    ))}
-                    <button
-                      disabled={userPage === totalUserPages}
-                      onClick={() => setUserPage(p => p + 1)}
-                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
-                    >
-                      Next
-                    </button>
+                      {[...Array(totalUserPages)].map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setUserPage(i + 1)}
+                          className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${userPage === i + 1 ? 'bg-brand-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button
+                        disabled={userPage === totalUserPages}
+                        onClick={() => setUserPage(p => p + 1)}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold disabled:opacity-50 transition-all hover:bg-slate-200"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'requests' && (
-            <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-[500px] transition-colors">
-              <div className="flex items-center justify-between mb-12">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Custom Requests</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Handle client inquiries and product submissions</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {customRequests.length === 0 ? (
-                  <EmptyState icon={<ClipboardList size={40} />} text="No product requests yet." />
-                ) : (
-                  customRequests.map((r: any) => (
-                    <ProductRequestCard key={r.id} request={r} onDelete={() => deleteRequest(r.id)} />
-                  ))
                 )}
               </div>
-            </div>
-          )}
+            )
+          }
 
-          {activeTab === 'orders' && (
-            <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm text-center py-20 md:py-32 transition-colors">
-              <ShoppingBag className="mx-auto text-slate-200 dark:text-slate-700 mb-6" size={64} />
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Order Tracking System</h3>
-              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This complex logistics module is currently being integrated with our carrier APIs. Status updates will appear here soon.</p>
-            </div>
-          )}
-
-          {activeTab === 'settings' && (
-            <div className="max-w-2xl bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm transition-colors">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-8">System Settings</h2>
-              <div className="space-y-10">
-                <div className="flex items-center justify-between">
+          {
+            activeTab === 'requests' && (
+              <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-[500px] transition-colors">
+                <div className="flex items-center justify-between mb-12">
                   <div>
-                    <p className="font-bold text-slate-800 dark:text-white">Public Service Mode</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Visibility of "Quick Quote" buttons</p>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Custom Requests</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Handle client inquiries and product submissions</p>
                   </div>
-                  <button
-                    onClick={() => onToggle(!isEnabled)}
-                    className={`w-14 h-8 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
-                    aria-label="Toggle public service mode"
-                    title="Toggle public service mode"
-                  >
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isEnabled ? 'left-7' : 'left-1'}`} />
-                  </button>
                 </div>
 
-                <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-slate-700">
-                  <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center">
-                    <ShieldCheck className="mr-2 text-brand-primary" size={18} /> Critical Access
-                  </h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
-                    Modify root administrative credentials and system API keys. This action requires secondary authentication.
-                  </p>
-                  <button className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-8 py-3 rounded-2xl font-bold text-xs border border-gray-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
-                    Re-authenticate Session
-                  </button>
+                <div className="space-y-6">
+                  {customRequests.length === 0 ? (
+                    <EmptyState icon={<ClipboardList size={40} />} text="No product requests yet." />
+                  ) : (
+                    customRequests.map((r: any) => (
+                      <ProductRequestCard key={r.id} request={r} onDelete={() => deleteRequest(r.id)} />
+                    ))
+                  )}
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )
+          }
+
+          {
+            activeTab === 'orders' && (
+              <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm text-center py-20 md:py-32 transition-colors">
+                <ShoppingBag className="mx-auto text-slate-200 dark:text-slate-700 mb-6" size={64} />
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Order Tracking System</h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This complex logistics module is currently being integrated with our carrier APIs. Status updates will appear here soon.</p>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'settings' && (
+              <div className="max-w-2xl bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm transition-colors">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-8">System Settings</h2>
+                <div className="space-y-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-white">Public Service Mode</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Visibility of "Quick Quote" buttons</p>
+                    </div>
+                    <button
+                      onClick={() => onToggle(!isEnabled)}
+                      className={`w-14 h-8 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
+                      aria-label="Toggle public service mode"
+                      title="Toggle public service mode"
+                    >
+                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isEnabled ? 'left-7' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-slate-700">
+                    <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                      <ShieldCheck className="mr-2 text-brand-primary" size={18} /> Critical Access
+                    </h4>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                      Modify root administrative credentials and system API keys. This action requires secondary authentication.
+                    </p>
+                    <button className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-8 py-3 rounded-2xl font-bold text-xs border border-gray-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
+                      Re-authenticate Session
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+        </div >
+      </main >
 
       <UserModal
         isOpen={showUserModal}
-        onClose={() => { setShowUserModal(false); setEditingUser(null); }}
+        onClose={() => { setShowUserModal(false); setSelectedUser(null); }}
         onSubmit={handleUserSubmitLocal}
-        user={editingUser}
+        user={selectedUser}
         loading={usersLoading}
       />
 
@@ -1409,10 +1407,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteConfirm}
         title="Delete User"
-        message={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${userToDelete?.full_name}? This action cannot be undone.`}
         loading={usersLoading}
       />
-    </div>
+    </div >
   )
 }
 
