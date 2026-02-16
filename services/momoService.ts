@@ -26,7 +26,7 @@ export const momoService = {
    */
   async initiatePayment(paymentData: MomoPaymentRequest): Promise<{ ok: boolean; data?: MomoPaymentResponse; error?: string }> {
     try {
-      const response = await api.post('/payments/momo/initiate/', {
+      const response = await api.post('/api/v1/payments/momo/initiate/', {
         ...paymentData,
         provider: 'mtn_rwanda',
         callback_url: `${window.location.origin}/payment/callback`
@@ -50,7 +50,7 @@ export const momoService = {
    */
   async checkPaymentStatus(transactionId: string): Promise<{ ok: boolean; data?: any; error?: string }> {
     try {
-      const response = await api.get(`/payments/momo/status/${transactionId}/`);
+      const response = await api.get(`/api/v1/payments/momo/status/${transactionId}/`);
       return {
         ok: true,
         data: response.data

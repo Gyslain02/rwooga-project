@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@config "./tailwind.config.ts";
+
 /* Portfolio-Specific Styles and Advanced Glassmorphism */
 
 /* Grid Layouts */
@@ -45,11 +48,9 @@
 .project-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(10, 13, 16, 0.95),
-    rgba(10, 13, 16, 0.3)
-  );
+  background: linear-gradient(to top,
+      rgba(10, 13, 16, 0.95),
+      rgba(10, 13, 16, 0.3));
   opacity: 0;
   transition: opacity 0.4s ease;
 }
@@ -113,12 +114,10 @@
 /* Section Divider */
 .glass-divider {
   height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(4, 120, 87, 0.5),
-    transparent
-  );
+  background: linear-gradient(to right,
+      transparent,
+      rgba(4, 120, 87, 0.5),
+      transparent);
   margin: 4rem 0;
 }
 
@@ -154,11 +153,9 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(4, 120, 87, 0.1),
-    transparent
-  );
+  background: linear-gradient(135deg,
+      rgba(4, 120, 87, 0.1),
+      transparent);
   pointer-events: none;
   z-index: 1;
 }
@@ -207,6 +204,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -214,6 +212,7 @@
 
 /* Print Styles */
 @media print {
+
   .glass,
   .glass-card,
   .glass-strong {

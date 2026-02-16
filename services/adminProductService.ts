@@ -1,6 +1,6 @@
 import api from './api';
 
-const API_URL = '/products';
+const API_URL = '/api/v1/products';
 
 export interface ProductFormData {
   name: string;
@@ -142,7 +142,7 @@ class AdminProductService {
     try {
       const formData = new FormData();
       formData.append('product', productId);
-      
+
       if (mediaType === 'image') {
         formData.append('image', mediaFile);
       } else if (mediaType === 'video') {
@@ -150,10 +150,10 @@ class AdminProductService {
       } else if (mediaType === '3d_model') {
         formData.append('model_3d', mediaFile);
       }
-      
+
       if (altText) formData.append('alt_text', altText);
       if (displayOrder !== undefined) formData.append('display_order', displayOrder.toString());
-      
+
       // Manually construct headers to avoid Content-Type issue and potential TS errors
       const token = localStorage.getItem('access_token');
       const headers = {
@@ -181,7 +181,7 @@ class AdminProductService {
     try {
       const results = [];
       let failedCount = 0;
-      
+
       // Upload images sequentially to avoid overwhelming the server
       for (let index = 0; index < images.length; index++) {
         try {
@@ -189,18 +189,18 @@ class AdminProductService {
           // Main image gets display_order = 0, others get sequential order
           const displayOrder = index === mainImageIndex ? 0 : (index < mainImageIndex ? index + 1 : index);
           const altText = productName ? `${productName} - Image ${index + 1}` : undefined;
-          
+
           const result = await this.uploadProductMedia(productId, image, 'image', altText, displayOrder);
           results.push(result);
-          
+
           if (!result.ok) {
             failedCount++;
             console.error(`Failed to upload image ${index + 1}:`, result.error);
           }
-          
+
           // Small delay between uploads to prevent server overload
           await new Promise(resolve => setTimeout(resolve, 300));
-          
+
         } catch (error: any) {
           failedCount++;
           console.error(`Error uploading image ${index + 1}:`, error);
@@ -209,10 +209,10 @@ class AdminProductService {
       }
 
       if (failedCount > 0) {
-        return { 
-          ok: false, 
+        return {
+          ok: false,
           error: `${failedCount} out of ${images.length} image(s) failed to upload. Please try uploading the failed images individually.`,
-          results 
+          results
         };
       }
 

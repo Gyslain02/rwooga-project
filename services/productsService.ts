@@ -9,7 +9,7 @@ export const productsService = {
         search?: string;
         ordering?: string;
     }) {
-        const response = await api.get('/products/products/', { params });
+        const response = await api.get('/api/v1/products/products/', { params });
         return {
             ok: true,
             status: response.status,
@@ -18,7 +18,7 @@ export const productsService = {
     },
 
     async getProduct(id: string | number) {
-        const response = await api.get(`/products/products/${id}/`);
+        const response = await api.get(`/api/v1/products/products/${id}/`);
         return {
             ok: true,
             status: response.status,
@@ -27,7 +27,7 @@ export const productsService = {
     },
 
     async getCategories() {
-        const response = await api.get('/products/categories/');
+        const response = await api.get('/api/v1/products/categories/');
         return {
             ok: true,
             status: response.status,
@@ -36,7 +36,7 @@ export const productsService = {
     },
 
     async getProductMedia(productId: string | number) {
-        const response = await api.get('/products/media/', {
+        const response = await api.get('/api/v1/products/media/', {
             params: { product: productId }
         });
         return {
@@ -47,7 +47,7 @@ export const productsService = {
     },
 
     async getProductFeedback(productId: string | number) {
-        const response = await api.get('/products/feedback/', {
+        const response = await api.get('/api/v1/products/feedback/', {
             params: { product: productId }
         });
         return {
@@ -64,7 +64,7 @@ export const productsService = {
     }, token: string) {
         // The token is now automatically handled by the interceptor in api.ts
         // but we can still pass it explicitly if needed, or rely on the interceptor.
-        const response = await api.post('/products/feedback/', data);
+        const response = await api.post('/api/v1/products/feedback/', data);
         return {
             ok: true,
             status: response.status,
@@ -82,7 +82,7 @@ export const productsService = {
         search?: string;
         ordering?: string;
     }) {
-        const response = await api.get('/products/products/', {
+        const response = await api.get('/api/v1/products/products/', {
             params: { ...params, published: true }
         });
         return {
@@ -96,7 +96,7 @@ export const productsService = {
      * Get featured products for home page (published, ordered by newest)
      */
     async getFeaturedProducts(limit: number = 6) {
-        const response = await api.get('/products/products/', {
+        const response = await api.get('/api/v1/products/products/', {
             params: {
                 published: true,
                 ordering: '-created_at',
@@ -121,7 +121,7 @@ export const productsService = {
         pricing_type?: string;
         is_active?: boolean;
     }) {
-        const response = await api.post('/products/categories/', categoryData);
+        const response = await api.post('/api/v1/products/categories/', categoryData);
         return {
             ok: true,
             status: response.status,
@@ -140,7 +140,7 @@ export const productsService = {
         pricing_type?: string;
         is_active?: boolean;
     }) {
-        const response = await api.patch(`/products/categories/${id}/`, categoryData);
+        const response = await api.patch(`/api/v1/products/categories/${id}/`, categoryData);
         return {
             ok: true,
             status: response.status,
@@ -152,7 +152,7 @@ export const productsService = {
      * Delete a category
      */
     async deleteCategory(id: string) {
-        const response = await api.delete(`/products/categories/${id}/`);
+        const response = await api.delete(`/api/v1/products/categories/${id}/`);
         return {
             ok: true,
             status: response.status,

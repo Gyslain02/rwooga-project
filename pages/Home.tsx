@@ -6,15 +6,18 @@ import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'fra
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { SERVICES, PORTFOLIO, getIcon } from '@/constants';
+import { useAuth } from '@/context/AuthContext';
 
 
 import heroImg from '@/assets/Maguru photoshoot.png';
 import heroVideo from '@/assets/MAGURU N_INSIBIKA MOVIE first look.mp4';
 import planetsBg from '@/assets/20 Strange Planets That Are Both Interesting And Terrifying (1).jpg';
-import titleTexture from '@/assets/download (37).jpg';
+
 
 const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) => {
-  const heroRef = useRef(null);
+  const { user } = useAuth();
+  const heroRef = useRef<HTMLElement>(null);
+
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
@@ -28,16 +31,17 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
 
   const opacity = useTransform(smoothProgress, [0, 0.5], [1, 0]);
   const heroTextY = useTransform(smoothProgress, [0, 1], [0, -80]);
+  const bgImageY = useTransform(smoothProgress, [0, 1], [0, 100]);
 
   return (
     <div className="bg-brand-dark overflow-hidden">
 
-      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section ref={heroRef as any} className="relative min-h-screen flex flex-col items-center pt-32 pb-20 px-4 sm:px-6 lg:px-8">
 
         <div className="absolute top-0 left-0 w-full h-[80vh] z-0 pointer-events-none overflow-hidden">
           <motion.img
             src={planetsBg}
-            style={{ y: useTransform(smoothProgress, [0, 1], [0, 100]), scale: 1.05 }}
+            style={{ y: bgImageY, scale: 1.05 }}
             className="w-full h-full object-cover opacity-15 translate-y-[-10%]"
             alt="Background Planets"
           />
@@ -91,131 +95,133 @@ const Home: React.FC<{ isPrintingEnabled: boolean }> = ({ isPrintingEnabled }) =
             </motion.div>
 
             {/* Customer Account Cards - Modern Floating Design */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="w-full max-w-6xl mx-auto"
-            >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {/* Cart Card */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/20 to-brand-primary/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
-                  <Link 
-                    to="/cart" 
-                    className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-brand-primary/30 transition-all block"
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="p-3 bg-brand-primary/10 rounded-xl mb-3 group-hover:bg-brand-primary/20 transition-colors">
-                        <ShoppingCart size={20} className="text-brand-primary" />
-                      </div>
-                      <span className="text-2xl font-bold text-white mb-1">
-                        {useSelector((state: RootState) => state.cart.items.length)}
-                      </span>
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">Cart</span>
-                    </div>
-                  </Link>
-                </motion.div>
-
-                {/* Wishlist Card */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
-                  <Link 
-                    to="/wishlist" 
-                    className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all block"
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="p-3 bg-red-500/10 rounded-xl mb-3 group-hover:bg-red-500/20 transition-colors">
-                        <Heart size={20} className="text-red-500" />
-                      </div>
-                      <span className="text-2xl font-bold text-white mb-1">
-                        {useSelector((state: RootState) => state.wishlist.items.length)}
-                      </span>
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">Wishlist</span>
-                    </div>
-                  </Link>
-                </motion.div>
-
-                {/* Orders Card */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-blue-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
-                  <Link 
-                    to="/orders" 
-                    className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-blue-500/30 transition-all block"
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="p-3 bg-blue-500/10 rounded-xl mb-3 group-hover:bg-blue-500/20 transition-colors">
-                        <Package size={20} className="text-blue-500" />
-                      </div>
-                      <span className="text-2xl font-bold text-white mb-1">0</span>
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">Orders</span>
-                    </div>
-                  </Link>
-                </motion.div>
-
-                {/* Returns Card */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-orange-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
-                  <Link 
-                    to="/returns" 
-                    className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-orange-500/30 transition-all block"
-                  >
-                    <div className="flex flex-col items-center text-center">
-                      <div className="p-3 bg-orange-500/10 rounded-xl mb-3 group-hover:bg-orange-500/20 transition-colors">
-                        <RefreshCw size={20} className="text-orange-500" />
-                      </div>
-                      <span className="text-2xl font-bold text-white mb-1">0</span>
-                      <span className="text-xs text-gray-400 uppercase tracking-wider">Returns</span>
-                    </div>
-                  </Link>
-                </motion.div>
-              </div>
-
-              {/* Quick Stats Bar */}
+            {user && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="glass-card p-4 rounded-2xl border border-white/10"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="w-full max-w-6xl mx-auto"
               >
-                <div className="flex items-center justify-around text-center">
-                  <div>
-                    <div className="text-lg font-bold text-brand-primary">
-                      {useSelector((state: RootState) => state.cart.total || 0).toLocaleString()} RWF
-                    </div>
-                    <div className="text-xs text-gray-400 uppercase tracking-wider">Cart Total</div>
-                  </div>
-                  <div className="w-px h-8 bg-white/10"></div>
-                  <div>
-                    <div className="text-lg font-bold text-green-400">0</div>
-                    <div className="text-xs text-gray-400 uppercase tracking-wider">Completed</div>
-                  </div>
-                  <div className="w-px h-8 bg-white/10"></div>
-                  <div>
-                    <div className="text-lg font-bold text-red-400">
-                      {useSelector((state: RootState) => state.wishlist.items.length)}
-                    </div>
-                    <div className="text-xs text-gray-400 uppercase tracking-wider">Saved</div>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {/* Cart Card */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/20 to-brand-primary/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
+                    <Link
+                      to="/cart"
+                      className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-brand-primary/30 transition-all block"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="p-3 bg-brand-primary/10 rounded-xl mb-3 group-hover:bg-brand-primary/20 transition-colors">
+                          <ShoppingCart size={20} className="text-brand-primary" />
+                        </div>
+                        <span className="text-2xl font-bold text-white mb-1">
+                          {useSelector((state: RootState) => state.cart.items.length)}
+                        </span>
+                        <span className="text-xs text-gray-400 uppercase tracking-wider">Cart</span>
+                      </div>
+                    </Link>
+                  </motion.div>
+
+                  {/* Wishlist Card */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
+                    <Link
+                      to="/wishlist"
+                      className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all block"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="p-3 bg-red-500/10 rounded-xl mb-3 group-hover:bg-red-500/20 transition-colors">
+                          <Heart size={20} className="text-red-500" />
+                        </div>
+                        <span className="text-2xl font-bold text-white mb-1">
+                          {useSelector((state: RootState) => state.wishlist.items.length)}
+                        </span>
+                        <span className="text-xs text-gray-400 uppercase tracking-wider">Wishlist</span>
+                      </div>
+                    </Link>
+                  </motion.div>
+
+                  {/* Orders Card */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-blue-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
+                    <Link
+                      to="/orders"
+                      className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-blue-500/30 transition-all block"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="p-3 bg-blue-500/10 rounded-xl mb-3 group-hover:bg-blue-500/20 transition-colors">
+                          <Package size={20} className="text-blue-500" />
+                        </div>
+                        <span className="text-2xl font-bold text-white mb-1">0</span>
+                        <span className="text-xs text-gray-400 uppercase tracking-wider">Orders</span>
+                      </div>
+                    </Link>
+                  </motion.div>
+
+                  {/* Returns Card */}
+                  <motion.div
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative group"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-orange-500/10 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
+                    <Link
+                      to="/returns"
+                      className="relative glass-card p-6 rounded-2xl border border-white/10 hover:border-orange-500/30 transition-all block"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="p-3 bg-orange-500/10 rounded-xl mb-3 group-hover:bg-orange-500/20 transition-colors">
+                          <RefreshCw size={20} className="text-orange-500" />
+                        </div>
+                        <span className="text-2xl font-bold text-white mb-1">0</span>
+                        <span className="text-xs text-gray-400 uppercase tracking-wider">Returns</span>
+                      </div>
+                    </Link>
+                  </motion.div>
                 </div>
+
+                {/* Quick Stats Bar */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  className="glass-card p-4 rounded-2xl border border-white/10"
+                >
+                  <div className="flex items-center justify-around text-center">
+                    <div>
+                      <div className="text-lg font-bold text-brand-primary">
+                        {useSelector((state: RootState) => state.cart.total || 0).toLocaleString()} RWF
+                      </div>
+                      <div className="text-xs text-gray-400 uppercase tracking-wider">Cart Total</div>
+                    </div>
+                    <div className="w-px h-8 bg-white/10"></div>
+                    <div>
+                      <div className="text-lg font-bold text-green-400">0</div>
+                      <div className="text-xs text-gray-400 uppercase tracking-wider">Completed</div>
+                    </div>
+                    <div className="w-px h-8 bg-white/10"></div>
+                    <div>
+                      <div className="text-lg font-bold text-red-400">
+                        {useSelector((state: RootState) => state.wishlist.items.length)}
+                      </div>
+                      <div className="text-xs text-gray-400 uppercase tracking-wider">Saved</div>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
+            )}
           </motion.div>
 
           {/* Middle Stage: Character & Links */}

@@ -25,6 +25,6 @@ POST https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/auth/login/
 Content-Type: application/json
 
 {
-    "email": "rugambagislain@gmail.com",
-    "password": "Rugamba@123"
+    "email": "gislain222007024@gmail.com",
+    "password": "Gislain@123"
 }

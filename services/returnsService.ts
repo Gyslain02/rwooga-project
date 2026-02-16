@@ -5,7 +5,7 @@ export const returnsService = {
      * Get user's returns
      */
     async getReturns() {
-        const response = await api.get('/orders/returns/');
+        const response = await api.get('/api/v1/orders/returns/');
         return {
             ok: true,
             status: response.status,
@@ -22,7 +22,7 @@ export const returnsService = {
         detailed_reason: string;
         requested_refund_amount: number;
     }) {
-        const response = await api.post('/orders/returns/', returnData);
+        const response = await api.post('/api/v1/orders/returns/', returnData);
         return {
             ok: true,
             status: response.status,
@@ -34,7 +34,7 @@ export const returnsService = {
      * Get return details by ID
      */
     async getReturn(returnId: string | number) {
-        const response = await api.get(`/orders/returns/${returnId}/`);
+        const response = await api.get(`/api/v1/orders/returns/${returnId}/`);
         return {
             ok: true,
             status: response.status,
@@ -46,7 +46,7 @@ export const returnsService = {
      * Cancel a return request
      */
     async cancelReturn(returnId: string | number) {
-        const response = await api.patch(`/orders/returns/${returnId}/`, {
+        const response = await api.patch(`/api/v1/orders/returns/${returnId}/`, {
             status: 'CANCELLED'
         });
         return {
@@ -60,7 +60,7 @@ export const returnsService = {
      * Get user's refunds
      */
     async getRefunds() {
-        const response = await api.get('/orders/refunds/');
+        const response = await api.get('/api/v1/orders/refunds/');
         return {
             ok: true,
             status: response.status,
@@ -72,7 +72,7 @@ export const returnsService = {
      * Get refund details by ID
      */
     async getRefund(refundId: string | number) {
-        const response = await api.get(`/orders/refunds/${refundId}/`);
+        const response = await api.get(`/api/v1/orders/refunds/${refundId}/`);
         return {
             ok: true,
             status: response.status,

@@ -9,7 +9,7 @@ export const ordersService = {
         limit?: number;
         offset?: number;
     }) {
-        const response = await api.get('/orders/orders/', { params });
+        const response = await api.get('/api/v1/orders/orders/', { params });
         return {
             ok: true,
             status: response.status,
@@ -21,7 +21,7 @@ export const ordersService = {
      * Get order details by ID
      */
     async getOrder(orderId: string | number) {
-        const response = await api.get(`/orders/orders/${orderId}/`);
+        const response = await api.get(`/api/v1/orders/orders/${orderId}/`);
         return {
             ok: true,
             status: response.status,
@@ -45,7 +45,7 @@ export const ordersService = {
         total_amount: number;
         shipping_fee?: number;
     }) {
-        const response = await api.post('/orders/orders/', orderData);
+        const response = await api.post('/api/v1/orders/orders/', orderData);
         return {
             ok: true,
             status: response.status,
@@ -61,7 +61,7 @@ export const ordersService = {
         detailed_reason: string;
         requested_refund_amount: number;
     }) {
-        const response = await api.post('/orders/returns/', {
+        const response = await api.post('/api/v1/orders/returns/', {
             order: orderId,
             ...returnData
         });
@@ -76,7 +76,7 @@ export const ordersService = {
      * Get user's returns
      */
     async getReturns() {
-        const response = await api.get('/orders/returns/');
+        const response = await api.get('/api/v1/orders/returns/');
         return {
             ok: true,
             status: response.status,
@@ -88,7 +88,7 @@ export const ordersService = {
      * Cancel an order
      */
     async cancelOrder(orderId: string | number) {
-        const response = await api.patch(`/orders/orders/${orderId}/`, {
+        const response = await api.patch(`/api/v1/orders/orders/${orderId}/`, {
             status: 'CANCELLED'
         });
         return {
