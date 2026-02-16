@@ -28,6 +28,7 @@ import Cart from '@/pages/Cart';
 import Wishlist from '@/pages/Wishlist';
 import Orders from '@/pages/Orders';
 import Returns from '@/pages/Returns';
+import Profile from '@/pages/Profile';
 import { authService } from '@/services/authService';
 
 // Assets
@@ -296,6 +297,7 @@ const AppContent: React.FC<{
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/returns" element={<Returns />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           <Route element={<ProtectedRoute requiredRole="admin" />}>

@@ -60,7 +60,7 @@ const Shop = () => {
         const productsRes = await productsService.getPublishedProducts()
         if (productsRes.ok && productsRes.data) {
           const productsList = productsRes.data.results || productsRes.data
-          
+
           // Fetch media for each product
           const productsWithMedia = await Promise.all(
             productsList.map(async (product: any) => {
@@ -78,7 +78,7 @@ const Shop = () => {
               }
             })
           )
-          
+
           setProducts(productsWithMedia)
         } else {
           // Fallback to empty array if API fails
@@ -100,8 +100,8 @@ const Shop = () => {
 
   const categoryNames = ['All', ...categories.map(c => c.name)]
 
-  const filteredProducts = selectedCategory === 'All' 
-    ? products 
+  const filteredProducts = selectedCategory === 'All'
+    ? products
     : products.filter(product => product.category === selectedCategory)
 
   const handleAddToCart = (product: any) => {
@@ -110,7 +110,7 @@ const Shop = () => {
       toast.error(`${product.name} is already in your cart!`);
       return;
     }
-    
+
     const cartItem = {
       id: product.id,
       name: product.name,
@@ -119,7 +119,7 @@ const Shop = () => {
       image: product.thumbnail || product.image || '/placeholder-product.jpg',
       category: product.category || 'Product'
     }
-    
+
     const updatedCart = [...cart, cartItem];
     setCart(updatedCart);
     localStorage.setItem('cart_items', JSON.stringify(updatedCart));
@@ -141,26 +141,25 @@ const Shop = () => {
   }
 
   return (
-    <div className="bg-[#000000] min-h-screen pt-32 pb-20 relative overflow-hidden">
+    <div className="bg-brand-dark min-h-screen pt-32 pb-20 relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 sm:px-12 relative z-10">
-        
+
         {/* Apple-style Header */}
         <div className="mb-24 text-center">
           <h1 className="text-5xl md:text-7xl font-display font-semibold text-white tracking-tight mb-6">
             Store. <span className="text-gray-500">The best way to buy the products you love.</span>
           </h1>
-          
+
           {/* Categories Tab */}
           <div className="flex flex-wrap justify-center gap-4 mt-12">
-             {categoryNames.map((cat) => (
+            {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  selectedCategory === cat
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === cat
                     ? 'bg-white text-black'
                     : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -304,7 +303,7 @@ const ProductCard: React.FC<{
   index: number;
 }> = ({ product, index }) => {
   const navigate = useNavigate()
-  
+
   const price = product.unit_price || product.price || 0
   const currency = product.currency || 'RWF'
   const isNew = calculateIsNew(product.created_at)
@@ -333,7 +332,7 @@ const ProductCard: React.FC<{
           alt={product.name}
           className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110"
         />
-        
+
         {isNew && (
           <span className="absolute top-6 left-6 text-orange-500 text-xs font-bold uppercase tracking-widest">New</span>
         )}
@@ -345,7 +344,7 @@ const ProductCard: React.FC<{
           <span className="text-gray-500 text-sm align-top mr-1">From</span>
           {price.toLocaleString()} {currency}
         </p>
-        
+
         <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
           <button className="px-6 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors">
             Buy
@@ -360,12 +359,12 @@ const ProductCard: React.FC<{
 }
 
 function calculateIsNew(dateString: string) {
-    if (!dateString) return false
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays < 14 // New if less than 14 days old
+  if (!dateString) return false
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - date.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays < 14 // New if less than 14 days old
 }
 
 export default Shop
