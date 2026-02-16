@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2, Loader2 } from 'lucide-react'
+import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2, Loader2, Play } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PRODUCTS } from '@/constants'
 import { productsService } from '@/services/productsService'
 import toast from 'react-hot-toast'
-import { useDispatch, useSelector } from 'react-redux'
-import { AppDispatch, RootState } from '@/store'
-import { addToCart, removeFromCart } from '@/store/slices/cartSlice'
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  currency: string;
+}
+
 
 const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('All')
@@ -16,11 +23,24 @@ const Shop = () => {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [cart, setCart] = useState<CartItem[]>([])
   const navigate = useNavigate()
-  const dispatch = useDispatch<AppDispatch>()
-  const { items: cart, total } = useSelector((state: RootState) => state.cart)
 
-  const { items: reduxProducts } = useSelector((state: RootState) => state.products)
+  useEffect(() => {
+    // Load cart from localStorage
+    try {
+      const savedCart = localStorage.getItem('cart_items');
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.error('Error loading cart:', error);
+    }
+  }, [])
+
+  const getTotal = () => {
+    return cart.reduce((sum, item) => sum + item.price, 0);
+  }
 
   // Fetch products and categories on mount
   useEffect(() => {
@@ -29,39 +49,60 @@ const Shop = () => {
         setLoading(true)
         setError('')
 
-        // Fetch categories (keep API for categories if intended)
+        // Fetch categories
         const categoriesRes = await productsService.getCategories()
-
         if (categoriesRes.ok && categoriesRes.data) {
           const categoriesList = categoriesRes.data.results || categoriesRes.data
           setCategories(categoriesList.filter((cat: any) => cat.is_active))
         }
 
-        // Use Redux products primarily
-        setProducts(reduxProducts)
+        // Fetch published products from backend
+        const productsRes = await productsService.getPublishedProducts()
+        if (productsRes.ok && productsRes.data) {
+          const productsList = productsRes.data.results || productsRes.data
+          
+          // Fetch media for each product
+          const productsWithMedia = await Promise.all(
+            productsList.map(async (product: any) => {
+              try {
+                const mediaRes = await productsService.getProductMedia(product.id)
+                if (mediaRes.ok && mediaRes.data) {
+                  const mediaList = mediaRes.data.results || mediaRes.data
+                  const sortedMedia = mediaList.sort((a: any, b: any) => a.display_order - b.display_order)
+                  return { ...product, media: sortedMedia }
+                }
+                return { ...product, media: [] }
+              } catch (err) {
+                console.error(`Error fetching media for product ${product.id}:`, err)
+                return { ...product, media: [] }
+              }
+            })
+          )
+          
+          setProducts(productsWithMedia)
+        } else {
+          // Fallback to empty array if API fails
+          setProducts([])
+          setError('Failed to load products')
+        }
 
       } catch (err: any) {
-        console.error('Error fetching categories:', err)
-        setError('Failed to load categories. Using sample products.')
-        setProducts(reduxProducts)
+        console.error('Error fetching data:', err)
+        setError('Failed to load products')
+        setProducts([])
       } finally {
         setLoading(false)
       }
     }
 
     fetchData()
-  }, [reduxProducts])
+  }, [])
 
   const categoryNames = ['All', ...categories.map(c => c.name)]
 
-  const filteredProducts =
-    selectedCategory === 'All'
-      ? products
-      : products.filter(p => {
-        // Handle both category object and category_name field
-        const categoryName = typeof p.category === 'object' ? p.category.name : p.category_name
-        return categoryName === selectedCategory
-      })
+  const filteredProducts = selectedCategory === 'All' 
+    ? products 
+    : products.filter(product => product.category === selectedCategory)
 
   const handleAddToCart = (product: any) => {
     const exists = cart.some(item => item.id === product.id);
@@ -69,15 +110,28 @@ const Shop = () => {
       toast.error(`${product.name} is already in your cart!`);
       return;
     }
-    dispatch(addToCart(product))
+    
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.unit_price || 0,
+      currency: product.currency || 'RWF',
+      image: product.thumbnail || product.image || '/placeholder-product.jpg',
+      category: product.category || 'Product'
+    }
+    
+    const updatedCart = [...cart, cartItem];
+    setCart(updatedCart);
+    localStorage.setItem('cart_items', JSON.stringify(updatedCart));
     setShowCart(true)
     toast.success(`${product.name} added to cart!`)
   }
 
-  const handleRemoveFromCart = (id: string) => {
-    const item = cart.find(i => i.id === id);
-    dispatch(removeFromCart(id))
-    if (item) toast.success(`${item.name} removed from cart`);
+  const handleRemoveFromCart = (itemId: string) => {
+    const updatedCart = cart.filter(item => item.id !== itemId);
+    setCart(updatedCart);
+    localStorage.setItem('cart_items', JSON.stringify(updatedCart));
+    toast.success('Item removed from cart!')
   }
 
   const goToCheckout = () => {
@@ -87,66 +141,52 @@ const Shop = () => {
   }
 
   return (
-    <div className="bg-brand-dark min-h-screen pt-40 pb-20 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-24">
-          <div className="max-w-2xl">
-            <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Premium Goods</span>
-            <h1 className="text-6xl md:text-[100px] font-display font-extrabold text-white leading-[0.85] tracking-tighter uppercase">
-              3D Printed <br />
-              <span className="text-gray-500">Products</span>
-            </h1>
-          </div>
-
-          <div className="mt-8 md:mt-0 flex flex-wrap gap-x-8 gap-y-4 items-center">
-            {categoryNames.map((cat) => (
+    <div className="bg-[#000000] min-h-screen pt-32 pb-20 relative overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-12 relative z-10">
+        
+        {/* Apple-style Header */}
+        <div className="mb-24 text-center">
+          <h1 className="text-5xl md:text-7xl font-display font-semibold text-white tracking-tight mb-6">
+            Store. <span className="text-gray-500">The best way to buy the products you love.</span>
+          </h1>
+          
+          {/* Categories Tab */}
+          <div className="flex flex-wrap justify-center gap-4 mt-12">
+             {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`text-sm font-bold uppercase tracking-widest transition-all pb-2 border-b-2 ${selectedCategory === cat
-                  ? 'text-brand-primary border-brand-primary'
-                  : 'text-gray-500 border-transparent hover:text-white'
-                  }`}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  selectedCategory === cat
+                    ? 'bg-white text-black'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
               >
                 {cat}
               </button>
             ))}
-
-            <button
-              onClick={() => setShowCart(true)}
-              className="ml-4 p-4 bg-brand-primary text-black rounded-full hover:scale-110 transition-all relative flex items-center justify-center"
-            >
-              <ShoppingCart size={20} />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                  {cart.length}
-                </span>
-              )}
-            </button>
           </div>
         </div>
 
         {/* Loading State */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-40">
-            <Loader2 className="w-16 h-16 text-brand-primary animate-spin mb-6" />
-            <p className="text-gray-500 font-bold uppercase tracking-widest">Loading products...</p>
+            <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
           </div>
         )}
 
         {/* Error Message */}
         {error && !loading && (
-          <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-2xl text-center">
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-center">
             {error}
           </div>
         )}
 
-        {/* product grid */}
+        {/* Product Grid - Apple Style */}
         {!loading && (
           <motion.div
             layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-16"
           >
             <AnimatePresence mode="popLayout">
               {filteredProducts.map((product, index) => (
@@ -154,7 +194,6 @@ const Shop = () => {
                   key={product.id}
                   product={product}
                   index={index}
-                  onAddToCart={handleAddToCart}
                 />
               ))}
             </AnimatePresence>
@@ -163,17 +202,29 @@ const Shop = () => {
 
         {/* No Products */}
         {!loading && filteredProducts.length === 0 && (
-          <div className="text-center py-40 border-2 border-dashed border-white/5 rounded-[40px]">
-            <p className="text-gray-500 font-bold uppercase tracking-widest">
+          <div className="text-center py-40">
+            <p className="text-gray-500 text-xl font-medium">
               No products found in this category.
             </p>
           </div>
         )}
 
-
       </div>
 
-      {/* --- CART SIDEBAR --- */}
+      {/* Cart Button (Floating) */}
+      <button
+        onClick={() => setShowCart(true)}
+        className="fixed bottom-8 right-8 p-4 bg-white text-black rounded-full shadow-2xl hover:scale-110 transition-transform z-50"
+      >
+        <ShoppingCart size={24} />
+        {cart.length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+            {cart.length}
+          </span>
+        )}
+      </button>
+
+      {/* --- CART SIDEBAR (Unchanged Logic, refined style) --- */}
       <AnimatePresence>
         {showCart && (
           <>
@@ -182,73 +233,60 @@ const Shop = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCart(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60]"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 w-full md:w-[450px] h-screen bg-brand-dark border-l border-white/5 z-[70] p-6 md:p-10 flex flex-col"
+              className="fixed top-0 right-0 w-full md:w-[450px] h-screen bg-[#1c1c1e] text-white z-[70] p-6 md:p-10 flex flex-col shadow-2xl"
             >
-              <div className="flex justify-between items-center mb-16">
-                <h3 className="text-4xl font-display font-bold text-white uppercase tracking-tighter">Your <span className="text-gray-500">Cart</span></h3>
+              <div className="flex justify-between items-center mb-10">
+                <h3 className="text-2xl font-bold">Your Cart</h3>
                 <button
                   onClick={() => setShowCart(false)}
-                  className="p-3 bg-white/5 rounded-full text-white hover:bg-white/10 transition-all"
-                  aria-label="Close cart"
+                  className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="flex-grow overflow-y-auto space-y-6 mb-10 pr-2 custom-scrollbar">
+              <div className="flex-grow overflow-y-auto space-y-6 mb-10 custom-scrollbar">
                 {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-                    <ShoppingBag size={64} className="text-white/10 mb-6" />
-                    <p className="text-gray-500 font-bold uppercase tracking-widest">Your cart is empty</p>
+                  <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+                    <ShoppingCart size={48} className="mb-4" />
+                    <p>Your cart is empty.</p>
                   </div>
                 ) : (
                   cart.map((item, idx) => (
-                    <motion.div
-                      key={`${item.id}-${idx}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex gap-6 p-6 bg-white/3 rounded-3xl border border-white/5 group"
-                    >
-                      <img src={item.image} className="w-20 h-20 rounded-2xl object-cover" alt={item.name} />
+                    <div key={`${item.id}-${idx}`} className="flex gap-4 py-4 border-b border-white/10">
+                      <img src={item.image} className="w-16 h-16 rounded-xl object-cover bg-white/5" alt={item.name} />
                       <div className="flex-grow">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-lg font-bold text-white">{item.name}</h4>
-                          <button
-                            onClick={() => handleRemoveFromCart(item.id)}
-                            className="text-gray-500 hover:text-red-500 transition-colors"
-                            aria-label="Remove from cart"
-                          >
-                            <Trash2 size={18} />
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-medium text-lg">{item.name}</h4>
+                          <button onClick={() => handleRemoveFromCart(item.id)} className="text-gray-500 hover:text-red-500">
+                            <Trash2 size={16} />
                           </button>
                         </div>
-                        <p className="text-brand-primary font-bold">{item.price.toLocaleString()} RWF</p>
+                        <p className="text-gray-400 mt-1">{item.price.toLocaleString()} RWF</p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))
                 )}
               </div>
 
               {cart.length > 0 && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-end">
-                    <span className="text-gray-500 font-bold uppercase tracking-widest text-xs">Total Amount</span>
-                    <span className="text-4xl font-display font-bold text-white tracking-tighter">
-                      {total.toLocaleString()} <span className="text-lg">RWF</span>
-                    </span>
+                <div className="pt-6 border-t border-white/10">
+                  <div className="flex justify-between items-end mb-6">
+                    <span className="text-gray-400">Total</span>
+                    <span className="text-2xl font-bold">{getTotal().toLocaleString()} RWF</span>
                   </div>
-
                   <button
-                    className="w-full bg-brand-primary text-black py-6 rounded-3xl font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-all text-lg shadow-xl shadow-brand-primary/20"
+                    className="w-full bg-green-600 text-white py-4 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                     onClick={goToCheckout}
                   >
-                    PROCEED TO CHECKOUT <ArrowRight size={24} />
+                    Check Out <ArrowRight size={18} />
                   </button>
                 </div>
               )}
@@ -264,58 +302,71 @@ const Shop = () => {
 const ProductCard: React.FC<{
   product: any;
   index: number;
-  onAddToCart: (product: any) => void;
-}> = ({ product, index, onAddToCart }) => {
-  // Handle both API format (unit_price) and static format (price)
+}> = ({ product, index }) => {
+  const navigate = useNavigate()
+  
   const price = product.unit_price || product.price || 0
   const currency = product.currency || 'RWF'
-  const image = product.thumbnail || product.image
-  const category = typeof product.category === 'object' ? product.category.name : product.category_name || product.category
+  const isNew = calculateIsNew(product.created_at)
 
-  // For variants, handle both API format and static format
-  const materialText = product.material || (product.variants?.material && product.variants.material[0]) || 'PLA'
-  const colorCount = product.available_colors?.length || product.variants?.color?.length || 0
+  // Get main image
+  const getMainImage = () => {
+    if (product.media && product.media.length > 0) {
+      const mainMedia = product.media.find((m: any) => m.display_order === 0) || product.media[0]
+      return mainMedia.image_url || mainMedia.video_file_url || product.thumbnail || product.image
+    }
+    return product.thumbnail || product.image || '/placeholder-product.jpg'
+  }
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      className="group"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
+      className="group cursor-pointer flex flex-col items-center text-center w-full"
+      onClick={() => navigate(`/product/${product.id}`)}
     >
-      <div className="aspect-square rounded-[40px] overflow-hidden bg-white/5 relative mb-6">
+      <div className="relative w-full aspect-square bg-gray-900/40 rounded-[30px] overflow-hidden mb-8 transition-transform duration-500 group-hover:scale-[1.02]">
         <img
-          src={image}
+          src={getMainImage()}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+          className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110"
         />
-        <div className="absolute top-6 left-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{category}</span>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-          <button
-            onClick={() => onAddToCart(product)}
-            className="bg-brand-primary text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-all shadow-2xl"
-          >
-            ADD TO CART
-          </button>
-        </div>
+        
+        {isNew && (
+          <span className="absolute top-6 left-6 text-orange-500 text-xs font-bold uppercase tracking-widest">New</span>
+        )}
       </div>
 
-      <div className="px-2">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-2xl font-bold text-white uppercase tracking-tight">{product.name}</h3>
-          <p className="text-brand-primary font-bold text-xl">{price.toLocaleString()} {currency}</p>
-        </div>
-        <p className="text-gray-500 text-sm font-medium">
-          {colorCount > 0 ? `Available in ${materialText} & ${colorCount} colors` : `Made with ${materialText}`}
+      <div className="space-y-2">
+        <h3 className="text-3xl font-bold text-white tracking-tight">{product.name}</h3>
+        <p className="text-xl text-white">
+          <span className="text-gray-500 text-sm align-top mr-1">From</span>
+          {price.toLocaleString()} {currency}
         </p>
+        
+        <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+          <button className="px-6 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors">
+            Buy
+          </button>
+          <button className="ml-4 text-green-500 hover:underline text-sm font-medium">
+            Learn more &gt;
+          </button>
+        </div>
       </div>
     </motion.div>
   )
 }
 
+function calculateIsNew(dateString: string) {
+    if (!dateString) return false
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays < 14 // New if less than 14 days old
+}
+
 export default Shop
+

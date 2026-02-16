@@ -15,9 +15,14 @@ interface CartState {
     total: number;
 }
 
+const calculateTotal = (items: CartItem[]) => {
+    return items.reduce((sum, item) => sum + Number(item.price), 0);
+};
+
+const items = JSON.parse(localStorage.getItem('cart_items') || '[]');
 const initialState: CartState = {
-    items: JSON.parse(localStorage.getItem('cart_items') || '[]'),
-    total: Number(localStorage.getItem('cart_total') || '0'),
+    items: items,
+    total: calculateTotal(items),
 };
 
 const cartSlice = createSlice({
@@ -29,14 +34,14 @@ const cartSlice = createSlice({
             const exists = state.items.some(item => item.id === action.payload.id);
             if (!exists) {
                 state.items.push(action.payload);
-                state.total = state.items.reduce((sum, item) => sum + item.price, 0);
+                state.total = calculateTotal(state.items);
                 localStorage.setItem('cart_items', JSON.stringify(state.items));
                 localStorage.setItem('cart_total', state.total.toString());
             }
         },
         removeFromCart: (state, action: PayloadAction<string>) => {
             state.items = state.items.filter(item => item.id !== action.payload);
-            state.total = state.items.reduce((sum, item) => sum + item.price, 0);
+            state.total = calculateTotal(state.items);
             localStorage.setItem('cart_items', JSON.stringify(state.items));
             localStorage.setItem('cart_total', state.total.toString());
         },

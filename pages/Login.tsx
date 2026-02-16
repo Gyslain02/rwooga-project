@@ -38,7 +38,7 @@ const Login: React.FC = () => {
 
             toast.success(`Welcome back!`);
 
-            if (user?.is_admin) {
+            if (user && (user as any).is_admin) {
                 navigate('/admin');
             } else {
                 navigate('/');

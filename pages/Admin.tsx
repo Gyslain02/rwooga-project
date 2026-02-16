@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, ShoppingBag, ClipboardList, Settings,
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
   Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
-  Mail, Phone, LogOut, Home
+  Mail, Phone, LogOut, Home, Upload, Image as ImageIcon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -28,6 +28,8 @@ import {
 } from '@/store/slices/usersSlice';
 import UserModal from '@/components/UserModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
+import { adminProductService } from '@/services/adminProductService'
+import { productsService } from '@/services/productsService'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
   const dispatch = useDispatch()
@@ -39,14 +41,42 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const { items: customRequests } = useSelector((state: RootState) => state.requests)
   const { items: products } = useSelector((state: RootState) => state.products)
 
+  // Product Management State
   const [showProductForm, setShowProductForm] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
+  const [editingProduct, setEditingProduct] = useState<any>(null)
   const [productForm, setProductForm] = useState({
     name: '',
-    price: '',
-    description: '',
-    available: true
+    category: '',
+    short_description: '',
+    detailed_description: '',
+    unit_price: '',
+    available_colors: '',
+    available_materials: '',
+    published: true,
+    length: '',
+    width: '',
+    height: ''
   })
+  const [productImages, setProductImages] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<any[]>([])
+  const [mainImageIndex, setMainImageIndex] = useState<number>(0)
+  const [categories, setCategories] = useState<any[]>([])
+  const [adminProducts, setAdminProducts] = useState<any[]>([])
+  const [productsLoading, setProductsLoading] = useState(false)
+
+  // Category Management State
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    requires_dimensions: false,
+    requires_material: false,
+    pricing_type: 'custom',
+    is_active: true
+  })
+  const [categoriesLoading, setCategoriesLoading] = useState(false)
 
   // Users Management State
   const { users, count, loading: usersLoading } = useSelector((state: RootState) => state.users)
@@ -57,10 +87,127 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [editingUser, setEditingUser] = useState<any>(null)
   const [userToDelete, setUserToDelete] = useState<any>(null)
 
-  // Initial load
+  // Initial load - fetch users, categories, and products
   useEffect(() => {
     dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+    loadCategories()
+    loadProducts()
   }, [dispatch, userPage, userSearch])
+
+  // Load categories for product form
+  const loadCategories = async () => {
+    try {
+      const response = await productsService.getCategories()
+      if (response.ok && response.data) {
+        const categoriesList = response.data.results || response.data
+        setCategories(categoriesList.filter((cat: any) => cat.is_active))
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error)
+    }
+  }
+
+  // Load all products (including unpublished for admin)
+  const loadProducts = async () => {
+    try {
+      setProductsLoading(true)
+      const response = await adminProductService.getAllProducts()
+      if (response.ok && response.data) {
+        const productsList = response.data.results || response.data
+        setAdminProducts(productsList)
+      }
+    } catch (error) {
+      console.error('Error loading products:', error)
+      toast.error('Failed to load products')
+    } finally {
+      setProductsLoading(false)
+    }
+  }
+
+  // Category Management Functions
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const response = editingCategory
+        ? await productsService.updateCategory(editingCategory.id, categoryForm)
+        : await productsService.createCategory(categoryForm)
+
+      if (response.ok) {
+        toast.success(editingCategory ? 'Category updated successfully' : 'Category created successfully')
+        setShowCategoryForm(false)
+        resetCategoryForm()
+        loadCategories()
+      } else {
+        toast.error('Failed to save category')
+      }
+    } catch (error: any) {
+      console.error('Error saving category:', error)
+      toast.error(error.message || 'Failed to save category')
+    }
+  }
+
+  const editCategory = (category: any) => {
+    setEditingCategory(category)
+    setCategoryForm({
+      name: category.name,
+      description: category.description || '',
+      requires_dimensions: category.requires_dimensions || false,
+      requires_material: category.requires_material || false,
+      pricing_type: category.pricing_type || 'custom',
+      is_active: category.is_active !== undefined ? category.is_active : true
+    })
+    setShowCategoryForm(true)
+  }
+
+  const deleteCategory = async (id: string) => {
+    const confirmed = window.confirm('Are you sure you want to delete this category? This may affect products using this category.')
+    if (!confirmed) return
+
+    try {
+      const response = await productsService.deleteCategory(id)
+      if (response.ok) {
+        toast.success('Category deleted successfully')
+        loadCategories()
+      } else {
+        toast.error('Failed to delete category')
+      }
+    } catch (error) {
+      console.error('Error deleting category:', error)
+      toast.error('Failed to delete category')
+    }
+  }
+
+  const resetCategoryForm = () => {
+    setCategoryForm({
+      name: '',
+      description: '',
+      requires_dimensions: false,
+      requires_material: false,
+      pricing_type: 'custom',
+      is_active: true
+    })
+    setEditingCategory(null)
+  }
+
+  const toggleCategoryStatus = async (category: any) => {
+    try {
+      const response = await productsService.updateCategory(category.id, {
+        ...category,
+        is_active: !category.is_active
+      })
+
+      if (response.ok) {
+        toast.success(category.is_active ? 'Category deactivated' : 'Category activated')
+        loadCategories()
+      } else {
+        toast.error('Failed to update category status')
+      }
+    } catch (error) {
+      console.error('Error toggling category status:', error)
+      toast.error('Failed to update category status')
+    }
+  }
 
   useEffect(() => {
     localStorage.setItem('admin_theme', theme)
@@ -84,43 +231,204 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     toast.success('Request deleted')
   }
 
-  const deleteProduct = (id: string | number) => {
-    dispatch(removeProduct(id))
-    toast.success('Product deleted')
+  const deleteProduct = async (id: string | number) => {
+    const confirmed = window.confirm('Are you sure you want to delete this product?')
+    if (!confirmed) return
+
+    try {
+      const response = await adminProductService.deleteProduct(id.toString())
+      if (response.ok) {
+        toast.success('Product deleted successfully')
+        loadProducts() // Reload products list
+      } else {
+        toast.error('Failed to delete product')
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      toast.error('Failed to delete product')
+    }
   }
 
-  const handleProductSubmit = (e: React.FormEvent) => {
+  const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newProduct = {
-      id: editingProduct ? (editingProduct as any).id : Date.now(),
-      name: productForm.name,
-      price: parseInt(productForm.price),
-      description: productForm.description,
-      available: productForm.available,
-      image: 'placeholder'
-    }
+    
+    try {
+      const productData = {
+        name: productForm.name,
+        category: productForm.category,
+        short_description: productForm.short_description,
+        detailed_description: productForm.detailed_description,
+        unit_price: parseFloat(productForm.unit_price),
+        available_colors: productForm.available_colors,
+        available_materials: productForm.available_materials,
+        published: productForm.published,
+        currency: 'RWF',
+        length: productForm.length ? parseFloat(productForm.length) : null,
+        width: productForm.width ? parseFloat(productForm.width) : null,
+        height: productForm.height ? parseFloat(productForm.height) : null
+      }
 
-    if (editingProduct) {
-      dispatch(updateProduct(newProduct))
-      setEditingProduct(null)
-    } else {
-      dispatch(addProduct(newProduct))
-    }
+      let response
+      if (editingProduct) {
+        response = await adminProductService.updateProduct(editingProduct.id, productData)
+      } else {
+        response = await adminProductService.createProduct(productData)
+      }
 
-    setProductForm({ name: '', price: '', description: '', available: true })
-    setShowProductForm(false)
-    toast.success(editingProduct ? 'Product updated' : 'Product created')
+      if (response.ok && response.data) {
+        // Upload multiple images if provided
+        if (productImages.length > 0 && response.data.id) {
+          toast.loading('Uploading images...', { id: 'upload-progress' });
+          
+          const uploadResult = await adminProductService.uploadMultipleProductImages(
+            response.data.id,
+            productImages,
+            mainImageIndex,
+            productForm.name
+          )
+          
+          toast.dismiss('upload-progress');
+          
+          if (!uploadResult.ok) {
+            toast.error(uploadResult.error || 'Some images failed to upload');
+          } else {
+            toast.success('All images uploaded successfully');
+          }
+        }
+
+        toast.success(editingProduct ? 'Product updated successfully' : 'Product created successfully')
+        setShowProductForm(false)
+        resetProductForm()
+        loadProducts() // Reload products list
+      } else {
+        toast.error(typeof response.error === 'string' ? response.error : 'Failed to save product: ' + JSON.stringify(response.error))
+      }
+    } catch (error: any) {
+      console.error('Error saving product:', error)
+      toast.error(error.message || 'Failed to save product')
+    }
   }
 
-  const editProduct = (product: any) => {
+  const editProduct = async (product: any) => {
     setEditingProduct(product)
     setProductForm({
       name: product.name,
-      price: product.price.toString(),
-      description: product.description,
-      available: product.available
+      category: product.category?.id || product.category || '',
+      short_description: product.short_description || '',
+      detailed_description: product.detailed_description || '',
+      unit_price: product.unit_price?.toString() || '',
+      available_colors: product.available_colors || '',
+      available_materials: product.available_materials || '',
+      published: product.published !== undefined ? product.published : true,
+      length: product.length?.toString() || '',
+      width: product.width?.toString() || '',
+      height: product.height?.toString() || ''
     })
+    
+    // Load existing images
+    if (product.media && product.media.length > 0) {
+      setExistingImages(product.media)
+      // Find main image (display_order = 0)
+      const mainIndex = product.media.findIndex((m: any) => m.display_order === 0)
+      setMainImageIndex(mainIndex >= 0 ? mainIndex : 0)
+    }
+    
     setShowProductForm(true)
+  }
+
+  const resetProductForm = () => {
+    setProductForm({
+      name: '',
+      category: '',
+      short_description: '',
+      detailed_description: '',
+      unit_price: '',
+      available_colors: '',
+      available_materials: '',
+      published: true,
+      length: '',
+      width: '',
+      height: ''
+    })
+    setProductImages([])
+    setImagePreviews([])
+    setExistingImages([])
+    setMainImageIndex(0)
+    setEditingProduct(null)
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files) as File[]
+      setProductImages(prev => [...prev, ...fileArray])
+      
+      // Generate previews for all new files
+      fileArray.forEach(file => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+  }
+
+  const removeNewImage = (index: number) => {
+    setProductImages(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+    // Adjust main image index if needed
+    if (mainImageIndex === index + existingImages.length) {
+      setMainImageIndex(0)
+    } else if (mainImageIndex > index + existingImages.length) {
+      setMainImageIndex(prev => prev - 1)
+    }
+  }
+
+  const removeExistingImage = async (imageId: string, index: number) => {
+    const confirmed = window.confirm('Are you sure you want to delete this image?')
+    if (!confirmed) return
+
+    try {
+      const response = await adminProductService.deleteProductMedia(imageId)
+      if (response.ok) {
+        setExistingImages(prev => prev.filter((_, i) => i !== index))
+        toast.success('Image deleted successfully')
+        // Adjust main image index if needed
+        if (mainImageIndex === index) {
+          setMainImageIndex(0)
+        } else if (mainImageIndex > index) {
+          setMainImageIndex(prev => prev - 1)
+        }
+      } else {
+        toast.error('Failed to delete image')
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      toast.error('Failed to delete image')
+    }
+  }
+
+  const setAsMainImage = (index: number) => {
+    setMainImageIndex(index)
+  }
+
+  const toggleProductPublish = async (product: any) => {
+    try {
+      const response = product.published
+        ? await adminProductService.unpublishProduct(product.id)
+        : await adminProductService.publishProduct(product.id)
+
+      if (response.ok) {
+        toast.success(product.published ? 'Product unpublished' : 'Product published')
+        loadProducts() // Reload products list
+      } else {
+        toast.error('Failed to update product status')
+      }
+    } catch (error) {
+      console.error('Error toggling product publish status:', error)
+      toast.error('Failed to update product status')
+    }
   }
 
   const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
@@ -208,7 +516,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         <nav className="flex-1 w-full space-y-2 px-3">
           <SidebarLink active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} icon={<LayoutDashboard size={20} />} label="Dashboard" />
           <SidebarLink active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<UsersIcon size={20} />} label="Users" />
-          <SidebarLink active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<Briefcase size={20} />} label="Products" />
+          <SidebarLink active={activeTab === 'categories'} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }} icon={<Briefcase size={20} />} label="Categories" />
+          <SidebarLink active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={20} />} label="Products" />
           <SidebarLink active={activeTab === 'orders'} onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={20} />} label="Shop Orders" />
           <SidebarLink active={activeTab === 'requests'} onClick={() => { setActiveTab('requests'); setIsSidebarOpen(false); }} icon={<ClipboardList size={20} />} label="Custom Requests" />
           <SidebarLink active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} icon={<Settings size={20} />} label="Settings" />
@@ -398,6 +707,98 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             </div>
           )}
 
+
+          {activeTab === 'categories' && (
+            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Category Management</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Manage product categories and their settings</p>
+                </div>
+                {!showCategoryForm && (
+                  <button onClick={() => { setShowCategoryForm(true); resetCategoryForm(); }} className="flex items-center space-x-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-primary/20">
+                    <Plus size={20} />
+                    <span>Add Category</span>
+                  </button>
+                )}
+              </div>
+              {showCategoryForm && (
+                <motion.form initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleCategorySubmit} className="mb-12 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 rounded-[32px] border border-gray-100 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">{editingCategory ? 'Edit Category' : 'New Category'}</h3>
+                    <button type="button" onClick={() => setShowCategoryForm(false)} className="w-10 h-10 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Category Name <span className="text-red-500">*</span></label>
+                      <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white" placeholder="e.g., 3D Printing" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Pricing Type</label>
+                      <select value={categoryForm.pricing_type} onChange={(e) => setCategoryForm({ ...categoryForm, pricing_type: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white">
+                        <option value="custom">Custom Quote</option>
+                        <option value="fixed">Fixed Price</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Description <span className="text-red-500">*</span></label>
+                      <textarea rows={4} value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white" placeholder="Describe this category and what types of products it includes..." required />
+                    </div>
+                    <div className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700">
+                      <input type="checkbox" id="requires_dimensions" checked={categoryForm.requires_dimensions} onChange={(e) => setCategoryForm({ ...categoryForm, requires_dimensions: e.target.checked })} className="w-6 h-6 accent-brand-primary rounded-lg" />
+                      <label htmlFor="requires_dimensions" className="text-sm font-bold text-slate-800 dark:text-white">Requires Dimensions</label>
+                    </div>
+                    <div className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700">
+                      <input type="checkbox" id="requires_material" checked={categoryForm.requires_material} onChange={(e) => setCategoryForm({ ...categoryForm, requires_material: e.target.checked })} className="w-6 h-6 accent-brand-primary rounded-lg" />
+                      <label htmlFor="requires_material" className="text-sm font-bold text-slate-800 dark:text-white">Requires Material</label>
+                    </div>
+                    <div className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700">
+                      <input type="checkbox" id="is_active" checked={categoryForm.is_active} onChange={(e) => setCategoryForm({ ...categoryForm, is_active: e.target.checked })} className="w-6 h-6 accent-brand-primary rounded-lg" />
+                      <label htmlFor="is_active" className="text-sm font-bold text-slate-800 dark:text-white">Active</label>
+                    </div>
+                  </div>
+                  <div className="mt-10 flex justify-end space-x-4">
+                    <button type="button" onClick={() => setShowCategoryForm(false)} className="px-8 py-4 text-slate-500 dark:text-slate-400 font-bold hover:text-slate-700 dark:hover:text-slate-200 transition-all">Cancel</button>
+                    <button type="submit" className="flex items-center space-x-2 px-10 py-4 bg-brand-primary text-white rounded-2xl font-bold shadow-xl shadow-brand-primary/20 hover:scale-[1.02] active:scale-95 transition-all"><Save size={22} /><span>{editingCategory ? 'Update Category' : 'Save Category'}</span></button>
+                  </div>
+                </motion.form>
+              )}
+              <div className="space-y-6">
+                {categoriesLoading ? (
+                  <div className="text-center py-20"><p className="text-slate-500 dark:text-slate-400">Loading categories...</p></div>
+                ) : categories.length === 0 ? (
+                  <EmptyState icon={<Briefcase size={40} />} text="No categories yet. Create one to get started!" />
+                ) : (
+                  categories.map((cat: any) => (
+                    <motion.div key={cat.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-slate-50 dark:bg-slate-800/30 rounded-[40px] border border-gray-100 dark:border-slate-800/50 group transition-colors">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-3">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white">{cat.name}</h3>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cat.is_active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>{cat.is_active ? 'Active' : 'Inactive'}</span>
+                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-brand-primary/10 text-brand-primary">{cat.pricing_type === 'fixed' ? 'Fixed Price' : 'Custom Quote'}</span>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{cat.description}</p>
+                          <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400">
+                            {cat.requires_dimensions && <span className="flex items-center gap-1"><CheckCircle2 size={14} className="text-brand-primary" />Requires Dimensions</span>}
+                            {cat.requires_material && <span className="flex items-center gap-1"><CheckCircle2 size={14} className="text-brand-primary" />Requires Material</span>}
+                            <span>{cat.product_count || 0} products</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleCategoryStatus(cat)} className={`p-2 rounded-xl transition-all ${cat.is_active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'}`} title={cat.is_active ? 'Deactivate' : 'Activate'}>{cat.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}</button>
+                          <button onClick={() => editCategory(cat)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all" title="Edit Category"><Edit2 size={20} /></button>
+                          <button onClick={() => deleteCategory(cat.id)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all" title="Delete Category"><Trash2 size={20} /></button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+
           {activeTab === 'products' && (
             <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
@@ -409,8 +810,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   <button
                     onClick={() => {
                       setShowProductForm(true)
-                      setEditingProduct(null)
-                      setProductForm({ name: '', price: '', description: '', available: true })
+                      resetProductForm()
                     }}
                     className="flex items-center space-x-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-primary/20"
                   >
@@ -434,6 +834,105 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Product Images Upload */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Product Images</label>
+                      
+                      {/* Image Gallery */}
+                      {(existingImages.length > 0 || imagePreviews.length > 0) && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                          {/* Existing Images */}
+                          {existingImages.map((media, index) => (
+                            <div key={media.id} className="relative group">
+                              <div className={`w-full h-32 rounded-2xl overflow-hidden border-2 ${mainImageIndex === index ? 'border-brand-primary' : 'border-gray-100 dark:border-slate-700'}`}>
+                                <img src={media.image} alt={media.alt_text || `Image ${index + 1}`} className="w-full h-full object-cover" />
+                              </div>
+                              {mainImageIndex === index && (
+                                <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs font-bold px-2 py-1 rounded-lg">
+                                  Main
+                                </div>
+                              )}
+                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {mainImageIndex !== index && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAsMainImage(index)}
+                                    className="bg-white dark:bg-slate-800 p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-brand-primary transition-all shadow-sm"
+                                    title="Set as main image"
+                                  >
+                                    <CheckCircle2 size={16} />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingImage(media.id, index)}
+                                  className="bg-white dark:bg-slate-800 p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all shadow-sm"
+                                  title="Delete image"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* New Images */}
+                          {imagePreviews.map((preview, index) => {
+                            const actualIndex = existingImages.length + index;
+                            return (
+                              <div key={`new-${index}`} className="relative group">
+                                <div className={`w-full h-32 rounded-2xl overflow-hidden border-2 ${mainImageIndex === actualIndex ? 'border-brand-primary' : 'border-gray-100 dark:border-slate-700'}`}>
+                                  <img src={preview} alt={`New image ${index + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                                {mainImageIndex === actualIndex && (
+                                  <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs font-bold px-2 py-1 rounded-lg">
+                                    Main
+                                  </div>
+                                )}
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {mainImageIndex !== actualIndex && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setAsMainImage(actualIndex)}
+                                      className="bg-white dark:bg-slate-800 p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-brand-primary transition-all shadow-sm"
+                                      title="Set as main image"
+                                    >
+                                      <CheckCircle2 size={16} />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeNewImage(index)}
+                                    className="bg-white dark:bg-slate-800 p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all shadow-sm"
+                                    title="Remove image"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                                <div className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+                                  New
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      
+                      {/* Upload Button */}
+                      <label className="flex flex-col items-center justify-center px-6 py-8 bg-white dark:bg-slate-800 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-brand-primary transition-all">
+                        <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                        <span className="text-sm font-bold text-slate-600 dark:text-slate-400">Click to upload images</span>
+                        <span className="text-xs text-slate-400 mt-1">PNG, JPG up to 10MB (multiple files supported)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Product Name */}
                     <div>
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Product Name</label>
                       <input
@@ -445,37 +944,137 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         required
                       />
                     </div>
+
+                    {/* Category */}
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Category</label>
+                      <select
+                        value={productForm.category}
+                        onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Dimensions (Conditionally Rendered) */}
+                    {categories.find(c => c.id === productForm.category)?.requires_dimensions && (
+                      <div className="md:col-span-2 grid grid-cols-3 gap-4">
+                         <div>
+                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Length (cm)</label>
+                          <input
+                            type="number"
+                            value={productForm.length || ''}
+                            onChange={(e) => setProductForm({ ...productForm, length: e.target.value })}
+                            className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                            placeholder="0.00"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Width (cm)</label>
+                          <input
+                            type="number"
+                            value={productForm.width || ''}
+                            onChange={(e) => setProductForm({ ...productForm, width: e.target.value })}
+                            className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                            placeholder="0.00"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Height (cm)</label>
+                          <input
+                            type="number"
+                            value={productForm.height || ''}
+                            onChange={(e) => setProductForm({ ...productForm, height: e.target.value })}
+                            className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                            placeholder="0.00"
+                            step="0.01"
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price */}
                     <div>
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Price (RWF)</label>
                       <input
                         type="number"
-                        value={productForm.price}
-                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                        value={productForm.unit_price}
+                        onChange={(e) => setProductForm({ ...productForm, unit_price: e.target.value })}
                         className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
                         placeholder="50,000"
                         required
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Description</label>
-                      <textarea
-                        rows={4}
-                        value={productForm.description}
-                        onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+
+                    {/* Available Colors */}
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Available Colors</label>
+                      <input
+                        type="text"
+                        value={productForm.available_colors}
+                        onChange={(e) => setProductForm({ ...productForm, available_colors: e.target.value })}
                         className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
-                        placeholder="Detail about the product material, size, and use..."
+                        placeholder="e.g., Red, Blue, Green"
+                      />
+                    </div>
+
+                    {/* Available Materials */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Available Materials</label>
+                      <input
+                        type="text"
+                        value={productForm.available_materials}
+                        onChange={(e) => setProductForm({ ...productForm, available_materials: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                        placeholder="e.g., PLA, ABS, PETG"
+                      />
+                    </div>
+
+                    {/* Short Description */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Short Description</label>
+                      <input
+                        type="text"
+                        value={productForm.short_description}
+                        onChange={(e) => setProductForm({ ...productForm, short_description: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                        placeholder="Brief one-line description"
                         required
                       />
                     </div>
+
+                    {/* Detailed Description */}
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Detailed Description</label>
+                      <textarea
+                        rows={4}
+                        value={productForm.detailed_description}
+                        onChange={(e) => setProductForm({ ...productForm, detailed_description: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-800 px-5 py-4 rounded-2xl border border-gray-100 dark:border-slate-700 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all dark:text-white"
+                        placeholder="Detail about the product material, size, and use..."
+                      />
+                    </div>
+
+                    {/* Published Toggle */}
                     <div className="flex items-center space-x-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700">
                       <input
                         type="checkbox"
-                        id="available"
-                        checked={productForm.available}
-                        onChange={(e) => setProductForm({ ...productForm, available: e.target.checked })}
+                        id="published"
+                        checked={productForm.published}
+                        onChange={(e) => setProductForm({ ...productForm, published: e.target.checked })}
                         className="w-6 h-6 accent-brand-primary rounded-lg"
                       />
-                      <label htmlFor="available" className="text-sm font-bold text-slate-800 dark:text-white">Available for Purchase</label>
+                      <label htmlFor="published" className="text-sm font-bold text-slate-800 dark:text-white">Publish to Website</label>
                     </div>
                   </div>
                   <div className="mt-10 flex justify-end space-x-4">
@@ -498,7 +1097,11 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {products.length === 0 ? (
+                {productsLoading ? (
+                  <div className="col-span-2 text-center py-20">
+                    <p className="text-slate-500 dark:text-slate-400">Loading products...</p>
+                  </div>
+                ) : adminProducts.length === 0 ? (
                   <div className="col-span-2 text-center py-20 bg-slate-50 dark:bg-slate-800/30 rounded-[40px] border border-dashed border-slate-200 dark:border-slate-700">
                     <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                       <ShoppingBag className="text-slate-300 dark:text-slate-600" size={32} />
@@ -506,15 +1109,31 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     <p className="text-slate-500 dark:text-slate-400 font-bold">No products listed in the shop yet.</p>
                   </div>
                 ) : (
-                  products.map((p: any) => (
+                  adminProducts.map((p: any) => (
                     <motion.div
                       key={p.id}
                       layout
                       className="group bg-white dark:bg-[#1E293B] p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 hover:border-brand-primary/30 dark:hover:border-brand-primary/50 hover:shadow-xl transition-all relative"
                     >
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 dark:text-slate-500">
-                          <ShoppingBag size={28} />
+                      {/* Product Image Thumbnail */}
+                      {p.media && p.media.length > 0 && p.media[0].image ? (
+                        <div className="w-full h-48 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                          <img 
+                            src={p.media[0].image} 
+                            alt={p.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-48 mb-4 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <ImageIcon className="text-slate-300 dark:text-slate-600" size={48} />
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{p.name}</h3>
+                          <p className="text-xs text-slate-400">{p.category_name || 'Uncategorized'}</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <button
@@ -536,15 +1155,21 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         </div>
                       </div>
 
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{p.name}</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed line-clamp-2">{p.description}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed line-clamp-2">{p.short_description || p.detailed_description}</p>
 
                       <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-slate-800">
-                        <span className="text-lg font-black text-slate-800 dark:text-white">{p.price.toLocaleString()} <span className="text-xs font-bold text-slate-500 dark:text-slate-400">RWF</span></span>
-                        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full ${p.available ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${p.available ? 'bg-brand-primary' : 'bg-red-500'}`} />
-                          <span className="text-[10px] font-black uppercase tracking-wider">{p.available ? 'In Stock' : 'Sold Out'}</span>
-                        </div>
+                        <span className="text-lg font-black text-slate-800 dark:text-white">{p.unit_price?.toLocaleString() || 0} <span className="text-xs font-bold text-slate-500 dark:text-slate-400">RWF</span></span>
+                        <button
+                          onClick={() => toggleProductPublish(p)}
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-all ${
+                            p.published 
+                              ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' 
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
+                          }`}
+                        >
+                          {p.published ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                          <span className="text-xs font-bold">{p.published ? 'Published' : 'Unpublished'}</span>
+                        </button>
                       </div>
                     </motion.div>
                   ))
@@ -881,3 +1506,4 @@ const EmptyState: React.FC<{ icon: React.ReactNode, text: string }> = ({ icon, t
 )
 
 export default Admin
+

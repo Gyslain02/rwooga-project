@@ -1,24 +1,71 @@
-
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RootState, AppDispatch } from '@/store';
-import { clearCart } from '@/store/slices/cartSlice';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Smartphone, CheckCircle, ArrowLeft, Loader2, ShieldCheck, MapPin, User, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { useAuth } from '@/context/AuthContext';
+import MomoPayment from '@/components/MomoPayment';
+import CardPayment from '@/components/CardPayment';
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  currency: string;
+}
 
 const Checkout: React.FC = () => {
-    const { items: cart, total } = useSelector((state: RootState) => state.cart);
     const { user } = useAuth();
-    const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Price formatting utility
+    const formatPrice = (price: number, currency: string = 'RWF') => {
+      return `${currency} ${Number(price).toLocaleString('en-US', { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2 
+      })}`;
+    };
+
+    // Calculate total
+    const getTotal = () => {
+      return cart.reduce((sum, item) => sum + item.price, 0);
+    };
+
+    useEffect(() => {
+      // Load cart from localStorage on mount
+      try {
+        const savedCart = localStorage.getItem('cart_items');
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart);
+          // Ensure prices are numbers
+          const cartWithNumbers = parsedCart.map((item: any) => ({
+            ...item,
+            price: Number(item.price) || 0
+          }));
+          setCart(cartWithNumbers);
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+    const handleClearCart = () => {
+      setCart([]);
+      localStorage.removeItem('cart_items');
+    };
 
     const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [showMomoPayment, setShowMomoPayment] = useState(false);
+    const [showCardPayment, setShowCardPayment] = useState(false);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         phone: user?.phone || '',
@@ -26,28 +73,93 @@ const Checkout: React.FC = () => {
         city: 'Kigali',
     });
 
+    // Monitor form data changes
+    useEffect(() => {
+        console.log('Form data updated:', formData);
+    }, [formData]);
+
     const handlePlaceOrder = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('Form submitted with data:', formData);
+        console.log('Payment method:', paymentMethod);
+        
         if (!paymentMethod) {
             toast.error('Please select a payment method');
             return;
         }
 
+        if (paymentMethod === 'momo') {
+            setShowMomoPayment(true);
+            return;
+        }
+        
+        if (paymentMethod === 'card') {
+            setShowCardPayment(true);
+            return;
+        }
+
+        // Handle card payment (existing logic)
         setIsProcessing(true);
-
-
         setTimeout(() => {
             setIsProcessing(false);
             setIsSuccess(true);
-            dispatch(clearCart());
+            handleClearCart();
             toast.success('Payment successful! Your order is being processed.');
-
-
             setTimeout(() => {
                 navigate('/');
             }, 5000);
         }, 3000);
     };
+
+    const handleMomoPaymentSuccess = (transactionId: string) => {
+        setIsProcessing(false);
+        setIsSuccess(true);
+        handleClearCart();
+        toast.success(`Payment successful! Transaction ID: ${transactionId}`);
+        setTimeout(() => {
+            navigate('/');
+        }, 5000);
+    };
+
+    const handleCardPaymentSuccess = (transactionId: string) => {
+        setIsProcessing(false);
+        setIsSuccess(true);
+        handleClearCart();
+        toast.success(`Card Payment successful! Transaction ID: ${transactionId}`);
+        setTimeout(() => {
+            navigate('/');
+        }, 5000);
+    };
+
+    const handleMomoPaymentError = (error: string) => {
+        setIsProcessing(false);
+        setShowMomoPayment(false);
+        toast.error(error);
+    };
+
+    const handleMomoPaymentCancel = () => {
+        setIsProcessing(false);
+        setShowMomoPayment(false);
+    };
+
+    const handleCardPaymentError = (error: string) => {
+        setIsProcessing(false);
+        // Don't close modal on error so user can retry
+        toast.error(error);
+    };
+
+    const handleCardPaymentCancel = () => {
+        setIsProcessing(false);
+        setShowCardPayment(false);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-brand-dark flex items-center justify-center">
+                <Loader2 className="animate-spin text-white" size={48} />
+            </div>
+        );
+    }
 
     if (cart.length === 0 && !isSuccess) {
         return (
@@ -55,7 +167,7 @@ const Checkout: React.FC = () => {
                 <h2 className="text-3xl font-display font-bold text-white mb-6">Your cart is empty</h2>
                 <button
                     onClick={() => navigate('/shop')}
-                    className="px-8 py-4 bg-brand-primary text-black font-bold rounded-full hover:scale-105 transition-all"
+                    className="px-8 py-4 bg-green-600 text-white font-bold rounded-full hover:bg-green-700 transition-all"
                 >
                     BACK TO SHOP
                 </button>
@@ -78,7 +190,7 @@ const Checkout: React.FC = () => {
                     <p className="text-gray-400 mb-8 leading-relaxed">Thank you for your purchase. We've sent a confirmation email with your order details.</p>
                     <button
                         onClick={() => navigate('/')}
-                        className="w-full py-4 bg-brand-primary text-black font-bold rounded-2xl hover:brightness-110 transition-all"
+                        className="w-full py-4 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all"
                     >
                         RETURN TO HOME
                     </button>
@@ -97,163 +209,278 @@ const Checkout: React.FC = () => {
                     <ArrowLeft size={16} /> Back to Shop
                 </button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                <form onSubmit={handlePlaceOrder}>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                        <div className="space-y-12">
+                            <section>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <span className="w-8 h-8 bg-brand-primary text-black rounded-full flex items-center justify-center font-bold text-sm">1</span>
+                                    <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Shipping Details</h2>
+                                </div>
 
-                    <div className="space-y-12">
-                        <section>
-                            <div className="flex items-center gap-4 mb-8">
-                                <span className="w-8 h-8 bg-brand-primary text-black rounded-full flex items-center justify-center font-bold text-sm">1</span>
-                                <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Shipping Details</h2>
-                            </div>
-
-                            <form className="space-y-5">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
+                                            <div className="relative">
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={18} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.name}
+                                                    onChange={(e) => {
+                                                        console.log('Form name input changed:', e.target.value);
+                                                        setFormData({ ...formData, name: e.target.value });
+                                                    }}
+                                                    style={{ 
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                        color: 'white',
+                                                        padding: '16px 48px',
+                                                        borderRadius: '16px',
+                                                        outline: 'none',
+                                                        width: '100%',
+                                                        fontSize: '16px',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
+                                                    placeholder="Recipient Name"
+                                                    required
+                                                    autoComplete="name"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Phone Number</label>
+                                            <div className="relative">
+                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={18} />
+                                                <input
+                                                    type="tel"
+                                                    value={formData.phone}
+                                                    onChange={(e) => {
+                                                        console.log('Form phone input changed:', e.target.value);
+                                                        setFormData({ ...formData, phone: e.target.value });
+                                                    }}
+                                                    onFocus={(e) => console.log('Form phone input focused')}
+                                                    style={{ 
+                                                        backgroundColor: '#1a1a1a',
+                                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                        color: 'white',
+                                                        padding: '16px 48px',
+                                                        borderRadius: '16px',
+                                                        outline: 'none',
+                                                        width: '100%',
+                                                        fontSize: '16px',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
+                                                    placeholder="0788xxxxxx or 0789xxxxxx"
+                                                    required
+                                                    autoComplete="tel"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Delivery Address</label>
                                         <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
                                             <input
                                                 type="text"
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                                 className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white outline-none focus:border-brand-primary transition-all"
-                                                placeholder="Recipient Name"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Phone Number</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                                            <input
-                                                type="tel"
-                                                value={formData.phone}
-                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white outline-none focus:border-brand-primary transition-all"
-                                                placeholder="07..."
+                                                placeholder="Street, District, Plot..."
+                                                required
                                             />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Delivery Address</label>
-                                    <div className="relative">
-                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
-                                        <input
-                                            type="text"
-                                            value={formData.address}
-                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white outline-none focus:border-brand-primary transition-all"
-                                            placeholder="Street, District, Plot..."
-                                        />
-                                    </div>
+                            </section>
+
+                            <section>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <span className="w-8 h-8 bg-brand-primary text-black rounded-full flex items-center justify-center font-bold text-sm">2</span>
+                                    <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Payment Method</h2>
                                 </div>
-                            </form>
-                        </section>
 
-                        <section>
-                            <div className="flex items-center gap-4 mb-8">
-                                <span className="w-8 h-8 bg-brand-primary text-black rounded-full flex items-center justify-center font-bold text-sm">2</span>
-                                <h2 className="text-2xl font-bold text-white uppercase tracking-tight">Payment Method</h2>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <button
-                                    onClick={() => setPaymentMethod('momo')}
-                                    className={`flex items-center gap-5 p-6 rounded-3xl border transition-all text-left ${paymentMethod === 'momo'
-                                        ? 'bg-brand-primary/10 border-brand-primary'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                                        }`}
-                                >
-                                    <div className={`p-4 rounded-2xl ${paymentMethod === 'momo' ? 'bg-brand-primary text-black' : 'bg-white/5 text-gray-400'}`}>
-                                        <Smartphone size={24} />
-                                    </div>
-                                    <div>
-                                        <p className={`font-bold ${paymentMethod === 'momo' ? 'text-white' : 'text-gray-400'}`}>Mobile Money</p>
-                                        <p className="text-xs text-gray-500 font-medium">MTN/Airtel Rwanda</p>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => setPaymentMethod('card')}
-                                    className={`flex items-center gap-5 p-6 rounded-3xl border transition-all text-left ${paymentMethod === 'card'
-                                        ? 'bg-brand-primary/10 border-brand-primary'
-                                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                                        }`}
-                                >
-                                    <div className={`p-4 rounded-2xl ${paymentMethod === 'card' ? 'bg-brand-primary text-black' : 'bg-white/5 text-gray-400'}`}>
-                                        <CreditCard size={24} />
-                                    </div>
-                                    <div>
-                                        <p className={`font-bold ${paymentMethod === 'card' ? 'text-white' : 'text-gray-400'}`}>Credit/Debit Card</p>
-                                        <p className="text-xs text-gray-500 font-medium">Visa, Mastercard</p>
-                                    </div>
-                                </button>
-                            </div>
-                        </section>
-                    </div>
-
-                    {/* Right Side: Order Summary */}
-                    <div className="bg-[#111418] border border-white/5 rounded-[40px] p-10 lg:sticky lg:top-32 shadow-2xl">
-                        <h3 className="text-2xl font-bold text-white mb-10 uppercase tracking-tight">Order Summary</h3>
-
-                        <div className="space-y-6 mb-10 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                            {cart.map((item, idx) => (
-                                <div key={idx} className="flex justify-between items-center group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-2xl bg-white/5 overflow-hidden border border-white/5">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('momo')}
+                                        className={`flex items-center gap-5 p-6 rounded-3xl border transition-all text-left ${paymentMethod === 'momo'
+                                            ? 'bg-green-700/20 border-green-600'
+                                            : 'bg-white/5 border-white/10 hover:border-green-600/50'
+                                            }`}
+                                    >
+                                        <div className={`p-4 rounded-2xl ${paymentMethod === 'momo' ? 'bg-green-600 text-white' : 'bg-white/5 text-gray-400'}`}>
+                                            <Smartphone size={24} />
                                         </div>
                                         <div>
-                                            <p className="text-white font-bold">{item.name}</p>
-                                            <p className="text-gray-500 text-xs uppercase tracking-widest font-bold">{item.category}</p>
+                                            <p className={`font-bold ${paymentMethod === 'momo' ? 'text-white' : 'text-gray-400'}`}>Mobile Money</p>
+                                            <p className="text-xs text-gray-500 font-medium">MTN/Airtel Rwanda</p>
                                         </div>
-                                    </div>
-                                    <p className="text-white font-bold">{item.price.toLocaleString()} RWF</p>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('card')}
+                                        className={`flex items-center gap-5 p-6 rounded-3xl border transition-all text-left ${paymentMethod === 'card'
+                                            ? 'bg-green-700/20 border-green-600'
+                                            : 'bg-white/5 border-white/10 hover:border-green-600/50'
+                                            }`}
+                                    >
+                                        <div className={`p-4 rounded-2xl ${paymentMethod === 'card' ? 'bg-green-600 text-white' : 'bg-white/5 text-gray-400'}`}>
+                                            <CreditCard size={24} />
+                                        </div>
+                                        <div>
+                                            <p className={`font-bold ${paymentMethod === 'card' ? 'text-white' : 'text-gray-400'}`}>Credit/Debit Card</p>
+                                            <p className="text-xs text-gray-500 font-medium">Visa, Mastercard</p>
+                                        </div>
+                                    </button>
                                 </div>
-                            ))}
+                            </section>
                         </div>
 
-                        <div className="space-y-4 border-t border-white/5 pt-8">
-                            <div className="flex justify-between text-gray-500 font-bold uppercase tracking-widest text-xs">
-                                <span>Subtotal</span>
-                                <span>{total.toLocaleString()} RWF</span>
-                            </div>
-                            <div className="flex justify-between text-gray-500 font-bold uppercase tracking-widest text-xs">
-                                <span>Shipping</span>
-                                <span className="text-brand-primary">FREE</span>
-                            </div>
-                            <div className="flex justify-between items-end pt-4 border-t border-white/5 mt-4">
-                                <span className="text-white font-bold uppercase tracking-tighter text-lg">Total</span>
-                                <span className="text-4xl font-display font-bold text-white tracking-tighter">
-                                    {total.toLocaleString()} <span className="text-lg">RWF</span>
-                                </span>
-                            </div>
-                        </div>
+                        {/* Right Side: Order Summary */}
+                        <div className="bg-[#111418] border border-white/5 rounded-[40px] p-10 lg:sticky lg:top-32 shadow-2xl">
+                            <h3 className="text-2xl font-bold text-white mb-10 uppercase tracking-tight">Order Summary</h3>
 
-                        <div className="mt-10 pt-10 border-t border-white/5 space-y-6">
-                            <div className="flex items-center gap-3 text-gray-500">
-                                <ShieldCheck size={18} className="text-brand-primary" />
-                                <p className="text-xs font-bold uppercase tracking-widest italic">Security Guaranteed</p>
+                            <div className="space-y-6 mb-10 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                {cart.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 rounded-2xl bg-white/5 overflow-hidden border border-white/5">
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-bold">{item.name}</p>
+                                                <p className="text-gray-500 text-xs uppercase tracking-widest font-bold">{item.category}</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-white font-bold">{formatPrice(item.price, item.currency)}</p>
+                                    </div>
+                                ))}
                             </div>
 
-                            <button
-                                onClick={handlePlaceOrder}
-                                disabled={isProcessing}
-                                className="w-full bg-brand-primary text-black py-6 rounded-3xl font-extrabold text-xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-3 shadow-2xl shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={24} />
-                                        PROCESSING PAYMENT...
-                                    </>
-                                ) : (
-                                    <>PAY {total.toLocaleString()} RWF</>
-                                )}
-                            </button>
+                            <div className="space-y-4 border-t border-white/5 pt-8">
+                                <div className="flex justify-between text-gray-500 font-bold uppercase tracking-widest text-xs">
+                                    <span>Subtotal</span>
+                                    <span>{formatPrice(getTotal())}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-500 font-bold uppercase tracking-widest text-xs">
+                                    <span>Shipping</span>
+                                    <span className="text-brand-primary">FREE</span>
+                                </div>
+                                <div className="flex justify-between items-end pt-4 border-t border-white/5 mt-4">
+                                    <span className="text-white font-bold uppercase tracking-tighter text-lg">Total</span>
+                                    <span className="text-4xl font-display font-bold text-white tracking-tighter">
+                                        {formatPrice(getTotal())}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-10 pt-10 border-t border-white/5 space-y-6">
+                                <div className="flex items-center gap-3 text-gray-500">
+                                    <ShieldCheck size={18} className="text-brand-primary" />
+                                    <p className="text-xs font-bold uppercase tracking-widest italic">Security Guaranteed</p>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isProcessing}
+                                    className="w-full bg-green-700 text-white py-6 rounded-3xl font-extrabold text-xl hover:bg-green-800 active:scale-[0.99] transition-all flex items-center justify-center gap-3 shadow-2xl shadow-green-700/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isProcessing ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={24} />
+                                            PROCESSING PAYMENT...
+                                        </>
+                                    ) : (
+                                        <>PAY {formatPrice(getTotal())}</>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </form>
+
+                {/* MTN Mobile Money Payment Modal */}
+                <AnimatePresence>
+                    {showMomoPayment && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+                            onClick={() => setShowMomoPayment(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-2xl font-bold text-gray-900">MTN Mobile Money</h3>
+                                    <button
+                                        onClick={() => setShowMomoPayment(false)}
+                                        className="text-gray-400 hover:text-gray-600"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <MomoPayment
+                                    amount={getTotal()}
+                                    customerName={formData.name}
+                                    customerEmail={user?.email}
+                                    onSuccess={handleMomoPaymentSuccess}
+                                    onError={handleMomoPaymentError}
+                                    onCancel={handleMomoPaymentCancel}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Card Payment Modal */}
+                <AnimatePresence>
+                    {showCardPayment && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+                            onClick={() => setShowCardPayment(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-white rounded-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-2xl font-bold text-gray-900">Card Payment</h3>
+                                    <button
+                                        onClick={() => setShowCardPayment(false)}
+                                        className="text-gray-400 hover:text-gray-600"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <CardPayment
+                                    amount={getTotal()}
+                                    customerName={formData.name}
+                                    customerEmail={user?.email}
+                                    onSuccess={handleCardPaymentSuccess}
+                                    onError={handleCardPaymentError}
+                                    onCancel={handleCardPaymentCancel}
+                                />
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut, Heart, Package } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
@@ -15,6 +15,7 @@ import About from '@/pages/About';
 import Services from '@/pages/Services';
 import Portfolio from '@/pages/Portfolio';
 import Shop from '@/pages/Shop';
+import ProductDetail from '@/pages/ProductDetail';
 import CustomRequest from '@/pages/CustomRequest';
 import Contact from '@/pages/Contact';
 import Admin from '@/pages/Admin';
@@ -24,6 +25,10 @@ import VerifyEmail from '@/pages/VerifyEmail';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import Checkout from '@/pages/Checkout';
+import Cart from '@/pages/Cart';
+import Wishlist from '@/pages/Wishlist';
+import Orders from '@/pages/Orders';
+import Returns from '@/pages/Returns';
 import { authService } from '@/services/authService';
 
 // Assets
@@ -134,6 +139,22 @@ const AppContent: React.FC<{
                             Profile
                           </Link>
 
+                          <Link
+                            to="/wishlist"
+                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                          >
+                            <Heart size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                            Wishlist
+                          </Link>
+
+                          <Link
+                            to="/orders"
+                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                          >
+                            <Package size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                            Orders
+                          </Link>
+
                           <button
                             onClick={handleLogout}
                             className="w-full flex items-center px-5 py-3 text-sm font-bold text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all border-t border-white/5 group/item"
@@ -227,6 +248,7 @@ const AppContent: React.FC<{
           <Route path="/services" element={<Services />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/contact" element={<Contact />} />
 
           <Route path="/login" element={<Login />} />
@@ -239,7 +261,11 @@ const AppContent: React.FC<{
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/custom-request" element={<CustomRequest isEnabled={isCustomPrintingEnabled} />} />
+            <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/returns" element={<Returns />} />
           </Route>
 
           <Route element={<ProtectedRoute requiredRole="admin" />}>

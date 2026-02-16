@@ -15,6 +15,13 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // If the data is FormData, remove Content-Type header to let browser set it automatically
+        // (browser will set multipart/form-data with correct boundary)
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
+        
         return config;
     },
     (error) => {
@@ -25,15 +32,27 @@ api.interceptors.request.use(
 // Add a response interceptor for easier error handling
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const originalRequest = error.config;
+        
+        // Handle 401 Unauthorized (Invalid Token)
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            // Clear invalid token
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            
+            // Remove Authorization header and retry
+            delete originalRequest.headers['Authorization'];
+            return api(originalRequest);
+        }
+
         // Standardize error message extraction
         const message = error.response?.data?.message ||
             error.response?.data?.detail ||
             error.message ||
             'An unexpected error occurred';
-
-        // You can also handle 401 Unauthorized globally here if needed
-        // e.g., redirect to login or refresh token
 
         return Promise.reject(new Error(message));
     }
