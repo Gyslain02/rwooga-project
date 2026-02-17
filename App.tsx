@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut, Heart, Package } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -106,7 +106,15 @@ const AppContent: React.FC<{
 }> = ({ user, handleLogout, isCustomPrintingEnabled, togglePrinting }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isAdminPage = location.pathname.startsWith('/admin');
+
+  // Route protection: If admin is logged in, they can ONLY access /admin routes
+  useEffect(() => {
+    if (user?.is_admin && !location.pathname.startsWith('/admin')) {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   return (
     <div className="flex flex-col min-h-screen font-sans selection:bg-brand-primary selection:text-white">

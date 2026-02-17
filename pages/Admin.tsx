@@ -8,10 +8,13 @@ import {
   LayoutDashboard, Briefcase, ShoppingBag, ClipboardList, Settings,
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
   Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
-  Mail, Phone, LogOut, Home, Upload, Image as ImageIcon
+  Mail, Phone, LogOut, Home, Upload, Image as ImageIcon,
+  Lock, Shield, Calendar, Eye, EyeOff, RefreshCw, AlertTriangle, User
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { profileService, UserProfile } from '@/services/profileService';
+import { authService } from '@/services/authService';
 import logo from '@/assets/Rwooga logo.png'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '@/store'
@@ -38,6 +41,252 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [activeTab, setActiveTab] = useState('dashboard')
   const { adminTheme: theme } = useSelector((state: RootState) => state.settings)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  // Profile State
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Profile form state
+  const [profileFormState, setProfileFormState] = useState({
+    full_name: '',
+    phone_number: ''
+  });
+
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Email change state
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [emailChangeStep, setEmailChangeStep] = useState<'request' | 'confirm'>('request');
+  const [emailChangeForm, setEmailChangeForm] = useState({
+    new_email: '',
+    password: '',
+    code: ''
+  });
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
+
+  // Delete Account state
+  const [showDeleteProfileConfirm, setShowDeleteProfileConfirm] = useState(false);
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      loadProfile();
+    }
+  }, [activeTab]);
+
+  const loadProfile = async () => {
+    try {
+      setLoadingProfile(true);
+      const response = await profileService.getProfile();
+      if (response.ok && response.data) {
+        setProfile(response.data);
+        setProfileFormState({
+          full_name: response.data.full_name,
+          phone_number: response.data.phone_number
+        });
+      } else {
+        toast.error('Failed to load profile');
+      }
+    } catch (error: any) {
+      console.error('Error loading profile:', error);
+      toast.error(error.message || 'Failed to load profile');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsSavingProfile(true);
+      const response = await profileService.updateProfile(profileFormState);
+      if (response.ok) {
+        toast.success('Profile updated successfully');
+        setIsEditingProfile(false);
+        loadProfile();
+      } else {
+        toast.error('Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleCancelEditProfile = () => {
+    if (profile) {
+      setProfileFormState({
+        full_name: profile.full_name,
+        phone_number: profile.phone_number
+      });
+    }
+    setIsEditingProfile(false);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.new_password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      const response = await profileService.changePassword({
+        old_password: passwordForm.old_password,
+        new_password: passwordForm.new_password,
+        new_password_confirm: passwordForm.confirm_password
+      });
+      if (response.ok) {
+        toast.success('Password changed successfully');
+        setPasswordForm({
+          old_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+      } else {
+        toast.error('Failed to change password');
+      }
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      toast.error(error.message || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleEmailChangeRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!emailChangeForm.new_email || !emailChangeForm.password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setIsChangingEmail(true);
+      const response = await profileService.emailChangeRequest({
+        new_email: emailChangeForm.new_email,
+        password: emailChangeForm.password
+      });
+      if (response.ok) {
+        toast.success('Verification code sent to your new email');
+        setEmailChangeStep('confirm');
+      } else {
+        toast.error('Failed to request email change');
+      }
+    } catch (error: any) {
+      console.error('Error requesting email change:', error);
+      toast.error(error.message || 'Failed to request email change');
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
+  const handleEmailChangeConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!emailChangeForm.code || emailChangeForm.code.length !== 6) {
+      toast.error('Please enter the 6-digit verification code');
+      return;
+    }
+
+    try {
+      setIsChangingEmail(true);
+      const response = await profileService.emailChangeConfirm({
+        new_email: emailChangeForm.new_email,
+        code: emailChangeForm.code
+      });
+      if (response.ok) {
+        toast.success('Email changed successfully');
+        setShowEmailChange(false);
+        setEmailChangeStep('request');
+        setEmailChangeForm({ new_email: '', password: '', code: '' });
+        loadProfile();
+      } else {
+        toast.error('Failed to confirm email change');
+      }
+    } catch (error: any) {
+      console.error('Error confirming email change:', error);
+      toast.error(error.message || 'Failed to confirm email change');
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      setIsChangingEmail(true);
+      const response = await profileService.resendEmailChangeCode({
+        new_email: emailChangeForm.new_email,
+        password: emailChangeForm.password
+      });
+      if (response.ok) {
+        toast.success('Verification code resent');
+      } else {
+        toast.error('Failed to resend code');
+      }
+    } catch (error: any) {
+      console.error('Error resending code:', error);
+      toast.error(error.message || 'Failed to resend code');
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
+  const handleCancelEmailChange = () => {
+    setShowEmailChange(false);
+    setEmailChangeStep('request');
+    setEmailChangeForm({ new_email: '', password: '', code: '' });
+  };
+
+  const handleDeleteProfileAccount = async () => {
+    if (!profile) return;
+
+    try {
+      setIsDeletingProfile(true);
+      const response = await profileService.deleteAccount(profile.id);
+      if (response.ok) {
+        toast.success('Account deleted successfully');
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+          await authService.logout(refreshToken);
+        }
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      } else {
+        toast.error('Failed to delete account');
+      }
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast.error(error.message || 'Failed to delete account');
+    } finally {
+      setIsDeletingProfile(false);
+      setShowDeleteProfileConfirm(false);
+    }
+  };
+
   const { items: customRequests } = useSelector((state: RootState) => state.requests)
   const { items: products } = useSelector((state: RootState) => state.products)
 
@@ -454,6 +703,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       }
       setShowUserModal(false)
       setSelectedUser(null)
+      // Refetch users to ensure we have the full object (including backend-generated fields like date_joined)
+      await dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
     } catch (err: any) {
       toast.error(err.message || 'Action failed')
     }
@@ -1219,7 +1470,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                               </div>
                               <div>
                                 <p className="font-bold text-slate-800 dark:text-white">{u.full_name}</p>
-                                <p className="text-[10px] text-slate-400 font-medium">ID: {u.id.substring(0, 8)}...</p>
+                                <p className="text-[10px] text-slate-400 font-medium">ID: {String(u.id).substring(0, 8)}...</p>
                               </div>
                             </div>
                           </td>
@@ -1359,36 +1610,438 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'settings' && (
-              <div className="max-w-2xl bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm transition-colors">
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-8">System Settings</h2>
-                <div className="space-y-10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-slate-800 dark:text-white">Public Service Mode</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Visibility of "Quick Quote" buttons</p>
+              <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+                {/* Header */}
+                <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 text-center shadow-sm transition-colors">
+                  {loadingProfile ? (
+                    <div className="py-12">
+                      <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                      <p className="text-gray-400">Loading profile...</p>
                     </div>
-                    <button
-                      onClick={() => onToggle(!isEnabled)}
-                      className={`w-14 h-8 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
-                      aria-label="Toggle public service mode"
-                      title="Toggle public service mode"
-                    >
-                      <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isEnabled ? 'left-7' : 'left-1'}`} />
-                    </button>
-                  </div>
+                  ) : !profile ? (
+                    <div className="py-12">
+                      <p className="text-gray-400">Failed to load profile</p>
+                      <button onClick={loadProfile} className="mt-4 text-brand-primary font-bold hover:underline">Retry</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-24 h-24 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4 shadow-xl">
+                        {profile.full_name?.charAt(0).toUpperCase()}
+                      </div>
+                      <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
+                        {profile.full_name}
+                      </h1>
+                      <p className="text-gray-500 dark:text-gray-400">{profile.email}</p>
+                      <div className="flex items-center justify-center gap-2 mt-4">
+                        <span className="inline-block px-4 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400">
+                          {profile.user_type}
+                        </span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${profile.is_active
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-red-500/10 text-red-400'
+                          }`}>
+                          {profile.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-                  <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-slate-700">
-                    <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center">
-                      <ShieldCheck className="mr-2 text-brand-primary" size={18} /> Critical Access
-                    </h4>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
-                      Modify root administrative credentials and system API keys. This action requires secondary authentication.
-                    </p>
-                    <button className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-8 py-3 rounded-2xl font-bold text-xs border border-gray-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
-                      Re-authenticate Session
-                    </button>
+                {profile && (
+                  <>
+                    {/* Profile Information Card */}
+                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
+                          <User className="mr-2" size={24} />
+                          Profile Information
+                        </h2>
+                        {!isEditingProfile ? (
+                          <button
+                            onClick={() => setIsEditingProfile(true)}
+                            className="flex items-center space-x-2 px-4 py-2 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all"
+                          >
+                            <Edit2 size={18} />
+                            <span>Edit</span>
+                          </button>
+                        ) : (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={handleCancelEditProfile}
+                              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                            >
+                              <X size={18} />
+                              <span>Cancel</span>
+                            </button>
+                            <button
+                              onClick={handleSaveProfile}
+                              disabled={isSavingProfile}
+                              className="flex items-center space-x-2 px-4 py-2 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50"
+                            >
+                              <Save size={18} />
+                              <span>{isSavingProfile ? 'Saving...' : 'Save'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-6">
+                        {/* Full Name */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            Full Name
+                          </label>
+                          {isEditingProfile ? (
+                            <input
+                              type="text"
+                              value={profileFormState.full_name}
+                              onChange={(e) => setProfileFormState({ ...profileFormState, full_name: e.target.value })}
+                              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white"
+                            />
+                          ) : (
+                            <div className="flex items-center px-4 py-3 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-transparent">
+                              <User size={20} className="text-gray-500 mr-3" />
+                              <span className="text-slate-800 dark:text-white">{profile.full_name}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Email (Read-only with change option) */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            Email Address
+                          </label>
+                          <div className="flex items-center px-4 py-3 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-transparent">
+                            <Mail size={20} className="text-gray-500 mr-3" />
+                            <span className="text-slate-800 dark:text-white">{profile.email}</span>
+                            <button
+                              onClick={() => setShowEmailChange(!showEmailChange)}
+                              className="ml-auto text-xs bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg font-bold hover:bg-brand-primary/20 transition-all"
+                            >
+                              Change Email
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Email Change Section */}
+                        <AnimatePresence>
+                          {showEmailChange && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl p-6 mt-4">
+                                {emailChangeStep === 'request' ? (
+                                  <form onSubmit={handleEmailChangeRequest} className="space-y-4">
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-2">Change Email Address</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                      A verification code will be sent to your new email address.
+                                    </p>
+                                    <div>
+                                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                        New Email Address
+                                      </label>
+                                      <input
+                                        type="email"
+                                        value={emailChangeForm.new_email}
+                                        onChange={(e) => setEmailChangeForm({ ...emailChangeForm, new_email: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white"
+                                        placeholder="Enter new email"
+                                        required
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                        Current Password
+                                      </label>
+                                      <div className="relative">
+                                        <input
+                                          type={showEmailPassword ? 'text' : 'password'}
+                                          value={emailChangeForm.password}
+                                          onChange={(e) => setEmailChangeForm({ ...emailChangeForm, password: e.target.value })}
+                                          className="w-full px-4 py-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white pr-12"
+                                          placeholder="Enter current password"
+                                          required
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowEmailPassword(!showEmailPassword)}
+                                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                                        >
+                                          {showEmailPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelEmailChange}
+                                        className="flex-1 px-4 py-2.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        disabled={isChangingEmail}
+                                        className="flex-1 px-4 py-2.5 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 text-sm"
+                                      >
+                                        {isChangingEmail ? 'Sending...' : 'Send Code'}
+                                      </button>
+                                    </div>
+                                  </form>
+                                ) : (
+                                  <form onSubmit={handleEmailChangeConfirm} className="space-y-4">
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-2">Verify New Email</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                      Enter the 6-digit code sent to <span className="text-slate-800 dark:text-white font-bold">{emailChangeForm.new_email}</span>
+                                    </p>
+                                    <div>
+                                      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">
+                                        Verification Code
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={emailChangeForm.code}
+                                        onChange={(e) => {
+                                          const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                          setEmailChangeForm({ ...emailChangeForm, code: val });
+                                        }}
+                                        className="w-full px-4 py-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white text-center text-2xl tracking-[0.5em] font-mono"
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        required
+                                      />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelEmailChange}
+                                        className="flex-1 px-4 py-2.5 bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        disabled={isChangingEmail}
+                                        className="flex-1 px-4 py-2.5 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 text-sm"
+                                      >
+                                        {isChangingEmail ? 'Confirming...' : 'Confirm'}
+                                      </button>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={handleResendCode}
+                                      disabled={isChangingEmail}
+                                      className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
+                                    >
+                                      <RefreshCw size={14} />
+                                      Resend verification code
+                                    </button>
+                                  </form>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Phone Number */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            Phone Number
+                          </label>
+                          {isEditingProfile ? (
+                            <input
+                              type="tel"
+                              value={profileFormState.phone_number}
+                              onChange={(e) => setProfileFormState({ ...profileFormState, phone_number: e.target.value })}
+                              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white"
+                            />
+                          ) : (
+                            <div className="flex items-center px-4 py-3 bg-gray-50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-transparent">
+                              <Phone size={20} className="text-gray-500 mr-3" />
+                              <span className="text-slate-800 dark:text-white">{profile.phone_number}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Card */}
+                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                      <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center mb-6">
+                        <Lock className="mr-2" size={24} />
+                        Change Password
+                      </h2>
+
+                      <form onSubmit={handleChangePassword} className="space-y-6">
+                        {/* Current Password */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            Current Password
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showOldPassword ? 'text' : 'password'}
+                              value={passwordForm.old_password}
+                              onChange={(e) => setPasswordForm({ ...passwordForm, old_password: e.target.value })}
+                              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white pr-12"
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowOldPassword(!showOldPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                            >
+                              {showOldPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* New Password */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            New Password
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showNewPassword ? 'text' : 'password'}
+                              value={passwordForm.new_password}
+                              onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white pr-12"
+                              required
+                              minLength={8}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                            >
+                              {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Must be at least 8 characters long
+                          </p>
+                        </div>
+
+                        {/* Confirm New Password */}
+                        <div>
+                          <label className="block text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                            Confirm New Password
+                          </label>
+                          <div className="relative">
+                            <input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              value={passwordForm.confirm_password}
+                              onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white pr-12"
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                            >
+                              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isChangingPassword}
+                          className="w-full px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50"
+                        >
+                          {isChangingPassword ? 'Changing Password...' : 'Change Password'}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Account Details Card */}
+                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                      <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center mb-6">
+                        <Shield className="mr-2" size={24} />
+                        Account Details
+                      </h2>
+
+                      <div className="space-y-4">
+
+                        <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10">
+                          <span className="text-gray-500 dark:text-gray-400">Status</span>
+                          <span className={`font-bold ${profile.is_active ? 'text-green-500' : 'text-red-500'}`}>
+                            {profile.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10">
+                          <span className="text-gray-500 dark:text-gray-400 flex items-center">
+                            <Calendar size={18} className="mr-2" />
+                            Member Since
+                          </span>
+                          <span className="font-bold text-slate-800 dark:text-white">{profile.date_joined ? formatDate(profile.date_joined) : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                          <span className="text-gray-500 dark:text-gray-400">Last Updated</span>
+                          <span className="font-bold text-slate-800 dark:text-white">{profile.updated_at ? formatDate(profile.updated_at) : 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* System Settings (Preserved) */}
+                <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-8">System Settings</h2>
+                  <div className="space-y-10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-slate-800 dark:text-white">Public Service Mode</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Visibility of "Quick Quote" buttons</p>
+                      </div>
+                      <button
+                        onClick={() => onToggle(!isEnabled)}
+                        className={`w-14 h-8 rounded-full relative transition-all ${isEnabled ? 'bg-brand-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
+                        aria-label="Toggle public service mode"
+                        title="Toggle public service mode"
+                      >
+                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${isEnabled ? 'left-7' : 'left-1'}`} />
+                      </button>
+                    </div>
+
+                    <div className="p-8 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-slate-700">
+                      <h4 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center">
+                        <ShieldCheck className="mr-2 text-brand-primary" size={18} /> Critical Access
+                      </h4>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                        Modify root administrative credentials and system API keys. This action requires secondary authentication.
+                      </p>
+                      <button className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-8 py-3 rounded-2xl font-bold text-xs border border-gray-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
+                        Re-authenticate Session
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Danger Zone */}
+                {profile && (
+                  <div className="bg-red-500/5 border border-red-500/20 rounded-[32px] md:rounded-[40px] shadow-xl p-8 mb-6">
+                    <h2 className="text-xl font-bold text-red-500 flex items-center mb-4">
+                      <AlertTriangle className="mr-2" size={24} />
+                      Danger Zone
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Once you delete your account, there is no going back. Please be certain.
+                    </p>
+                    <button
+                      onClick={() => setShowDeleteProfileConfirm(true)}
+                      className="bg-red-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-600 transition-all flex items-center"
+                    >
+                      <Trash2 size={18} className="mr-2" />
+                      Delete Account
+                    </button>
+                  </div>
+                )}
               </div>
             )}
         </div >
@@ -1409,6 +2062,15 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         title="Delete User"
         message={`Are you sure you want to delete ${userToDelete?.full_name}? This action cannot be undone.`}
         loading={usersLoading}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteProfileConfirm}
+        onClose={() => setShowDeleteProfileConfirm(false)}
+        onConfirm={handleDeleteProfileAccount}
+        title="Delete Your Account"
+        message="Are you sure you want to delete your account? This action cannot be undone and you will lose all access immediately."
+        loading={isDeletingProfile}
       />
     </div >
   )
@@ -1465,7 +2127,7 @@ const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <RequestDetail label="Email Address" value={request.email} />
       <RequestDetail label="Phone Number" value={request.phone} />
-      <RequestDetail label="Submitted On" value={new Date(request.date).toLocaleDateString()} />
+      <RequestDetail label="Submitted On" value={request.date ? new Date(request.date).toLocaleDateString() : 'N/A'} />
     </div>
 
     <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-gray-100 dark:border-slate-700 shadow-sm mb-8">
@@ -1486,6 +2148,21 @@ const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
     )}
   </div>
 )
+
+const formatDate = (dateString: any) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return 'N/A';
+  }
+};
 
 const RequestDetail: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div>
