@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://modern-noemi-rwooga3dservices-e96463f8.koyeb.app/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

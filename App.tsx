@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut, Heart, Package } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -45,7 +45,7 @@ const App: React.FC = () => {
   const { user, logout } = useAuth();
   const handleLogout = () => {
     logout();
-    window.location.hash = '/login';
+    window.location.href = '/login';
   };
 
   const togglePrinting = (val: boolean) => {
