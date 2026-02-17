@@ -5,7 +5,7 @@ interface User {
     id: string; // UUID from backend
     email: string;
     full_name: string;
-    phone_number: string;
+    phone_number: number;
     user_type: 'ADMIN' | 'STAFF' | 'CUSTOMER';
     is_active: boolean;
     date_joined: string;

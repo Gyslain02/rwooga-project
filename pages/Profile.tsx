@@ -17,7 +17,7 @@ const Profile = () => {
     // Profile form state
     const [profileForm, setProfileForm] = useState({
         full_name: '',
-        phone_number: ''
+        phone_number: '' as string | number
     });
 
     // Password form state
@@ -74,7 +74,10 @@ const Profile = () => {
     const handleSaveProfile = async () => {
         try {
             setIsSaving(true);
-            const response = await profileService.updateProfile(profileForm);
+            const response = await profileService.updateProfile({
+                full_name: profileForm.full_name,
+                phone_number: profileForm.phone_number === '' ? undefined : Number(profileForm.phone_number)
+            });
             if (response.ok) {
                 toast.success('Profile updated successfully');
                 setIsEditing(false);
@@ -547,13 +550,16 @@ const Profile = () => {
                                 <input
                                     type="tel"
                                     value={profileForm.phone_number}
-                                    onChange={(e) => setProfileForm({ ...profileForm, phone_number: e.target.value })}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setProfileForm({ ...profileForm, phone_number: value === '' ? '' : Number(value) });
+                                    }}
                                     className="w-full px-4 py-3 bg-gray-900/40 border border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-white"
                                 />
                             ) : (
                                 <div className="flex items-center px-4 py-3 bg-gray-900/40 rounded-xl">
                                     <Phone size={20} className="text-gray-500 mr-3" />
-                                    <span className="text-white">{profile.phone_number}</span>
+                                    <span className="text-white">{String(profile.phone_number || '')}</span>
                                 </div>
                             )}
                         </div>

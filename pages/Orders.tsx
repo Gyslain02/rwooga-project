@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Package, ArrowLeft, Calendar, MapPin, Phone, 
+import {
+    Package, ArrowLeft, Calendar, MapPin, Phone,
     Truck, CheckCircle, Clock, XCircle, AlertCircle,
     RefreshCw, Eye, Filter
 } from 'lucide-react';
@@ -17,7 +17,7 @@ interface Order {
     shipping_fee: number;
     final_amount: number;
     shipping_address: string;
-    shipping_phone: string;
+    shipping_phone: number;
     tracking_number?: string;
     customer_notes: string;
     created_at: string;
@@ -45,7 +45,7 @@ const Orders: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedStatus, setSelectedStatus] = useState<string>('all');
     const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-    
+
     // Return Modal State
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<Order | null>(null);
@@ -149,8 +149,8 @@ const Orders: React.FC = () => {
         }
     };
 
-    const filteredOrders = selectedStatus === 'all' 
-        ? orders 
+    const filteredOrders = selectedStatus === 'all'
+        ? orders
         : orders.filter(order => order.status === selectedStatus);
 
     const statusCounts = orders.reduce((acc, order) => {
@@ -192,11 +192,10 @@ const Orders: React.FC = () => {
                 <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
                     <button
                         onClick={() => setSelectedStatus('all')}
-                        className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap ${
-                            selectedStatus === 'all'
+                        className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap ${selectedStatus === 'all'
                                 ? 'bg-green-700 text-white'
                                 : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                        }`}
+                            }`}
                     >
                         All ({orders.length})
                     </button>
@@ -204,11 +203,10 @@ const Orders: React.FC = () => {
                         <button
                             key={status}
                             onClick={() => setSelectedStatus(status)}
-                            className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
-                                selectedStatus === status
+                            className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${selectedStatus === status
                                     ? 'bg-green-700 text-white'
                                     : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                            }`}
+                                }`}
                         >
                             {getStatusIcon(status)}
                             {status.charAt(0) + status.slice(1).toLowerCase()} ({count})
@@ -222,8 +220,8 @@ const Orders: React.FC = () => {
                         <Package size={64} className="mx-auto mb-4 text-gray-400" />
                         <h3 className="text-xl font-semibold mb-2">No orders found</h3>
                         <p className="text-gray-400 mb-6">
-                            {selectedStatus === 'all' 
-                                ? "You haven't placed any orders yet" 
+                            {selectedStatus === 'all'
+                                ? "You haven't placed any orders yet"
                                 : `No orders with status "${selectedStatus}"`
                             }
                         </p>
@@ -246,7 +244,7 @@ const Orders: React.FC = () => {
                                     className="bg-[#1c1c1e] rounded-2xl border border-white/10 overflow-hidden"
                                 >
                                     {/* Order Header */}
-                                    <div 
+                                    <div
                                         className="p-6 cursor-pointer hover:bg-white/5 transition-colors"
                                         onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                                     >
@@ -381,7 +379,7 @@ const Orders: React.FC = () => {
                                                             View Product
                                                         </button>
                                                         {order.status === 'PENDING' && (
-                                                            <button 
+                                                            <button
                                                                 className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl transition-colors"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -392,7 +390,7 @@ const Orders: React.FC = () => {
                                                             </button>
                                                         )}
                                                         {order.status === 'DELIVERED' && (
-                                                            <button 
+                                                            <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     openReturnModal(order);

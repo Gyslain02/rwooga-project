@@ -1,60 +1,98 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Upload, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { WHATSAPP_NUMBER } from '@/constants';
 import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
-import { setRequests } from '@/store/slices/requestsSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { submitRequest } from '@/store/slices/requestsSlice';
+import { productsService } from '@/services/productsService';
+import { RootState } from '@/store';
+import { useAuth } from '@/context/AuthContext';
 
 const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    projectType: '',
+    client_name: user?.full_name || user?.name || '',
+    client_email: user?.email || '',
+    client_phone: (user?.phone || user?.phone_number) ? String(user?.phone || user?.phone_number) : '',
+    service_category: '',
+    title: '',
     description: '',
-    deadline: ''
+    budget: ''
   });
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await productsService.getCategories();
+        if (response.ok) {
+          setCategories(response.data.results || response.data);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(prev => [...prev, ...files]);
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
 
-  const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTimeout(() => {
-      const newRequest = {
-        id: Date.now(),
-        ...formData,
-        status: 'pending',
-        date: new Date().toLocaleDateString(),
-      };
+    setIsSubmitting(true);
 
-      // Update Redux state (which also updates localStorage)
-      const existing = JSON.parse(localStorage.getItem('custom_requests') || '[]');
-      dispatch(setRequests([...existing, newRequest]));
+    try {
+      const data = new FormData();
+      data.append('client_name', formData.client_name);
+      data.append('client_email', formData.client_email);
+      const rawPhone = String(formData.client_phone).replace(/\s/g, '');
+      data.append('client_phone', rawPhone);
+      data.append('title', formData.title);
+      data.append('description', formData.description);
+      if (formData.service_category) {
+        data.append('service_category', formData.service_category);
+      }
+
+      const budgetValue = String(formData.budget).trim();
+      if (budgetValue) {
+        data.append('budget', budgetValue);
+      }
+      if (selectedFile) {
+        data.append('reference_file', selectedFile);
+      }
+
+      await (dispatch(submitRequest(data) as any)).unwrap();
 
       setIsSubmitted(true);
       toast.success('Request sent successfully!');
+
+      const categoryName = categories.find(c => c.id === formData.service_category)?.name || 'Custom';
       const message = encodeURIComponent(
         `Hi Rwooga! I have a custom project request.\n\n` +
-        `Name: ${formData.name}\n` +
-        `Type: ${formData.projectType}\n` +
+        `Name: ${formData.client_name}\n` +
+        `Type: ${categoryName}\n` +
+        `Title: ${formData.title}\n` +
         `Description: ${formData.description}\n` +
-        `Deadline: ${formData.deadline}`
+        `Budget: ${formData.budget || 'N/A'} RWF`
       );
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
-    }, 1000);
+    } catch (err: any) {
+      toast.error(err || 'Failed to submit request');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isEnabled) {
@@ -77,8 +115,6 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
   return (
     <div className="bg-brand-dark min-h-screen pt-40 pb-20 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-
-
         <div className="flex flex-col md:flex-row justify-between items-end mb-32">
           <div className="max-w-3xl">
             <span className="text-brand-primary font-bold tracking-[0.4em] uppercase text-xs mb-6 block">Bespoke Solutions</span>
@@ -104,9 +140,21 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
               <CheckCircle2 size={40} />
             </div>
             <h2 className="text-3xl font-display font-bold text-white mb-4 uppercase tracking-tight">Request Received</h2>
-            <p className="text-gray-400 text-lg mb-8">Redirecting to WhatsApp for file handover...</p>
+            <p className="text-gray-400 text-lg mb-8">Redirecting to WhatsApp for final confirmation...</p>
             <button
-              onClick={() => setIsSubmitted(false)}
+              onClick={() => {
+                setIsSubmitted(false);
+                setFormData({
+                  client_name: user?.full_name || user?.name || '',
+                  client_email: user?.email || '',
+                  client_phone: (user?.phone || user?.phone_number) ? String(user?.phone || user?.phone_number) : '',
+                  service_category: '',
+                  title: '',
+                  description: '',
+                  budget: ''
+                });
+                setSelectedFile(null);
+              }}
               className="px-8 py-4 bg-white text-black rounded-xl font-bold hover:bg-brand-primary transition-all uppercase tracking-widest text-sm"
             >
               Submit Another
@@ -121,8 +169,8 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                   <input
                     required
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.client_name}
+                    onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                     placeholder="John Doe"
                   />
@@ -132,8 +180,8 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                   <input
                     required
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={formData.client_email}
+                    onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                     placeholder="john@example.com"
                   />
@@ -146,33 +194,47 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                   <input
                     required
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.client_phone}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setFormData({
+                        ...formData,
+                        client_phone: value
+                      });
+                    }}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
                     placeholder="07xx xxx xxx"
-                    title="Phone Number"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Project Title</label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
+                    placeholder="e.g. Prototype for agricultural drone"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label htmlFor="product-category" className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Product Category</label>
+                  <label htmlFor="product-category" className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Service Category</label>
                   <div className="relative">
                     <select
                       id="product-category"
-                      required
-                      value={formData.projectType}
-                      onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
+                      value={formData.service_category}
+                      onChange={(e) => setFormData({ ...formData, service_category: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:border-brand-primary focus:bg-white/10 outline-none transition-all appearance-none cursor-pointer"
-                      title="Select Product Category"
-                      aria-label="Product Category"
                     >
-                      <option value="" disabled className="bg-gray-900">Select a type</option>
-                      <option value="3d-visualization" className="bg-gray-900">3D Visualization</option>
-                      <option value="animation" className="bg-gray-900">Animation</option>
-                      <option value="custom-design" className="bg-gray-900">Custom Design</option>
-                      <option value="3d-printing" className="bg-gray-900">3D Printing</option>
+                      <option value="" className="bg-gray-900">General Inquiry</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id} className="bg-gray-900">
+                          {category.name}
+                        </option>
+                      ))}
                     </select>
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                       <ArrowRight size={16} className="rotate-90" />
@@ -181,14 +243,13 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Desired Deadline</label>
+                  <label className="text-xs font-bold text-brand-primary uppercase tracking-widest ml-1">Budget (RWF)</label>
                   <input
-                    type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    type="number"
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-gray-600 focus:border-brand-primary focus:bg-white/10 outline-none transition-all"
-                    title="Desired Deadline"
-                    placeholder="Select a date"
+                    placeholder="e.g. 50000"
                   />
                 </div>
               </div>
@@ -211,85 +272,39 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
                   <input
                     type="file"
                     className="absolute inset-0 opacity-0 cursor-pointer"
-                    multiple
                     onChange={handleFileChange}
-                    accept="image/*,.stl,.obj"
-                    aria-label="Upload project files"
+                    accept="image/*,.pdf,.stl,.obj"
                     title="Upload project files"
                   />
                   <div className="mb-4 text-gray-400 group-hover:text-brand-primary transition-colors">
                     <Upload size={32} className="mx-auto" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">Click to upload or drag files here</h3>
-                  <p className="text-gray-500 text-sm">Images, Sketches, or CAD files (STL, OBJ)</p>
+                  <h3 className="text-lg font-bold text-white mb-2">
+                    {selectedFile ? selectedFile.name : 'Click to upload reference file'}
+                  </h3>
+                  <p className="text-gray-500 text-sm">Images, PDF, STL, or OBJ</p>
                 </div>
-
-                {/* Previews */}
-                {selectedFiles.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4 mt-6">
-                    {selectedFiles.map((file, index) => (
-                      <FilePreviewItem
-                        key={index}
-                        file={file}
-                        onRemove={() => removeFile(index)}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-brand-primary text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-brand-primary/20"
+                disabled={isSubmitting}
+                className={`w-full bg-brand-primary text-black font-bold text-lg py-5 rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-brand-primary/20 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                <ArrowRight size={20} />
-                <span>Submit Request</span>
+                {isSubmitting ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                ) : (
+                  <>
+                    <ArrowRight size={20} />
+                    <span>Submit Request</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
         )}
       </div>
     </div>
-  );
-};
-
-const FilePreviewItem: React.FC<{ file: File; onRemove: () => void }> = ({ file, onRemove }) => {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-  }, [file]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10 group"
-    >
-      {preview ? (
-        <img src={preview} className="w-full h-full object-cover" alt="Preview" />
-      ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
-          <Upload size={20} className="text-gray-500 mb-1" />
-          <span className="text-[10px] text-gray-400 truncate w-full">{file.name}</span>
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-label="Remove file"
-        title="Remove file"
-      >
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3 h-3">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </motion.div>
   );
 };
 

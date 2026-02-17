@@ -6,10 +6,12 @@ import toast from 'react-hot-toast';
 interface User {
     id: string;
     name: string;
+    full_name?: string;
     email: string;
     role: string;
     is_admin?: boolean;
-    phone?: string;
+    phone?: number;
+    phone_number?: number;
 }
 
 interface AuthContextType {

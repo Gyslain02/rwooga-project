@@ -4,7 +4,7 @@ export interface UserProfile {
     id: string;
     email: string;
     full_name: string;
-    phone_number: string;
+    phone_number: number;
     user_type: 'STAFF' | 'ADMIN' | 'CUSTOMER';
     is_active: boolean;
     is_admin: string;
@@ -15,7 +15,7 @@ export interface UserProfile {
 
 export interface UpdateProfileData {
     full_name?: string;
-    phone_number?: string;
+    phone_number?: number;
 }
 
 export interface ChangePasswordData {

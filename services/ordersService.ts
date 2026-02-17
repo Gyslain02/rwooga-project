@@ -40,7 +40,7 @@ export const ordersService = {
             product_name: string;
         }>;
         shipping_address: string;
-        shipping_phone: string;
+        shipping_phone: number;
         customer_notes?: string;
         total_amount: number;
         shipping_fee?: number;

@@ -19,7 +19,11 @@ import logo from '@/assets/Rwooga logo.png'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '@/store'
 import { addProduct, updateProduct, deleteProduct as removeProduct } from '@/store/slices/productsSlice'
-import { deleteRequest as removeRequest } from '@/store/slices/requestsSlice'
+import {
+  fetchRequests,
+  submitRequest,
+  removeRequest
+} from '@/store/slices/requestsSlice';
 import { setAdminTheme } from '@/store/slices/settingsSlice'
 import {
   fetchUsers,
@@ -51,7 +55,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   // Profile form state
   const [profileFormState, setProfileFormState] = useState({
     full_name: '',
-    phone_number: ''
+    phone_number: '' as string | number
   });
 
   // Password form state
@@ -86,6 +90,12 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'requests') {
+      dispatch(fetchRequests({}) as any);
+    }
+  }, [activeTab, dispatch]);
+
   const loadProfile = async () => {
     try {
       setLoadingProfile(true);
@@ -110,7 +120,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const handleSaveProfile = async () => {
     try {
       setIsSavingProfile(true);
-      const response = await profileService.updateProfile(profileFormState);
+      const response = await profileService.updateProfile({
+        full_name: profileFormState.full_name,
+        phone_number: profileFormState.phone_number === '' ? undefined : Number(profileFormState.phone_number)
+      });
       if (response.ok) {
         toast.success('Profile updated successfully');
         setIsEditingProfile(false);
@@ -477,7 +490,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   }
 
   const deleteRequest = (id: string | number) => {
-    dispatch(removeRequest(id))
+    dispatch(removeRequest(id) as any)
     toast.success('Request deleted')
   }
 
@@ -1590,7 +1603,18 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     <EmptyState icon={<ClipboardList size={40} />} text="No product requests yet." />
                   ) : (
                     customRequests.map((r: any) => (
-                      <ProductRequestCard key={r.id} request={r} onDelete={() => deleteRequest(r.id)} />
+                      <ProductRequestCard
+                        key={r.id}
+                        request={r}
+                        onDelete={async () => {
+                          try {
+                            await dispatch(removeRequest(r.id) as any).unwrap();
+                            toast.success('Request deleted');
+                          } catch (err: any) {
+                            toast.error(err || 'Failed to delete');
+                          }
+                        }}
+                      />
                     ))
                   )}
                 </div>
@@ -1855,7 +1879,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             <input
                               type="tel"
                               value={profileFormState.phone_number}
-                              onChange={(e) => setProfileFormState({ ...profileFormState, phone_number: e.target.value })}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '');
+                                setProfileFormState({ ...profileFormState, phone_number: value === '' ? '' : Number(value) });
+                              }}
                               className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-slate-800 dark:text-white"
                             />
                           ) : (
@@ -1975,11 +2002,8 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           </span>
                         </div>
                         <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10">
-                          <span className="text-gray-500 dark:text-gray-400 flex items-center">
-                            <Calendar size={18} className="mr-2" />
-                            Member Since
-                          </span>
-                          <span className="font-bold text-slate-800 dark:text-white">{profile.date_joined ? formatDate(profile.date_joined) : 'N/A'}</span>
+                          <span className="text-gray-500 dark:text-gray-400">Phone Number</span>
+                          <span className="font-bold text-slate-800 dark:text-white">{String(profile.phone_number || 'N/A')}</span>
                         </div>
                         <div className="flex items-center justify-between py-3">
                           <span className="text-gray-500 dark:text-gray-400">Last Updated</span>
@@ -2108,15 +2132,15 @@ const DashboardStat: React.FC<{ label: string; value: string; trend: string; ico
 )
 
 const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ request, onDelete }) => (
-  <div className="p-8 bg-slate-50 dark:bg-slate-800/30 rounded-[40px] border border-gray-100 dark:border-slate-800/50 group transition-colors">
+  <div className="p-8 bg-white dark:bg-slate-800/40 rounded-[40px] border border-gray-100 dark:border-slate-800/50 group transition-all hover:border-brand-primary/20">
     <div className="flex justify-between items-start mb-8">
       <div className="flex items-center space-x-6">
-        <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-brand-primary shadow-sm">
+        <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-brand-primary shadow-inner">
           <Files size={28} />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white leading-tight">{request.name}</h3>
-          <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">{request.productType}</p>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white leading-tight">{request.client_name}</h3>
+          <p className="text-xs text-brand-primary font-black uppercase tracking-widest mt-1">{request.service_category_name || 'General Inquiry'}</p>
         </div>
       </div>
       <button onClick={onDelete} className="w-10 h-10 bg-white dark:bg-slate-800 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 rounded-xl flex items-center justify-center border border-gray-100 dark:border-slate-700 transition-all shadow-sm" aria-label="Delete request" title="Delete request">
@@ -2124,26 +2148,35 @@ const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
       </button>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <RequestDetail label="Email Address" value={request.email} />
-      <RequestDetail label="Phone Number" value={request.phone} />
-      <RequestDetail label="Submitted On" value={request.date ? new Date(request.date).toLocaleDateString() : 'N/A'} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <RequestDetail label="Title" value={request.title} />
+      <RequestDetail label="Email" value={request.client_email} />
+      <RequestDetail label="Phone" value={request.client_phone} />
+      <RequestDetail label="Budget (RWF)" value={request.budget ? Number(request.budget).toLocaleString() : 'N/A'} />
     </div>
 
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-[32px] border border-gray-100 dark:border-slate-700 shadow-sm mb-8">
-      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Product Requirement</p>
-      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{request.description}</p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <RequestDetail label="Submitted On" value={formatDate(request.created_at)} />
+      <RequestDetail label="Current Status" value={request.status} />
     </div>
 
-    {request.files && request.files.length > 0 && (
-      <div className="flex flex-wrap gap-4 items-center">
-        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-2">Attached Files:</span>
-        {request.files.map((f: string, idx: number) => (
-          <button key={idx} className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-gray-100 dark:border-slate-700 hover:border-brand-primary/30 text-[10px] font-bold text-slate-600 dark:text-slate-300 transition-all shadow-sm" aria-label={`Download ${f}`} title={`Download ${f}`}>
-            <Download size={14} className="text-brand-primary" />
-            <span className="truncate max-w-[120px]">{f}</span>
-          </button>
-        ))}
+    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-inner mb-8 transition-colors">
+      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Project Description</p>
+      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{request.description}</p>
+    </div>
+
+    {request.reference_file && (
+      <div className="flex items-center">
+        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mr-4">Reference File:</span>
+        <a
+          href={request.reference_file}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center space-x-2 bg-brand-primary/10 text-brand-primary px-5 py-2.5 rounded-xl hover:bg-brand-primary/20 text-xs font-bold transition-all"
+        >
+          <Download size={16} />
+          <span>View / Download Attachment</span>
+        </a>
       </div>
     )}
   </div>

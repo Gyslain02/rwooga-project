@@ -123,7 +123,72 @@ const AppContent: React.FC<{
         <nav className="fixed w-full z-50 glass-card border-b border-white/10 shadow-2xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-24">
-              <div className="flex items-center">
+              <div className="flex items-center space-x-6">
+                {/* User Menu on the Left */}
+                {user && (
+                  <div className="hidden md:flex items-center">
+                    <div className="relative group">
+                      <button className="flex items-center justify-center p-2 text-white hover:text-brand-primary transition-all duration-300">
+                        <Menu size={28} className="group-hover:scale-110 transition-transform" />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[60]">
+                        <div className="glass-card border border-white/10 py-2 w-52 shadow-2xl rounded-2xl overflow-hidden backdrop-blur-xl">
+                          <div className="px-5 py-3 border-b border-white/5 mb-1 bg-white/5">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
+                            <p className="text-xs font-bold text-white truncate">{user.email || user.name || user.full_name}</p>
+                          </div>
+
+                          <Link
+                            to="/profile"
+                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                          >
+                            <UserIcon size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                            Profile
+                          </Link>
+
+                          {user.is_admin ? (
+                            <Link
+                              to="/admin"
+                              className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                            >
+                              <Settings size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                              Admin Dashboard
+                            </Link>
+                          ) : (
+                            <>
+                              <Link
+                                to="/wishlist"
+                                className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                              >
+                                <Heart size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                                Wishlist
+                              </Link>
+
+                              <Link
+                                to="/orders"
+                                className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                              >
+                                <Package size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                                Orders
+                              </Link>
+                            </>
+                          )}
+
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center px-5 py-3 text-sm font-bold text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all border-t border-white/5 group/item"
+                          >
+                            <LogOut size={16} className="mr-3 text-red-400/70 group-hover/item:text-red-500" />
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <Link to="/" className="flex items-center group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                   <img src={logo} alt="Rwooga" className="h-16 w-auto object-contain" />
                 </Link>
@@ -137,9 +202,6 @@ const AppContent: React.FC<{
                 <NavLink to="/portfolio">Portfolio</NavLink>
                 <NavLink to="/shop">Shop</NavLink>
                 <NavLink to="/contact">Contact</NavLink>
-                {user?.is_admin && (
-                  <NavLink to="/admin">Admin</NavLink>
-                )}
               </div>
 
               <div className="flex items-center space-x-4">
@@ -155,56 +217,7 @@ const AppContent: React.FC<{
                 )}
 
                 {user && !user.is_admin ? (
-                  <div className="hidden md:flex items-center">
-                    <div className="relative group">
-                      <button className="flex items-center space-x-2 py-2 pl-4 ml-4 border-l border-white/10 group-hover:text-brand-primary transition-all duration-300">
-                        <span className="text-sm font-bold text-white group-hover:text-brand-primary transition-colors">{user.full_name || user.name}</span>
-                        <ChevronDown size={14} className="text-gray-500 group-hover:text-brand-primary group-hover:rotate-180 transition-all duration-300" />
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[60]">
-                        <div className="glass-card border border-white/10 py-2 w-52 shadow-2xl rounded-2xl overflow-hidden backdrop-blur-xl">
-                          <div className="px-5 py-3 border-b border-white/5 mb-1 bg-white/5">
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
-                            <p className="text-xs font-bold text-white truncate">{user.email || user.name}</p>
-                          </div>
-
-                          <Link
-                            to="/profile"
-                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
-                          >
-                            <UserIcon size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
-                            Profile
-                          </Link>
-
-                          <Link
-                            to="/wishlist"
-                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
-                          >
-                            <Heart size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
-                            Wishlist
-                          </Link>
-
-                          <Link
-                            to="/orders"
-                            className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
-                          >
-                            <Package size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
-                            Orders
-                          </Link>
-
-                          <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center px-5 py-3 text-sm font-bold text-red-400 hover:text-red-500 hover:bg-red-500/5 transition-all border-t border-white/5 group/item"
-                          >
-                            <LogOut size={16} className="mr-3 text-red-400/70 group-hover/item:text-red-500" />
-                            Logout
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  null
                 ) : !user ? (
                   <div className="hidden md:block">
                     <Link
@@ -248,10 +261,10 @@ const AppContent: React.FC<{
                   {user ? (
                     <>
                       <div className="px-3 py-2">
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{user.role}</p>
-                        <p className="text-xl font-bold text-white">{user.name}</p>
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Signed in as</p>
+                        <p className="text-xl font-bold text-white">{user.full_name || user.name || user.email}</p>
                       </div>
-                      {user.role === 'admin' && (
+                      {user.is_admin && (
                         <MobileNavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</MobileNavLink>
                       )}
                       <button

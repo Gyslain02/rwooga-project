@@ -7,7 +7,7 @@ interface User {
     id?: string;
     email: string;
     full_name: string;
-    phone_number: string;
+    phone_number: string | number;
     user_type: 'ADMIN' | 'STAFF' | 'CUSTOMER';
     is_active: boolean;
     password?: string;
@@ -26,7 +26,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
     const [formData, setFormData] = useState<User>({
         email: '',
         full_name: '',
-        phone_number: '',
+        phone_number: '' as string | number,
         user_type: 'CUSTOMER',
         is_active: true,
         password: '',
@@ -46,7 +46,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
             setFormData({
                 email: '',
                 full_name: '',
-                phone_number: '',
+                phone_number: '' as string | number,
                 user_type: 'CUSTOMER',
                 is_active: true,
                 password: '',
@@ -129,7 +129,10 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
                                         type="tel"
                                         required
                                         value={formData.phone_number}
-                                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, '');
+                                            setFormData({ ...formData, phone_number: value === '' ? '' : Number(value) });
+                                        }}
                                         className="w-full bg-slate-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all dark:text-white"
                                         placeholder="07..."
                                     />

@@ -67,18 +67,18 @@ export const momoService = {
   /**
    * Validate phone number for MTN Rwanda
    */
-  validatePhoneNumber(phoneNumber: string): boolean {
+  validatePhoneNumber(phoneNumber: string | number): boolean {
     // MTN Rwanda numbers: 0788xxxxxx, 0789xxxxxx
     const mtnRegex = /^(0788|0789)\d{6}$/;
-    return mtnRegex.test(phoneNumber.replace(/\s/g, ''));
+    return mtnRegex.test(String(phoneNumber).replace(/\s/g, ''));
   },
 
   /**
    * Format phone number for MTN API
    */
-  formatPhoneNumber(phoneNumber: string): string {
+  formatPhoneNumber(phoneNumber: string | number): string {
     // Remove spaces and ensure proper format
-    const cleaned = phoneNumber.replace(/\s/g, '');
+    const cleaned = String(phoneNumber).replace(/\s/g, '');
     // Paypack API seems to prefer 07... format as confirmed by test_payment.py
     return cleaned;
   },

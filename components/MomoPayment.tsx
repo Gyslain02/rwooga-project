@@ -20,7 +20,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
   onError,
   onCancel
 }) => {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState<string | number>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
   const [transactionId, setTransactionId] = useState<string>('');
@@ -58,9 +58,9 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const validatePhone = (phone: string) => {
+  const validatePhone = (phone: string | number) => {
     if (!momoService.validatePhoneNumber(phone)) {
-      setErrorMessage('Please enter a valid MTN Rwanda number (0788xxxxxx or 0789xxxxxx)');
+      setErrorMessage('Please enter a valid MTN Rwanda number (078xxxxxx or 079xxxxxx)');
       return false;
     }
     setErrorMessage('');
@@ -86,11 +86,11 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
 
     try {
       const response = await momoService.initiatePayment(paymentData);
-      
+
       if (response.ok && response.data) {
         setTransactionId(response.data.transactionId);
         toast.success('Payment initiated! Please check your phone for MTN MoMo prompt.');
-        
+
         // Reset timer for new payment
         setTimeLeft(300);
       } else {
@@ -113,11 +113,11 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
       console.log('Checking payment status for:', transactionId);
       const response = await momoService.checkPaymentStatus(transactionId);
       console.log('Payment status response:', response);
-      
+
       if (response.ok && response.data) {
         const status = response.data.status;
         console.log('Payment status:', status);
-        
+
         if (status === 'successful') {
           setPaymentStatus('success');
           onSuccess(transactionId);
@@ -197,7 +197,10 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
             <input
               type="tel"
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                setPhoneNumber(value === '' ? '' : Number(value));
+              }}
               placeholder="0788xxxxxx or 0789xxxxxx"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
               disabled={isProcessing}
@@ -267,7 +270,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
               <strong>Transaction ID:</strong> {transactionId}
             </p>
             <p className="text-sm text-yellow-800 mb-2">
-              <strong>Phone:</strong> {phoneNumber}
+              <strong>Phone:</strong> {String(phoneNumber)}
             </p>
             <p className="text-sm text-yellow-800 mb-2">
               <strong>Amount:</strong> RWF {amount.toLocaleString()}
