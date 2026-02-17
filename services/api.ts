@@ -39,13 +39,41 @@ api.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
-            // Clear invalid token
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+                try {
+                    // Try to refresh the token
+                    // Create a new axios instance for refresh to avoid infinite loops
+                    const response = await axios.post(`${API_BASE_URL}/auth/refresh_token/`, {
+                        refresh: refreshToken
+                    });
+
+                    if (response.status === 200) {
+                        const { access } = response.data;
+                        localStorage.setItem('access_token', access);
+
+                        // Update the original request header
+                        originalRequest.headers['Authorization'] = `Bearer ${access}`;
+
+                        // Update the global instance defaults
+                        api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+                        return api(originalRequest);
+                    }
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                }
+            }
+
+            // If no refresh token or refresh failed, clear tokens and reject
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
 
-            // Remove Authorization header and retry
-            delete originalRequest.headers['Authorization'];
-            return api(originalRequest);
+            // Optional: Redirect to login or reload page
+            // window.location.href = '/login';
+
+            return Promise.reject(error);
         }
 
         // Standardize error message extraction

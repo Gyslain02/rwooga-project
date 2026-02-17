@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Calendar, Shield, Lock, Edit2, Save, X, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Lock, Edit2, Save, X, Eye, EyeOff, RefreshCw, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { profileService, UserProfile } from '@/services/profileService';
+import { authService } from '@/services/authService';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -39,6 +41,10 @@ const Profile = () => {
     });
     const [isChangingEmail, setIsChangingEmail] = useState(false);
     const [showEmailPassword, setShowEmailPassword] = useState(false);
+
+    // Delete Account state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadProfile();
@@ -243,6 +249,35 @@ const Profile = () => {
             month: 'long',
             day: 'numeric'
         });
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!profile) return;
+
+        try {
+            setIsDeleting(true);
+            const response = await profileService.deleteAccount(profile.id);
+            if (response.ok) {
+                toast.success('Account deleted successfully');
+                // Logout and clean up
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (refreshToken) {
+                    await authService.logout(refreshToken);
+                }
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user');
+                navigate('/');
+            } else {
+                toast.error('Failed to delete account');
+            }
+        } catch (error: any) {
+            console.error('Error deleting account:', error);
+            toast.error(error.message || 'Failed to delete account');
+        } finally {
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
+        }
     };
 
     if (loading) {
@@ -657,7 +692,39 @@ const Profile = () => {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Danger Zone */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-red-500/5 border border-red-500/20 rounded-3xl shadow-xl p-8 mb-6"
+                >
+                    <h2 className="text-xl font-bold text-red-500 flex items-center mb-4">
+                        <AlertTriangle className="mr-2" size={24} />
+                        Danger Zone
+                    </h2>
+                    <p className="text-gray-400 mb-6 text-sm">
+                        Once you delete your account, there is no going back. Please be certain.
+                    </p>
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center space-x-2 px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all"
+                    >
+                        <Trash2 size={18} />
+                        <span>Delete Account</span>
+                    </button>
+                </motion.div>
             </div>
+
+            <DeleteConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={handleDeleteAccount}
+                title="Delete Account"
+                message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
+                loading={isDeleting}
+            />
         </div>
     );
 };

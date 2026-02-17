@@ -87,5 +87,14 @@ export const profileService = {
             status: response.status,
             data: response.data
         };
+    },
+
+    async deleteAccount(id: string) {
+        const response = await api.delete(`/user/${id}/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     }
 };
