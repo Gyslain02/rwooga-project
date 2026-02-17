@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Calendar, Shield, Lock, Edit2, Save, X, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { User, Mail, Phone, Calendar, Shield, Lock, Edit2, Save, X, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { profileService, UserProfile } from '@/services/profileService';
 
@@ -28,6 +28,17 @@ const Profile = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    // Email change state
+    const [showEmailChange, setShowEmailChange] = useState(false);
+    const [emailChangeStep, setEmailChangeStep] = useState<'request' | 'confirm'>('request');
+    const [emailChangeForm, setEmailChangeForm] = useState({
+        new_email: '',
+        password: '',
+        code: ''
+    });
+    const [isChangingEmail, setIsChangingEmail] = useState(false);
+    const [showEmailPassword, setShowEmailPassword] = useState(false);
 
     useEffect(() => {
         loadProfile();
@@ -100,7 +111,8 @@ const Profile = () => {
             setIsChangingPassword(true);
             const response = await profileService.changePassword({
                 old_password: passwordForm.old_password,
-                new_password: passwordForm.new_password
+                new_password: passwordForm.new_password,
+                new_password_confirm: passwordForm.confirm_password
             });
             if (response.ok) {
                 toast.success('Password changed successfully');
@@ -120,11 +132,109 @@ const Profile = () => {
         }
     };
 
+    const handleEmailChangeRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!emailChangeForm.new_email || !emailChangeForm.password) {
+            toast.error('Please fill in all fields');
+            return;
+        }
+
+        try {
+            setIsChangingEmail(true);
+            const response = await profileService.emailChangeRequest({
+                new_email: emailChangeForm.new_email,
+                password: emailChangeForm.password
+            });
+            if (response.ok) {
+                toast.success('Verification code sent to your new email');
+                setEmailChangeStep('confirm');
+            } else {
+                toast.error('Failed to request email change');
+            }
+        } catch (error: any) {
+            console.error('Error requesting email change:', error);
+            toast.error(error.message || 'Failed to request email change');
+        } finally {
+            setIsChangingEmail(false);
+        }
+    };
+
+    const handleEmailChangeConfirm = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!emailChangeForm.code || emailChangeForm.code.length !== 6) {
+            toast.error('Please enter the 6-digit verification code');
+            return;
+        }
+
+        try {
+            setIsChangingEmail(true);
+            const response = await profileService.emailChangeConfirm({
+                new_email: emailChangeForm.new_email,
+                code: emailChangeForm.code
+            });
+            if (response.ok) {
+                toast.success('Email changed successfully');
+                setShowEmailChange(false);
+                setEmailChangeStep('request');
+                setEmailChangeForm({ new_email: '', password: '', code: '' });
+                loadProfile();
+            } else {
+                toast.error('Failed to confirm email change');
+            }
+        } catch (error: any) {
+            console.error('Error confirming email change:', error);
+            toast.error(error.message || 'Failed to confirm email change');
+        } finally {
+            setIsChangingEmail(false);
+        }
+    };
+
+    const handleResendCode = async () => {
+        try {
+            setIsChangingEmail(true);
+            const response = await profileService.resendEmailChangeCode({
+                new_email: emailChangeForm.new_email,
+                password: emailChangeForm.password
+            });
+            if (response.ok) {
+                toast.success('Verification code resent');
+            } else {
+                toast.error('Failed to resend code');
+            }
+        } catch (error: any) {
+            console.error('Error resending code:', error);
+            toast.error(error.message || 'Failed to resend code');
+        } finally {
+            setIsChangingEmail(false);
+        }
+    };
+
+    const handleCancelEmailChange = () => {
+        setShowEmailChange(false);
+        setEmailChangeStep('request');
+        setEmailChangeForm({ new_email: '', password: '', code: '' });
+    };
+
     const getUserRole = () => {
         if (!profile) return 'Customer';
-        if (profile.is_admin) return 'Admin';
-        if (profile.is_staff) return 'Staff';
-        return 'Customer';
+        switch (profile.user_type) {
+            case 'ADMIN': return 'Admin';
+            case 'STAFF': return 'Staff';
+            case 'CUSTOMER': return 'Customer';
+            default: return 'Customer';
+        }
+    };
+
+    const getRoleBadgeClasses = () => {
+        if (!profile) return 'bg-gray-800 text-gray-400';
+        switch (profile.user_type) {
+            case 'ADMIN': return 'bg-purple-500/10 text-purple-400';
+            case 'STAFF': return 'bg-blue-500/10 text-blue-400';
+            case 'CUSTOMER': return 'bg-gray-800 text-gray-400';
+            default: return 'bg-gray-800 text-gray-400';
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -178,14 +288,17 @@ const Profile = () => {
                         {profile.full_name}
                     </h1>
                     <p className="text-gray-400">{profile.email}</p>
-                    <span className={`inline-block mt-2 px-4 py-1 rounded-full text-xs font-bold ${profile.is_admin
-                        ? 'bg-purple-500/10 text-purple-400'
-                        : profile.is_staff
-                            ? 'bg-blue-500/10 text-blue-400'
-                            : 'bg-gray-800 text-gray-400'
-                        }`}>
-                        {getUserRole()}
-                    </span>
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                        <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold ${getRoleBadgeClasses()}`}>
+                            {getUserRole()}
+                        </span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${profile.is_active
+                            ? 'bg-green-500/10 text-green-400'
+                            : 'bg-red-500/10 text-red-400'
+                            }`}>
+                            {profile.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
                 </motion.div>
 
                 {/* Profile Information Card */}
@@ -250,7 +363,7 @@ const Profile = () => {
                             )}
                         </div>
 
-                        {/* Email (Read-only) */}
+                        {/* Email (Read-only with change option) */}
                         <div>
                             <label className="block text-sm font-bold text-gray-400 mb-2">
                                 Email Address
@@ -258,9 +371,137 @@ const Profile = () => {
                             <div className="flex items-center px-4 py-3 bg-gray-900/40 rounded-xl">
                                 <Mail size={20} className="text-gray-500 mr-3" />
                                 <span className="text-white">{profile.email}</span>
-                                <span className="ml-auto text-xs text-gray-500">(Read-only)</span>
+                                <button
+                                    onClick={() => setShowEmailChange(!showEmailChange)}
+                                    className="ml-auto text-xs bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg font-bold hover:bg-brand-primary/20 transition-all"
+                                >
+                                    Change Email
+                                </button>
                             </div>
                         </div>
+
+                        {/* Email Change Section */}
+                        <AnimatePresence>
+                            {showEmailChange && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="bg-gray-900/40 border border-gray-700 rounded-xl p-6">
+                                        {emailChangeStep === 'request' ? (
+                                            <form onSubmit={handleEmailChangeRequest} className="space-y-4">
+                                                <h3 className="text-sm font-bold text-white mb-2">Change Email Address</h3>
+                                                <p className="text-xs text-gray-400 mb-4">
+                                                    A verification code will be sent to your new email address.
+                                                </p>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-400 mb-1">
+                                                        New Email Address
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        value={emailChangeForm.new_email}
+                                                        onChange={(e) => setEmailChangeForm({ ...emailChangeForm, new_email: e.target.value })}
+                                                        className="w-full px-4 py-3 bg-gray-900/60 border border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-white"
+                                                        placeholder="Enter new email"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-400 mb-1">
+                                                        Current Password
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showEmailPassword ? 'text' : 'password'}
+                                                            value={emailChangeForm.password}
+                                                            onChange={(e) => setEmailChangeForm({ ...emailChangeForm, password: e.target.value })}
+                                                            className="w-full px-4 py-3 bg-gray-900/60 border border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-white pr-12"
+                                                            placeholder="Enter current password"
+                                                            required
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowEmailPassword(!showEmailPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                                                        >
+                                                            {showEmailPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelEmailChange}
+                                                        className="flex-1 px-4 py-2.5 bg-gray-800 text-gray-300 rounded-xl font-bold hover:bg-gray-700 transition-all text-sm"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isChangingEmail}
+                                                        className="flex-1 px-4 py-2.5 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 text-sm"
+                                                    >
+                                                        {isChangingEmail ? 'Sending...' : 'Send Code'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        ) : (
+                                            <form onSubmit={handleEmailChangeConfirm} className="space-y-4">
+                                                <h3 className="text-sm font-bold text-white mb-2">Verify New Email</h3>
+                                                <p className="text-xs text-gray-400 mb-4">
+                                                    Enter the 6-digit code sent to <span className="text-white font-bold">{emailChangeForm.new_email}</span>
+                                                </p>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-400 mb-1">
+                                                        Verification Code
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={emailChangeForm.code}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                            setEmailChangeForm({ ...emailChangeForm, code: val });
+                                                        }}
+                                                        className="w-full px-4 py-3 bg-gray-900/60 border border-gray-600 rounded-xl focus:ring-2 focus:ring-brand-primary outline-none transition-all text-white text-center text-2xl tracking-[0.5em] font-mono"
+                                                        placeholder="000000"
+                                                        maxLength={6}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelEmailChange}
+                                                        className="flex-1 px-4 py-2.5 bg-gray-800 text-gray-300 rounded-xl font-bold hover:bg-gray-700 transition-all text-sm"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isChangingEmail}
+                                                        className="flex-1 px-4 py-2.5 bg-brand-primary text-white rounded-xl font-bold hover:brightness-110 transition-all disabled:opacity-50 text-sm"
+                                                    >
+                                                        {isChangingEmail ? 'Confirming...' : 'Confirm'}
+                                                    </button>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResendCode}
+                                                    disabled={isChangingEmail}
+                                                    className="w-full flex items-center justify-center gap-2 text-xs text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                                                >
+                                                    <RefreshCw size={14} />
+                                                    Resend verification code
+                                                </button>
+                                            </form>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Phone Number */}
                         <div>
@@ -396,6 +637,12 @@ const Profile = () => {
                         <div className="flex items-center justify-between py-3 border-b border-white/10">
                             <span className="text-gray-400">Account Type</span>
                             <span className="font-bold text-white">{getUserRole()}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3 border-b border-white/10">
+                            <span className="text-gray-400">Status</span>
+                            <span className={`font-bold ${profile.is_active ? 'text-green-400' : 'text-red-400'}`}>
+                                {profile.is_active ? 'Active' : 'Inactive'}
+                            </span>
                         </div>
                         <div className="flex items-center justify-between py-3 border-b border-white/10">
                             <span className="text-gray-400 flex items-center">

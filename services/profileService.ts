@@ -5,7 +5,9 @@ export interface UserProfile {
     email: string;
     full_name: string;
     phone_number: string;
-    is_admin: boolean;
+    user_type: 'STAFF' | 'ADMIN' | 'CUSTOMER';
+    is_active: boolean;
+    is_admin: string;
     is_staff: boolean;
     date_joined: string;
     updated_at: string;
@@ -19,6 +21,17 @@ export interface UpdateProfileData {
 export interface ChangePasswordData {
     old_password: string;
     new_password: string;
+    new_password_confirm: string;
+}
+
+export interface EmailChangeRequestData {
+    new_email: string;
+    password: string;
+}
+
+export interface EmailChangeConfirmData {
+    new_email: string;
+    code: string;
 }
 
 export const profileService = {
@@ -42,6 +55,33 @@ export const profileService = {
 
     async changePassword(data: ChangePasswordData) {
         const response = await api.post('/profile/change_password/', data);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    async emailChangeRequest(data: EmailChangeRequestData) {
+        const response = await api.post('/profile/email_change_request/', data);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    async emailChangeConfirm(data: EmailChangeConfirmData) {
+        const response = await api.post('/profile/email_change_confirm/', data);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    async resendEmailChangeCode(data: { new_email: string; password: string }) {
+        const response = await api.post('/profile/resend_email_change_code/', data);
         return {
             ok: true,
             status: response.status,
