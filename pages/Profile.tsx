@@ -569,7 +569,7 @@ const Profile = () => {
                 >
                     <h2 className="text-xl font-bold text-white flex items-center mb-6">
                         <Lock className="mr-2" size={24} />
-                        Security
+                        Change Password
                     </h2>
 
                     <form onSubmit={handleChangePassword} className="space-y-6">
@@ -669,10 +669,7 @@ const Profile = () => {
                     </h2>
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between py-3 border-b border-white/10">
-                            <span className="text-gray-400">Account Type</span>
-                            <span className="font-bold text-white">{getUserRole()}</span>
-                        </div>
+
                         <div className="flex items-center justify-between py-3 border-b border-white/10">
                             <span className="text-gray-400">Status</span>
                             <span className={`font-bold ${profile.is_active ? 'text-green-400' : 'text-red-400'}`}>
