@@ -70,8 +70,8 @@ api.interceptors.response.use(
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
 
-            // Optional: Redirect to login or reload page
-            // window.location.href = '/login';
+            // Redirect to login page
+            window.location.href = '/login';
 
             return Promise.reject(error);
         }
