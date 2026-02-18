@@ -4,61 +4,47 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Smartphone, CheckCircle, ArrowLeft, Loader2, ShieldCheck, MapPin, User, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '@/store';
+import { clearCart } from '@/store/slices/cartSlice';
 import { useAuth } from '@/context/AuthContext';
 import MomoPayment from '@/components/MomoPayment';
 import CardPayment from '@/components/CardPayment';
 
 interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  currency: string;
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    category: string;
+    currency: string;
 }
 
 const Checkout: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [cart, setCart] = useState<CartItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const dispatch = useDispatch();
+    const cartState = useSelector((state: RootState) => state.cart);
+    const cart = cartState.items || [];
+    const [loading, setLoading] = useState(false);
 
     // Price formatting utility
     const formatPrice = (price: number, currency: string = 'RWF') => {
-      return `${currency} ${Number(price).toLocaleString('en-US', { 
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2 
-      })}`;
+        return `${currency} ${Number(price).toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
     };
 
     // Calculate total
     const getTotal = () => {
-      return cart.reduce((sum, item) => sum + item.price, 0);
+        return cart.reduce((sum, item) => sum + item.price, 0);
     };
 
-    useEffect(() => {
-      // Load cart from localStorage on mount
-      try {
-        const savedCart = localStorage.getItem('cart_items');
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart);
-          // Ensure prices are numbers
-          const cartWithNumbers = parsedCart.map((item: any) => ({
-            ...item,
-            price: Number(item.price) || 0
-          }));
-          setCart(cartWithNumbers);
-        }
-      } catch (error) {
-        console.error('Error loading cart:', error);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
+    // Cart loading is handled by Redux slice initialization
 
     const handleClearCart = () => {
-      setCart([]);
-      localStorage.removeItem('cart_items');
+        dispatch(clearCart());
     };
 
     const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | null>(null);
@@ -82,7 +68,7 @@ const Checkout: React.FC = () => {
         e.preventDefault();
         console.log('Form submitted with data:', formData);
         console.log('Payment method:', paymentMethod);
-        
+
         if (!paymentMethod) {
             toast.error('Please select a payment method');
             return;
@@ -92,7 +78,7 @@ const Checkout: React.FC = () => {
             setShowMomoPayment(true);
             return;
         }
-        
+
         if (paymentMethod === 'card') {
             setShowCardPayment(true);
             return;
@@ -231,7 +217,7 @@ const Checkout: React.FC = () => {
                                                         console.log('Form name input changed:', e.target.value);
                                                         setFormData({ ...formData, name: e.target.value });
                                                     }}
-                                                    style={{ 
+                                                    style={{
                                                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
                                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                                         color: 'white',
@@ -260,7 +246,7 @@ const Checkout: React.FC = () => {
                                                         setFormData({ ...formData, phone: e.target.value });
                                                     }}
                                                     onFocus={(e) => console.log('Form phone input focused')}
-                                                    style={{ 
+                                                    style={{
                                                         backgroundColor: '#1a1a1a',
                                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                                         color: 'white',

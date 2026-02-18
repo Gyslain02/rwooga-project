@@ -5,7 +5,7 @@ export const wishlistService = {
      * Get user's wishlist items
      */
     async getWishlist() {
-        const response = await api.get('/api/v1/products/wishlists/');
+        const response = await api.get('/api/v1/products/wishlist-items/');
         return {
             ok: true,
             status: response.status,
@@ -17,7 +17,7 @@ export const wishlistService = {
      * Add product to wishlist
      */
     async addToWishlist(productId: string | number) {
-        const response = await api.post('/api/v1/products/wishlists/toggle/', {
+        const response = await api.post('/api/v1/products/wishlist-items/toggle/', {
             product: productId
         });
         return {
@@ -31,8 +31,8 @@ export const wishlistService = {
      * Remove product from wishlist
      */
     async removeFromWishlist(productId: string | number) {
-        // The toggle endpoint will remove if it exists
-        const response = await api.post('/api/v1/products/wishlists/toggle/', {
+        // The toggle endpoint handles both adding and removing
+        const response = await api.post('/api/v1/products/wishlist-items/toggle/', {
             product: productId
         });
         return {
@@ -46,7 +46,7 @@ export const wishlistService = {
      * Clear all wishlist items
      */
     async clearWishlist() {
-        const response = await api.delete('/api/v1/products/wishlists/clear/');
+        const response = await api.delete('/api/v1/products/wishlist-items/clear/');
         return {
             ok: true,
             status: response.status,
@@ -58,7 +58,7 @@ export const wishlistService = {
      * Check if product is in wishlist
      */
     async isInWishlist(productId: string | number) {
-        const response = await api.get('/api/v1/products/wishlists/', {
+        const response = await api.get('/api/v1/products/wishlist-items/', {
             params: { product: productId }
         });
         return {

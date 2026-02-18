@@ -12,9 +12,9 @@ export interface ProductFormData {
   available_sizes?: string;
   available_colors?: string;
   available_materials?: string;
-  length?: number;
-  width?: number;
   height?: number;
+  material?: string[];
+  materials?: string[];
   measurement_unit?: string;
   published?: boolean;
 }

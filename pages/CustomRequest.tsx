@@ -55,21 +55,27 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
 
     try {
       const data = new FormData();
-      data.append('client_name', formData.client_name);
-      data.append('client_email', formData.client_email);
-      const rawPhone = String(formData.client_phone).replace(/\s/g, '');
-      data.append('client_phone', rawPhone);
-      data.append('title', formData.title);
-      data.append('description', formData.description);
+      data.append('client_name', formData.client_name.trim());
+      data.append('client_email', formData.client_email.trim());
+
+      const rawPhone = String(formData.client_phone).trim().replace(/\D/g, '');
+      if (rawPhone) {
+        data.append('client_phone', rawPhone);
+      }
+
+      data.append('title', formData.title.trim());
+      data.append('description', formData.description.trim());
+
       if (formData.service_category) {
         data.append('service_category', formData.service_category);
       }
 
       const budgetValue = String(formData.budget).trim();
-      if (budgetValue) {
+      if (budgetValue && budgetValue !== '0') {
         data.append('budget', budgetValue);
       }
-      if (selectedFile) {
+
+      if (selectedFile && selectedFile instanceof File) {
         data.append('reference_file', selectedFile);
       }
 
@@ -77,17 +83,6 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
 
       setIsSubmitted(true);
       toast.success('Request sent successfully!');
-
-      const categoryName = categories.find(c => c.id === formData.service_category)?.name || 'Custom';
-      const message = encodeURIComponent(
-        `Hi Rwooga! I have a custom project request.\n\n` +
-        `Name: ${formData.client_name}\n` +
-        `Type: ${categoryName}\n` +
-        `Title: ${formData.title}\n` +
-        `Description: ${formData.description}\n` +
-        `Budget: ${formData.budget || 'N/A'} RWF`
-      );
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
     } catch (err: any) {
       toast.error(err || 'Failed to submit request');
     } finally {
@@ -140,25 +135,33 @@ const CustomRequest: React.FC<{ isEnabled: boolean }> = ({ isEnabled }) => {
               <CheckCircle2 size={40} />
             </div>
             <h2 className="text-3xl font-display font-bold text-white mb-4 uppercase tracking-tight">Request Received</h2>
-            <p className="text-gray-400 text-lg mb-8">Redirecting to WhatsApp for final confirmation...</p>
-            <button
-              onClick={() => {
-                setIsSubmitted(false);
-                setFormData({
-                  client_name: user?.full_name || user?.name || '',
-                  client_email: user?.email || '',
-                  client_phone: (user?.phone || user?.phone_number) ? String(user?.phone || user?.phone_number) : '',
-                  service_category: '',
-                  title: '',
-                  description: '',
-                  budget: ''
-                });
-                setSelectedFile(null);
-              }}
-              className="px-8 py-4 bg-white text-black rounded-xl font-bold hover:bg-brand-primary transition-all uppercase tracking-widest text-sm"
-            >
-              Submit Another
-            </button>
+            <p className="text-gray-400 text-lg mb-8">Our team will review your request shortly. You can track its status in the "My Requests" section of your account.</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/my-requests"
+                className="px-8 py-4 bg-brand-primary text-black rounded-xl font-bold hover:brightness-110 transition-all uppercase tracking-widest text-sm"
+              >
+                Track My Requests
+              </Link>
+              <button
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setFormData({
+                    client_name: user?.full_name || user?.name || '',
+                    client_email: user?.email || '',
+                    client_phone: (user?.phone || user?.phone_number) ? String(user?.phone || user?.phone_number) : '',
+                    service_category: '',
+                    title: '',
+                    description: '',
+                    budget: ''
+                  });
+                  setSelectedFile(null);
+                }}
+                className="px-8 py-4 bg-white/10 text-white border border-white/10 rounded-xl font-bold hover:bg-white/20 transition-all uppercase tracking-widest text-sm"
+              >
+                Submit New Request
+              </button>
+            </div>
           </motion.div>
         ) : (
           <div className="max-w-5xl mx-auto bg-[#111418] border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl">

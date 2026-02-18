@@ -17,12 +17,13 @@ import { profileService, UserProfile } from '@/services/profileService';
 import { authService } from '@/services/authService';
 import logo from '@/assets/Rwooga logo.png'
 import { useSelector, useDispatch } from 'react-redux'
-import { RootState } from '@/store'
-import { addProduct, updateProduct, deleteProduct as removeProduct } from '@/store/slices/productsSlice'
+import { RootState, AppDispatch } from '@/store'
+import { fetchAllProducts, createProduct, updateProduct, deleteProduct as deleteProductRedux, clearError as clearProductError } from '@/store/slices/productsSlice'
 import {
   fetchRequests,
   submitRequest,
-  removeRequest
+  removeRequest,
+  updateRequestStatus
 } from '@/store/slices/requestsSlice';
 import { setAdminTheme } from '@/store/slices/settingsSlice'
 import {
@@ -39,7 +40,7 @@ import { adminProductService } from '@/services/adminProductService'
 import { productsService } from '@/services/productsService'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const activeTabFromStore = 'dashboard' // Keep as local state if simple, or move to slice if needed
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -92,7 +93,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   useEffect(() => {
     if (activeTab === 'requests') {
-      dispatch(fetchRequests({}) as any);
+      dispatch(fetchRequests({}))
     }
   }, [activeTab, dispatch]);
 
@@ -301,7 +302,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   };
 
   const { items: customRequests } = useSelector((state: RootState) => state.requests)
-  const { items: products } = useSelector((state: RootState) => state.products)
+  const { items: products, loading: productsLoading, error: productsError } = useSelector((state: RootState) => state.products)
 
   // Product Management State
   const [showProductForm, setShowProductForm] = useState(false)
@@ -324,8 +325,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [existingImages, setExistingImages] = useState<any[]>([])
   const [mainImageIndex, setMainImageIndex] = useState<number>(0)
   const [categories, setCategories] = useState<any[]>([])
-  const [adminProducts, setAdminProducts] = useState<any[]>([])
-  const [productsLoading, setProductsLoading] = useState(false)
 
   // Category Management State
   const [showCategoryForm, setShowCategoryForm] = useState(false)
@@ -347,15 +346,17 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [showUserModal, setShowUserModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [userToDelete, setUserToDelete] = useState<any>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<any>(null)
+  const [requestToDelete, setRequestToDelete] = useState<any>(null)
 
   // Initial load - fetch users, categories, and products
   useEffect(() => {
-    dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+    dispatch(fetchUsers({ page: userPage, search: userSearch }))
   }, [dispatch, userPage, userSearch])
 
   useEffect(() => {
     loadCategories()
-    loadProducts()
+    dispatch(fetchAllProducts({}))
   }, [])
 
   // Load categories for product form
@@ -368,25 +369,6 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       }
     } catch (error) {
       console.error('Error loading categories:', error)
-    }
-  }
-
-  // Load all products (including unpublished for admin)
-  const loadProducts = async () => {
-    try {
-      setProductsLoading(true)
-      const response = await productsService.getProducts()
-      if (response.ok && response.data) {
-        const productsList = response.data.results || response.data
-        setAdminProducts(productsList)
-      } else {
-        toast.error('Failed to load products')
-      }
-    } catch (error: any) {
-      console.error('Error loading products:', error)
-      toast.error('for products: ' + error.message)
-    } finally {
-      setProductsLoading(false)
     }
   }
 
@@ -425,12 +407,16 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     setShowCategoryForm(true)
   }
 
-  const deleteCategory = async (id: string) => {
-    const confirmed = window.confirm('Are you sure you want to delete this category? This may affect products using this category.')
-    if (!confirmed) return
+  const deleteCategory = (category: any) => {
+    setCategoryToDelete(category)
+  }
+
+  const handleCategoryDeleteConfirm = async () => {
+    if (!categoryToDelete) return
 
     try {
-      const response = await productsService.deleteCategory(id)
+      setCategoriesLoading(true)
+      const response = await productsService.deleteCategory(categoryToDelete.id)
       if (response.ok) {
         toast.success('Category deleted successfully')
         loadCategories()
@@ -440,6 +426,9 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     } catch (error) {
       console.error('Error deleting category:', error)
       toast.error('Failed to delete category')
+    } finally {
+      setCategoriesLoading(false)
+      setCategoryToDelete(null)
     }
   }
 
@@ -489,9 +478,22 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     dispatch(setAdminTheme(theme === 'light' ? 'dark' : 'light'))
   }
 
-  const deleteRequest = (id: string | number) => {
-    dispatch(removeRequest(id) as any)
-    toast.success('Request deleted')
+  const deleteRequest = (request: any) => {
+    setRequestToDelete(request)
+  }
+
+  const handleRequestDeleteConfirm = async () => {
+    if (!requestToDelete) return
+
+    try {
+      await dispatch(removeRequest(requestToDelete.id)).unwrap()
+      toast.success('Request deleted')
+    } catch (error: any) {
+      console.error('Error deleting request:', error)
+      toast.error('Failed to delete request')
+    } finally {
+      setRequestToDelete(null)
+    }
   }
 
   const deleteProduct = async (id: string | number) => {
@@ -499,16 +501,11 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     if (!confirmed) return
 
     try {
-      const response = await adminProductService.deleteProduct(id.toString())
-      if (response.ok) {
-        toast.success('Product deleted successfully')
-        loadProducts() // Reload products list
-      } else {
-        toast.error('Failed to delete product')
-      }
-    } catch (error) {
+      await dispatch(deleteProductRedux(id)).unwrap()
+      toast.success('Product deleted successfully')
+    } catch (error: any) {
       console.error('Error deleting product:', error)
-      toast.error('Failed to delete product')
+      toast.error('Failed to delete product: ' + (error.message || error))
     }
   }
 
@@ -518,7 +515,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     try {
       const productData = {
         name: productForm.name,
-        category: productForm.category,
+        category: (productForm.category && !isNaN(Number(productForm.category))) ? Number(productForm.category) : productForm.category,
         short_description: productForm.short_description,
         detailed_description: productForm.detailed_description,
         unit_price: parseFloat(productForm.unit_price),
@@ -528,23 +525,25 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         currency: 'RWF',
         length: productForm.length ? parseFloat(productForm.length) : null,
         width: productForm.width ? parseFloat(productForm.width) : null,
-        height: productForm.height ? parseFloat(productForm.height) : null
+        height: productForm.height ? parseFloat(productForm.height) : null,
+        material: productForm.available_materials ? [productForm.available_materials] : [],
+        materials: productForm.available_materials ? [productForm.available_materials] : []
       }
 
-      let response
+      let result: any
       if (editingProduct) {
-        response = await adminProductService.updateProduct(editingProduct.id, productData)
+        result = await dispatch(updateProduct({ id: editingProduct.id, data: productData })).unwrap()
       } else {
-        response = await adminProductService.createProduct(productData)
+        result = await dispatch(createProduct(productData)).unwrap()
       }
 
-      if (response.ok && response.data) {
+      if (result && result.id) {
         // Upload multiple images if provided
-        if (productImages.length > 0 && response.data.id) {
+        if (productImages.length > 0) {
           toast.loading('Uploading images...', { id: 'upload-progress' });
 
           const uploadResult = await adminProductService.uploadMultipleProductImages(
-            response.data.id,
+            result.id,
             productImages,
             mainImageIndex,
             productForm.name
@@ -562,13 +561,12 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         toast.success(editingProduct ? 'Product updated successfully' : 'Product created successfully')
         setShowProductForm(false)
         resetProductForm()
-        loadProducts() // Reload products list
-      } else {
-        toast.error(typeof response.error === 'string' ? response.error : 'Failed to save product: ' + JSON.stringify(response.error))
+        dispatch(fetchAllProducts({})) // Refresh to get all data
       }
     } catch (error: any) {
       console.error('Error saving product:', error)
-      toast.error(error.message || 'Failed to save product')
+      const errorMsg = typeof error === 'object' ? (error.message || JSON.stringify(error)) : error;
+      toast.error(errorMsg || 'Failed to save product')
     }
   }
 
@@ -576,7 +574,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     setEditingProduct(product)
     setProductForm({
       name: product.name,
-      category: product.category?.id || product.category || '',
+      category: (product.category?.id || product.category || '').toString(),
       short_description: product.short_description || '',
       detailed_description: product.detailed_description || '',
       unit_price: product.unit_price?.toString() || '',
@@ -678,27 +676,24 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   const toggleProductPublish = async (product: any) => {
     try {
-      const response = product.published
-        ? await adminProductService.unpublishProduct(product.id)
-        : await adminProductService.publishProduct(product.id)
-
-      if (response.ok) {
-        toast.success(product.published ? 'Product unpublished' : 'Product published')
-        loadProducts() // Reload products list
+      if (product.published) {
+        await adminProductService.unpublishProduct(product.id)
       } else {
-        toast.error('Failed to update product status')
+        await adminProductService.publishProduct(product.id)
       }
-    } catch (error) {
-      console.error('Error toggling product publish status:', error)
+      toast.success(`Product ${product.published ? 'unpublished' : 'published'} successfully`)
+      dispatch(fetchAllProducts({}))
+    } catch (error: any) {
+      console.error('Error toggling product status:', error)
       toast.error('Failed to update product status')
     }
   }
 
   const handleToggleStatus = async (id: string | number, currentStatus: boolean) => {
     try {
-      await dispatch(toggleUserStatus({ id, is_active: currentStatus }) as any).unwrap()
+      await dispatch(toggleUserStatus({ id, is_active: currentStatus })).unwrap()
       // Refetch users to ensure UI is in sync with backend
-      await dispatch(fetchUsers({ page: userPage, search: userSearch }) as any)
+      await dispatch(fetchUsers({ page: userPage, search: userSearch }))
       toast.success('Status updated successfully')
     } catch (err: any) {
       toast.error(err.message || 'Failed to update status')
@@ -737,9 +732,9 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   // Filter Users (Local fallback if needed, though API handles it)
   const filteredUsers = users.filter((u: any) =>
-    u.full_name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.phone_number.includes(userSearch)
+    (u.full_name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+    (u.phone_number || '').includes(userSearch)
   )
   const totalUserPages = Math.ceil(count / usersPerPage)
   const paginatedUsers = users // API already paginates, so we show the current set
@@ -882,7 +877,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 />
                 <DashboardStat
                   label="Pending Requests"
-                  value={customRequests.length.toString()}
+                  value={(customRequests || []).length.toString()}
                   trend="Requires review"
                   icon={<ClipboardList className="text-brand-orange" />}
                   bg="bg-brand-orange/10"
@@ -908,7 +903,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-                        {customRequests.slice(0, 5).map((req: any) => (
+                        {((customRequests || []).slice(0, 5)).map((req: any) => (
                           <tr key={req.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all rounded-xl overflow-hidden">
                             <td className="py-5">
                               <p className="font-bold text-slate-800 dark:text-white">{req.name}</p>
@@ -927,7 +922,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             </td>
                           </tr>
                         ))}
-                        {customRequests.length === 0 && (
+                        {(customRequests || []).length === 0 && (
                           <tr><td colSpan={4} className="py-12 text-center text-slate-500 dark:text-slate-400 text-sm">No recent requests</td></tr>
                         )}
                       </tbody>
@@ -958,7 +953,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-black text-slate-800 dark:text-white text-sm">{p.price.toLocaleString()} </p>
+                            <p className="font-black text-slate-800 dark:text-white text-sm">{((p.unit_price || p.price || 0)).toLocaleString()} </p>
                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg ${idx === 0 ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-500' : 'bg-emerald-50 dark:bg-emerald-500/10 text-brand-primary'}`}>
                               {idx === 0 ? 'Shipping' : 'Delivered'}
                             </span>
@@ -1045,7 +1040,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         <div className="flex items-center gap-2">
                           <button onClick={() => toggleCategoryStatus(cat)} className={`p-2 rounded-xl transition-all ${cat.is_active ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'}`} title={cat.is_active ? 'Deactivate' : 'Activate'}>{cat.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}</button>
                           <button onClick={() => editCategory(cat)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all" title="Edit Category"><Edit2 size={20} /></button>
-                          <button onClick={() => deleteCategory(cat.id)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all" title="Delete Category"><Trash2 size={20} /></button>
+                          <button onClick={() => deleteCategory(cat)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all" title="Delete Category"><Trash2 size={20} /></button>
                         </div>
                       </div>
                     </motion.div>
@@ -1218,7 +1213,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </div>
 
                     {/* Dimensions (Conditionally Rendered) */}
-                    {categories.find(c => c.id === productForm.category)?.requires_dimensions && (
+                    {categories.find(c => String(c.id) === String(productForm.category))?.requires_dimensions && (
                       <div className="md:col-span-2 grid grid-cols-3 gap-4">
                         <div>
                           <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Length (cm)</label>
@@ -1357,7 +1352,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   <div className="col-span-2 text-center py-20">
                     <p className="text-slate-500 dark:text-slate-400">Loading products...</p>
                   </div>
-                ) : adminProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                   <div className="col-span-2 text-center py-20 bg-slate-50 dark:bg-slate-800/30 rounded-[40px] border border-dashed border-slate-200 dark:border-slate-700">
                     <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                       <ShoppingBag className="text-slate-300 dark:text-slate-600" size={32} />
@@ -1365,17 +1360,17 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     <p className="text-slate-500 dark:text-slate-400 font-bold">No products listed in the shop yet.</p>
                   </div>
                 ) : (
-                  adminProducts.map((p: any) => (
+                  (products || []).map((p: any) => (
                     <motion.div
                       key={p.id}
                       layout
                       className="group bg-white dark:bg-[#1E293B] p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 hover:border-brand-primary/30 dark:hover:border-brand-primary/50 hover:shadow-xl transition-all relative"
                     >
                       {/* Product Image Thumbnail */}
-                      {p.media && p.media.length > 0 && p.media[0].image ? (
+                      {(p.media && p.media.length > 0 && (p.media[0].image || p.media[0].image_url)) ? (
                         <div className="w-full h-48 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                           <img
-                            src={p.media[0].image}
+                            src={p.media[0].image || p.media[0].image_url}
                             alt={p.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
@@ -1479,7 +1474,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           <td className="py-5 pl-4">
                             <div className="flex items-center space-x-4">
                               <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary font-bold">
-                                {u.full_name.charAt(0)}
+                                {(u.full_name || 'U').charAt(0)}
                               </div>
                               <div>
                                 <p className="font-bold text-slate-800 dark:text-white">{u.full_name}</p>
@@ -1606,14 +1601,15 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       <ProductRequestCard
                         key={r.id}
                         request={r}
-                        onDelete={async () => {
+                        onUpdateStatus={async (newStatus: string) => {
                           try {
-                            await dispatch(removeRequest(r.id) as any).unwrap();
-                            toast.success('Request deleted');
+                            await dispatch(updateRequestStatus({ id: r.id, status: newStatus }) as any).unwrap();
+                            toast.success(`Request status updated to ${newStatus}`);
                           } catch (err: any) {
-                            toast.error(err || 'Failed to delete');
+                            toast.error(err || 'Failed to update status');
                           }
                         }}
+                        onDelete={() => deleteRequest(r)}
                       />
                     ))
                   )}
@@ -2089,6 +2085,23 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       />
 
       <DeleteConfirmModal
+        isOpen={!!categoryToDelete}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleCategoryDeleteConfirm}
+        title="Delete Category"
+        message={`Are you sure you want to delete the category "${categoryToDelete?.name}"? This may affect products linked to this category.`}
+        loading={categoriesLoading}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!requestToDelete}
+        onClose={() => setRequestToDelete(null)}
+        onConfirm={handleRequestDeleteConfirm}
+        title="Delete Custom Request"
+        message={`Are you sure you want to delete the request from ${requestToDelete?.client_name || requestToDelete?.name}? This action cannot be undone.`}
+      />
+
+      <DeleteConfirmModal
         isOpen={showDeleteProfileConfirm}
         onClose={() => setShowDeleteProfileConfirm(false)}
         onConfirm={handleDeleteProfileAccount}
@@ -2123,15 +2136,15 @@ const DashboardStat: React.FC<{ label: string; value: string; trend: string; ico
       <div className="flex items-baseline space-x-2">
         <h4 className="text-3xl font-display font-black text-slate-800 dark:text-white">{value}</h4>
       </div>
-      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2 flex items-center">
+      <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-2 flex items-center">
         {trend.includes('+') ? <CheckCircle2 size={12} className="text-brand-primary mr-1" /> : (label === "Pending Requests") ? <AlertCircle size={12} className="text-brand-orange mr-1" /> : <div className="w-1.5 h-1.5 bg-brand-primary rounded-full mr-1" />}
         {trend}
-      </p>
+      </div>
     </div>
   </div>
 )
 
-const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ request, onDelete }) => (
+const ProductRequestCard: React.FC<{ request: any; onUpdateStatus: (status: string) => void; onDelete: () => void }> = ({ request, onUpdateStatus, onDelete }) => (
   <div className="p-8 bg-white dark:bg-slate-800/40 rounded-[40px] border border-gray-100 dark:border-slate-800/50 group transition-all hover:border-brand-primary/20">
     <div className="flex justify-between items-start mb-8">
       <div className="flex items-center space-x-6">
@@ -2157,7 +2170,23 @@ const ProductRequestCard: React.FC<{ request: any; onDelete: () => void }> = ({ 
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <RequestDetail label="Submitted On" value={formatDate(request.created_at)} />
-      <RequestDetail label="Current Status" value={request.status} />
+      <div className="flex flex-col">
+        <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Manage Status</p>
+        <div className="flex flex-wrap gap-2">
+          {['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].map((status) => (
+            <button
+              key={status}
+              onClick={() => onUpdateStatus(status)}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${request.status === status
+                ? 'bg-brand-primary/10 text-brand-primary border-brand-primary'
+                : 'bg-slate-50 dark:bg-slate-900 border-gray-100 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+            >
+              {status.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
 
     <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-inner mb-8 transition-colors">

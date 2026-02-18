@@ -42,6 +42,15 @@ export const customRequestService = {
         };
     },
 
+    async updateCustomRequest(id: string | number, data: any) {
+        const response = await api.patch(`/api/v1/products/custom-requests/${id}/`, data);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
     async deleteCustomRequest(id: string | number) {
         const response = await api.delete(`/api/v1/products/custom-requests/${id}/`);
         return {

@@ -39,6 +39,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSubmit, user, 
         if (user) {
             setFormData({
                 ...user,
+                full_name: user.full_name || '',
+                phone_number: user.phone_number || '',
                 password: '',
                 password_confirm: '',
             });

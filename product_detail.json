@@ -1,0 +1,28 @@
+﻿{
+    "id":  "73e8de79-a7f0-484f-b279-3b17fca4f465",
+    "category":  "25bcd3ea-7270-480d-8128-d0331ff3a2e9",
+    "name":  "HP Desktop",
+    "slug":  "hp-desktop",
+    "short_description":  "HY",
+    "detailed_description":  "ewrtyuk",
+    "unit_price":  null,
+    "currency":  "RWF",
+    "length":  null,
+    "width":  null,
+    "height":  null,
+    "product_volume":  null,
+    "measurement_unit":  "cm^3",
+    "published":  true,
+    "uploaded_by":  null,
+    "created_at":  "2026-02-18T09:19:26.909678Z",
+    "updated_at":  "2026-02-18T11:13:14.381083Z",
+    "available_sizes":  "",
+    "available_colors":  "",
+    "available_materials":  "",
+    "final_price":  null,
+    "media":  [
+
+              ],
+    "average_rating":  null,
+    "is_for_sale":  false
+}

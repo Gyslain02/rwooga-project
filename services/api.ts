@@ -17,11 +17,14 @@ api.interceptors.request.use(
         }
 
         if (config.data instanceof FormData) {
-            // In Axios 1.x, setting to null/undefined or using .set is preferred
-            if (config.headers.set) {
+            // Remove Content-Type to let the browser set it with the boundary
+            if (config.headers?.set) {
                 config.headers.set('Content-Type', undefined);
-            } else {
+                // Also common to delete it to be sure
+                try { delete (config.headers as any)['Content-Type']; } catch (e) { }
+            } else if (config.headers) {
                 delete config.headers['Content-Type'];
+                delete config.headers['content-type'];
             }
         }
 

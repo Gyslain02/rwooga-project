@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
-import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut, Heart, Package } from 'lucide-react';
+import { Menu, X, MessageCircle, Settings, ChevronDown, User as UserIcon, LogOut, Heart, Package, ClipboardList } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
@@ -29,6 +29,7 @@ import Wishlist from '@/pages/Wishlist';
 import Orders from '@/pages/Orders';
 import Returns from '@/pages/Returns';
 import Profile from '@/pages/Profile';
+import MyCustomRequests from '@/pages/MyCustomRequests';
 import { authService } from '@/services/authService';
 
 // Assets
@@ -173,6 +174,14 @@ const AppContent: React.FC<{
                                 <Package size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
                                 Orders
                               </Link>
+
+                              <Link
+                                to="/my-requests"
+                                className="flex items-center px-5 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all group/item"
+                              >
+                                <ClipboardList size={16} className="mr-3 text-gray-500 group-hover/item:text-brand-primary" />
+                                My Requests
+                              </Link>
                             </>
                           )}
 
@@ -264,8 +273,14 @@ const AppContent: React.FC<{
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1">Signed in as</p>
                         <p className="text-xl font-bold text-white">{user.full_name || user.name || user.email}</p>
                       </div>
-                      {user.is_admin && (
+                      {user.is_admin ? (
                         <MobileNavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</MobileNavLink>
+                      ) : (
+                        <>
+                          <MobileNavLink to="/wishlist" onClick={() => setIsMenuOpen(false)}>Wishlist</MobileNavLink>
+                          <MobileNavLink to="/orders" onClick={() => setIsMenuOpen(false)}>Orders</MobileNavLink>
+                          <MobileNavLink to="/my-requests" onClick={() => setIsMenuOpen(false)}>My Requests</MobileNavLink>
+                        </>
                       )}
                       <button
                         onClick={() => { handleLogout(); setIsMenuOpen(false); }}
@@ -317,6 +332,7 @@ const AppContent: React.FC<{
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/my-requests" element={<MyCustomRequests />} />
             <Route path="/returns" element={<Returns />} />
             <Route path="/profile" element={<Profile />} />
           </Route>

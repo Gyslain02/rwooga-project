@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, ArrowRight, ShoppingCart, X, Trash2, Loader2, Play } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PRODUCTS } from '@/constants'
+import { useSelector, useDispatch } from 'react-redux'
+import { RootState } from '@/store'
+import { fetchPublishedProducts } from '@/store/slices/productsSlice'
+import { addToCart, removeFromCart } from '@/store/slices/cartSlice'
 import { productsService } from '@/services/productsService'
 import toast from 'react-hot-toast'
 
@@ -17,26 +20,16 @@ interface CartItem {
 
 
 const Shop = () => {
+  const dispatch = useDispatch()
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [showCart, setShowCart] = useState(false)
-  const [products, setProducts] = useState<any[]>([])
+  const { items: products, loading, error } = useSelector((state: RootState) => state.products)
+  const cartState = useSelector((state: RootState) => state.cart)
+  const cart = cartState.items || []
   const [categories, setCategories] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [cart, setCart] = useState<CartItem[]>([])
   const navigate = useNavigate()
 
-  useEffect(() => {
-    // Load cart from localStorage
-    try {
-      const savedCart = localStorage.getItem('cart_items');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    } catch (error) {
-      console.error('Error loading cart:', error);
-    }
-  }, [])
+  // Cart loading is handled by Redux slice initialization
 
   const getTotal = () => {
     return cart.reduce((sum, item) => sum + item.price, 0);
@@ -44,93 +37,48 @@ const Shop = () => {
 
   // Fetch products and categories on mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategories = async () => {
       try {
-        setLoading(true)
-        setError('')
-
-        // Fetch categories
         const categoriesRes = await productsService.getCategories()
         if (categoriesRes.ok && categoriesRes.data) {
           const categoriesList = categoriesRes.data.results || categoriesRes.data
           setCategories(categoriesList.filter((cat: any) => cat.is_active))
         }
-
-        // Fetch published products from backend
-        const productsRes = await productsService.getPublishedProducts()
-        if (productsRes.ok && productsRes.data) {
-          const productsList = productsRes.data.results || productsRes.data
-
-          // Fetch media for each product
-          const productsWithMedia = await Promise.all(
-            productsList.map(async (product: any) => {
-              try {
-                const mediaRes = await productsService.getProductMedia(product.id)
-                if (mediaRes.ok && mediaRes.data) {
-                  const mediaList = mediaRes.data.results || mediaRes.data
-                  const sortedMedia = mediaList.sort((a: any, b: any) => a.display_order - b.display_order)
-                  return { ...product, media: sortedMedia }
-                }
-                return { ...product, media: [] }
-              } catch (err) {
-                console.error(`Error fetching media for product ${product.id}:`, err)
-                return { ...product, media: [] }
-              }
-            })
-          )
-
-          setProducts(productsWithMedia)
-        } else {
-          // Fallback to empty array if API fails
-          setProducts([])
-          setError('Failed to load products')
-        }
-
-      } catch (err: any) {
-        console.error('Error fetching data:', err)
-        setError('Failed to load products')
-        setProducts([])
-      } finally {
-        setLoading(false)
+      } catch (err) {
+        console.error('Error fetching categories:', err)
       }
     }
 
-    fetchData()
-  }, [])
+    fetchCategories()
+    dispatch(fetchPublishedProducts({}) as any)
+  }, [dispatch])
 
   const categoryNames = ['All', ...categories.map(c => c.name)]
 
   const filteredProducts = selectedCategory === 'All'
     ? products
-    : products.filter(product => product.category === selectedCategory)
+    : products.filter(product => {
+      const productCat = typeof product.category === 'object' ? product.category?.name : product.category_name;
+      return productCat === selectedCategory;
+    })
 
   const handleAddToCart = (product: any) => {
-    const exists = cart.some(item => item.id === product.id);
-    if (exists) {
-      toast.error(`${product.name} is already in your cart!`);
-      return;
-    }
-
     const cartItem = {
       id: product.id,
       name: product.name,
       price: product.unit_price || 0,
       currency: product.currency || 'RWF',
-      image: product.thumbnail || product.image || '/placeholder-product.jpg',
-      category: product.category || 'Product'
+      image: (product.media && product.media.length > 0) ? (product.media[0].image_url || product.media[0].thumbnail) : (product.thumbnail || product.image || '/placeholder-product.jpg'),
+      category: typeof product.category === 'object' ? product.category.name : (product.category_name || 'Product')
     }
 
-    const updatedCart = [...cart, cartItem];
-    setCart(updatedCart);
-    localStorage.setItem('cart_items', JSON.stringify(updatedCart));
+    dispatch(addToCart(cartItem))
     setShowCart(true)
     toast.success(`${product.name} added to cart!`)
   }
 
   const handleRemoveFromCart = (itemId: string) => {
-    const updatedCart = cart.filter(item => item.id !== itemId);
-    setCart(updatedCart);
-    localStorage.setItem('cart_items', JSON.stringify(updatedCart));
+    dispatch(removeFromCart(itemId))
     toast.success('Item removed from cart!')
   }
 
@@ -157,8 +105,8 @@ const Shop = () => {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${selectedCategory === cat
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                  ? 'bg-white text-black'
+                  : 'bg-white/10 text-white hover:bg-white/20'
                   }`}
               >
                 {cat}

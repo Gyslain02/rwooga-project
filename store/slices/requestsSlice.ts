@@ -37,6 +37,30 @@ export const removeRequest = createAsyncThunk(
     }
 );
 
+export const updateRequestStatus = createAsyncThunk(
+    'requests/updateStatus',
+    async ({ id, status }: { id: string | number; status: string }, { rejectWithValue }) => {
+        try {
+            const response = await customRequestService.updateCustomStatus(id, status);
+            return response.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Failed to update status');
+        }
+    }
+);
+
+export const updateExistingRequest = createAsyncThunk(
+    'requests/update',
+    async ({ id, data }: { id: string | number; data: any }, { rejectWithValue }) => {
+        try {
+            const response = await customRequestService.updateCustomRequest(id, data);
+            return response.data;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'Failed to update request');
+        }
+    }
+);
+
 interface CustomRequest {
     id: string;
     client_name: string;
@@ -97,6 +121,20 @@ const requestsSlice = createSlice({
             .addCase(removeRequest.fulfilled, (state, action) => {
                 state.items = state.items.filter(item => item.id !== action.payload);
                 state.count -= 1;
+            })
+            // Update Status
+            .addCase(updateRequestStatus.fulfilled, (state, action) => {
+                const index = state.items.findIndex(item => item.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
+            })
+            // Update Request
+            .addCase(updateExistingRequest.fulfilled, (state, action) => {
+                const index = state.items.findIndex(item => item.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                }
             });
     }
 });

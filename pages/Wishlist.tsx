@@ -1,62 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ShoppingCart, Trash2, ArrowLeft, Package, Plus } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, ArrowLeft, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '@/store/slices/cartSlice';
-import { wishlistService } from '@/services/wishlistService';
-
-interface WishlistItem {
-  id: string;
-  product: {
-    id: string;
-    name: string;
-    unit_price: number;
-    image?: string;
-    thumbnail?: string;
-    category?: string;
-  };
-  created_at: string;
-}
+import { fetchWishlist, toggleWishlist, clearWishlist, WishlistItem } from '@/store/slices/wishlistSlice';
+import { RootState } from '@/store';
 
 const Wishlist: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const { items: wishlistItems, loading, error } = useSelector((state: RootState) => state.wishlist);
 
   useEffect(() => {
-    fetchWishlistItems();
-  }, []);
-
-  const fetchWishlistItems = async () => {
-    try {
-      setLoading(true);
-      const response = await wishlistService.getWishlist();
-      if (response.ok) {
-        // The API returns wishlist items with product details
-        setWishlistItems(response.data.results || response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching wishlist:', error);
-      toast.error('Failed to load wishlist');
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchWishlist() as any);
+  }, [dispatch]);
 
   const handleRemoveFromWishlist = async (productId: string) => {
     try {
-      setLoading(true);
-      await wishlistService.removeFromWishlist(productId);
-      setWishlistItems(wishlistItems.filter(item => item.product.id !== productId));
+      await dispatch(toggleWishlist(productId) as any).unwrap();
       toast.success('Item removed from wishlist');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing from wishlist:', error);
-      toast.error('Failed to remove item from wishlist');
-    } finally {
-      setLoading(false);
+      const message = typeof error === 'string' ? error : (error?.message || 'Failed to remove item from wishlist');
+      toast.error(message);
     }
   };
 
@@ -74,15 +42,12 @@ const Wishlist: React.FC = () => {
 
   const handleClearWishlist = async () => {
     try {
-      setLoading(true);
-      await wishlistService.clearWishlist();
-      setWishlistItems([]);
+      await dispatch(clearWishlist() as any).unwrap();
       toast.success('Wishlist cleared');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error clearing wishlist:', error);
-      toast.error('Failed to clear wishlist');
-    } finally {
-      setLoading(false);
+      const message = typeof error === 'string' ? error : (error?.message || 'Failed to clear wishlist');
+      toast.error(message);
     }
   };
 
@@ -90,12 +55,28 @@ const Wishlist: React.FC = () => {
     return wishlistItems.reduce((total, item) => total + (item.product.unit_price || 0), 0);
   };
 
-  if (loading) {
+  if (loading && wishlistItems.length === 0) {
     return (
       <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p>Loading your wishlist...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => dispatch(fetchWishlist() as any)}
+            className="px-6 py-2 bg-green-700 rounded-lg"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -118,7 +99,7 @@ const Wishlist: React.FC = () => {
               <p className="text-gray-400">{wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'}</p>
             </div>
           </div>
-          
+
           {wishlistItems.length > 0 && (
             <button
               onClick={handleClearWishlist}
@@ -182,7 +163,7 @@ const Wishlist: React.FC = () => {
                       </span>
                     </div>
                     <h3 className="text-xl font-bold mb-4 line-clamp-2">{item.product.name}</h3>
-                    
+
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-2xl font-bold text-green-400">
                         {(item.product.unit_price || 0).toLocaleString()} RWF

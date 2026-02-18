@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  ArrowLeft, ShoppingCart, Plus, Minus, X, Heart, Share2, 
+import {
+  ArrowLeft, ShoppingCart, Plus, Minus, X, Heart, Share2,
   Star, Truck, Shield, Clock, ChevronLeft, ChevronRight,
   Loader2, AlertCircle, Box
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { wishlistService } from '@/services/wishlistService'
 import { productsService } from '@/services/productsService'
+import { useDispatch, useSelector } from 'react-redux'
+import { addToCart } from '@/store/slices/cartSlice'
+import { toggleWishlist, fetchWishlist } from '@/store/slices/wishlistSlice'
+import { RootState } from '@/store'
 import ThreeDViewer from '@/components/ThreeDViewer'
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  
+  const dispatch = useDispatch()
+
   const [product, setProduct] = useState<any>(null)
   const [media, setMedia] = useState<any[]>([])
   const [feedback, setFeedback] = useState<any[]>([])
@@ -23,7 +28,9 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
   const [activeMediaIndex, setActiveMediaIndex] = useState(0)
   const [show3D, setShow3D] = useState(false)
-  const [isInWishlist, setIsInWishlist] = useState(false)
+
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items)
+  const isInWishlist = product ? wishlistItems.some((item: any) => item.product.id === product.id) : false
 
   // Scroll tracking for sticky header/buy bar
   const [isScrolled, setIsScrolled] = useState(false)
@@ -37,55 +44,19 @@ const ProductDetail = () => {
   }, [id])
 
   useEffect(() => {
-    // Check if product is in wishlist
-    if (product) {
-      const checkWishlistStatus = async () => {
-        try {
-          console.log('Wishlist Debug - Checking status for product:', product.id);
-          console.log('Wishlist Debug - Token exists:', !!localStorage.getItem('access_token'));
-          
-          const token = localStorage.getItem('access_token');
-          if (!token) {
-            console.log('Wishlist Debug - No token, checking localStorage');
-            // Fallback to localStorage if not authenticated
-            const existingWishlist = JSON.parse(localStorage.getItem('wishlist_items') || '[]');
-            const itemExists = existingWishlist.some((item: any) => item.id === product.id);
-            setIsInWishlist(itemExists);
-            return;
-          }
-          
-          const response = await wishlistService.isInWishlist(product.id);
-          console.log('Wishlist Debug - Status check response:', response);
-          setIsInWishlist(response.data);
-        } catch (error) {
-          console.error('Wishlist Debug - Error checking status:', error);
-          console.error('Wishlist Debug - Status error details:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-          });
-          
-          // Fallback to localStorage on API error
-          console.log('Wishlist Debug - API failed, checking localStorage');
-          const existingWishlist = JSON.parse(localStorage.getItem('wishlist_items') || '[]');
-          const itemExists = existingWishlist.some((item: any) => item.id === product.id);
-          setIsInWishlist(itemExists);
-        }
-      };
-      checkWishlistStatus();
-    }
-  }, [product])
+    dispatch(fetchWishlist() as any)
+  }, [dispatch])
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       const scrolled = currentScrollY > 100
-      
+
       setIsScrolled(scrolled)
       setIsScrollingUp(currentScrollY < lastScrollY)
       setLastScrollY(currentScrollY)
     }
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
@@ -98,13 +69,13 @@ const ProductDetail = () => {
       const productRes = await productsService.getProduct(productId)
       if (productRes.ok && productRes.data) {
         setProduct(productRes.data)
-        
+
         const mediaRes = await productsService.getProductMedia(productId)
         if (mediaRes.ok && mediaRes.data) {
           const mediaList = mediaRes.data.results || mediaRes.data
           const sortedMedia = mediaList.sort((a: any, b: any) => a.display_order - b.display_order)
           setMedia(sortedMedia)
-          
+
           // Check if there is a 3D model
           const has3D = sortedMedia.some((m: any) => m.media_type === 'model_3d' || m.file_type === 'glb' || m.file_type === 'gltf' || m.model_file)
           if (has3D) {
@@ -131,10 +102,9 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!product) return
-    
-    // Add to localStorage cart
+
     const cartItem = {
-      id: product.id,
+      id: product.id.toString(),
       name: product.name,
       price: product.unit_price || 0,
       currency: product.currency || 'RWF',
@@ -142,119 +112,24 @@ const ProductDetail = () => {
       category: getCategoryName()
     }
 
-    try {
-      // Get existing cart from localStorage
-      const existingCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
-      console.log('Add to Cart Debug - Existing cart:', existingCart);
-      console.log('Add to Cart Debug - New item to add:', cartItem);
-      
-      // Check if item already exists
-      const itemExists = existingCart.some((item: any) => item.id === product.id);
-      console.log('Add to Cart Debug - Item exists:', itemExists);
-      
-      if (!itemExists) {
-        // Add item to cart
-        existingCart.push(cartItem);
-        localStorage.setItem('cart_items', JSON.stringify(existingCart));
-        console.log('Add to Cart Debug - Updated cart:', existingCart);
-        console.log('Add to Cart Debug - localStorage after save:', localStorage.getItem('cart_items'));
-        toast.success(`${product.name} added to cart`);
-      } else {
-        toast.success(`${product.name} is already in cart`);
-      }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
-    }
+    dispatch(addToCart(cartItem))
+    toast.success(`${product.name} added to cart`);
   }
 
   const handleToggleWishlist = async () => {
     if (!product) return
-    
+
     try {
-      console.log('Wishlist Debug - Starting toggle for product:', product.id);
-      console.log('Wishlist Debug - Token exists:', !!localStorage.getItem('access_token'));
-      
-      // Check if user is authenticated
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        console.log('Wishlist Debug - No token found, using localStorage fallback');
-        // Fallback to localStorage if not authenticated
-        const existingWishlist = JSON.parse(localStorage.getItem('wishlist_items') || '[]');
-        const itemExists = existingWishlist.some((item: any) => item.id === product.id);
-        
-        if (itemExists) {
-          const updatedWishlist = existingWishlist.filter((item: any) => item.id !== product.id);
-          localStorage.setItem('wishlist_items', JSON.stringify(updatedWishlist));
-          setIsInWishlist(false);
-          toast.success(`${product.name} removed from wishlist`);
-        } else {
-          const wishlistItem = {
-            id: product.id,
-            name: product.name,
-            price: product.unit_price || 0,
-            currency: product.currency || 'RWF',
-            image: getMainImage(),
-            category: getCategoryName()
-          };
-          existingWishlist.push(wishlistItem);
-          localStorage.setItem('wishlist_items', JSON.stringify(existingWishlist));
-          setIsInWishlist(true);
-          toast.success(`${product.name} added to wishlist`);
-        }
-        return;
-      }
-      
-      // Use API if authenticated
-      const isInWishlistResponse = await wishlistService.isInWishlist(product.id);
-      console.log('Wishlist Debug - Check response:', isInWishlistResponse);
-      const currentlyInWishlist = isInWishlistResponse.data;
-      
-      if (currentlyInWishlist) {
-        // Remove from wishlist
-        console.log('Wishlist Debug - Removing from wishlist');
-        await wishlistService.removeFromWishlist(product.id);
-        setIsInWishlist(false);
-        toast.success(`${product.name} removed from wishlist`);
+      await dispatch(toggleWishlist(product.id) as any).unwrap()
+      if (isInWishlist) {
+        toast.success(`${product.name} removed from wishlist`)
       } else {
-        // Add to wishlist
-        console.log('Wishlist Debug - Adding to wishlist');
-        await wishlistService.addToWishlist(product.id);
-        setIsInWishlist(true);
-        toast.success(`${product.name} added to wishlist`);
+        toast.success(`${product.name} added to wishlist`)
       }
-    } catch (error) {
-      console.error('Wishlist Debug - Error:', error);
-      console.error('Wishlist Debug - Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      // Fallback to localStorage on API error
-      console.log('Wishlist Debug - API failed, using localStorage fallback');
-      const existingWishlist = JSON.parse(localStorage.getItem('wishlist_items') || '[]');
-      const itemExists = existingWishlist.some((item: any) => item.id === product.id);
-      
-      if (itemExists) {
-        const updatedWishlist = existingWishlist.filter((item: any) => item.id !== product.id);
-        localStorage.setItem('wishlist_items', JSON.stringify(updatedWishlist));
-        setIsInWishlist(false);
-        toast.success(`${product.name} removed from wishlist`);
-      } else {
-        const wishlistItem = {
-          id: product.id,
-          name: product.name,
-          price: product.unit_price || 0,
-          currency: product.currency || 'RWF',
-          image: getMainImage(),
-          category: getCategoryName()
-        };
-        existingWishlist.push(wishlistItem);
-        localStorage.setItem('wishlist_items', JSON.stringify(existingWishlist));
-        setIsInWishlist(true);
-        toast.success(`${product.name} added to wishlist`);
-      }
+    } catch (error: any) {
+      console.error('Error toggling wishlist:', error)
+      const message = typeof error === 'string' ? error : (error?.message || 'Failed to update wishlist')
+      toast.error(message)
     }
   }
 
@@ -267,15 +142,15 @@ const ProductDetail = () => {
   }
 
   const getCategoryName = () => {
-    return typeof product?.category === 'object' ? product.category.name : product?.category || 'Unknown' 
+    return typeof product?.category === 'object' ? product.category.name : product?.category || 'Unknown'
   }
 
   const get3DModelUrl = () => {
     // Look for GLB/GLTF files in media
-    const model = media.find(m => 
-      m.model_file || 
-      m.model_3d_url || 
-      m.image_url?.endsWith('.glb') || 
+    const model = media.find(m =>
+      m.model_file ||
+      m.model_3d_url ||
+      m.image_url?.endsWith('.glb') ||
       m.image_url?.endsWith('.gltf') ||
       m.media_type === 'model_3d'
     )
@@ -289,13 +164,12 @@ const ProductDetail = () => {
 
   return (
     <div className="bg-[#000000] min-h-screen text-[#f5f5f7] pb-20">
-      
+
       {/* Sticky Product Nav */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${
-        isScrolled && isScrollingUp ? 'translate-y-0' : 
-        isScrolled && !isScrollingUp ? '-translate-y-full' : 
-        'translate-y-0'
-      }`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${isScrolled && isScrollingUp ? 'translate-y-0' :
+        isScrolled && !isScrollingUp ? '-translate-y-full' :
+          'translate-y-0'
+        }`}>
         <div className="max-w-[1000px] mx-auto px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold">{product.name}</h2>
           <div className="flex items-center gap-6">
@@ -307,10 +181,10 @@ const ProductDetail = () => {
 
       {/* Hero / Media Section - Apple Style */}
       <div className="max-w-[1200px] mx-auto pt-32 px-6">
-        
+
         {/* Back Button */}
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="mb-8 flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
         >
           <div className="p-2 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
@@ -322,7 +196,7 @@ const ProductDetail = () => {
         {/* Title Area */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-4">
-             <span className="px-3 py-1 border border-orange-500 text-orange-500 rounded-full text-[10px] uppercase font-bold tracking-widest">New</span>
+            <span className="px-3 py-1 border border-orange-500 text-orange-500 rounded-full text-[10px] uppercase font-bold tracking-widest">New</span>
           </div>
           <h1 className="text-6xl md:text-8xl font-semibold tracking-tighter mb-4">{product.name}</h1>
           <p className="text-2xl md:text-3xl font-medium text-gray-400 max-w-2xl">
@@ -336,36 +210,36 @@ const ProductDetail = () => {
 
         {/* Main Viewer Area */}
         <div className="relative w-full aspect-[4/3] md:aspect-[16/9] bg-[#1c1c1e] rounded-3xl overflow-hidden mb-16 group">
-          
+
           {show3D && is3DAvailable ? (
-            <ThreeDViewer 
-              src={get3DModelUrl()} 
-              alt={product.name} 
+            <ThreeDViewer
+              src={get3DModelUrl()}
+              alt={product.name}
               className="w-full h-full"
             />
           ) : (
-             <div className="w-full h-full relative">
-                {/* Check for video or image */}
-                {media[activeMediaIndex]?.video_file_url ? (
-                   <video 
-                     src={media[activeMediaIndex].video_file_url} 
-                     className="w-full h-full object-contain" 
-                     controls 
-                   />
-                ) : (
-                  <img 
-                    src={media[activeMediaIndex]?.image_url || getMainImage()} 
-                    alt={product.name} 
-                    className="w-full h-full object-contain p-8 md:p-16 transition-transform duration-700 hover:scale-105"
-                  />
-                )}
-             </div>
+            <div className="w-full h-full relative">
+              {/* Check for video or image */}
+              {media[activeMediaIndex]?.video_file_url ? (
+                <video
+                  src={media[activeMediaIndex].video_file_url}
+                  className="w-full h-full object-contain"
+                  controls
+                />
+              ) : (
+                <img
+                  src={media[activeMediaIndex]?.image_url || getMainImage()}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-8 md:p-16 transition-transform duration-700 hover:scale-105"
+                />
+              )}
+            </div>
           )}
 
           {/* Controls Overlay */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 bg-black/50 backdrop-blur-md p-2 rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             {is3DAvailable && (
-              <button 
+              <button
                 onClick={() => setShow3D(!show3D)}
                 className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${show3D ? 'bg-white text-black' : 'hover:bg-white/20 text-white'}`}
               >
@@ -373,11 +247,11 @@ const ProductDetail = () => {
               </button>
             )}
             {media.map((_, idx) => (
-               <button
-                 key={idx}
-                 onClick={() => { setShow3D(false); setActiveMediaIndex(idx); }}
-                 className={`w-2 h-2 rounded-full transition-all ${!show3D && activeMediaIndex === idx ? 'bg-white w-4' : 'bg-white/30'}`}
-               />
+              <button
+                key={idx}
+                onClick={() => { setShow3D(false); setActiveMediaIndex(idx); }}
+                className={`w-2 h-2 rounded-full transition-all ${!show3D && activeMediaIndex === idx ? 'bg-white w-4' : 'bg-white/30'}`}
+              />
             ))}
           </div>
 
@@ -385,67 +259,66 @@ const ProductDetail = () => {
 
         {/* Product Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-24 mb-32">
-          
+
           {/* Left Col - Interaction */}
           <div className="md:col-span-1 space-y-12">
             <div className="sticky top-32">
-               <div className="bg-[#1c1c1e] rounded-3xl p-8 space-y-6">
-                 <h3 className="text-xl font-semibold">Order Now</h3>
-                 
-                 <div className="flex items-center justify-center p-2 bg-black rounded-lg">
-                    <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))} 
-                      className="p-2 hover:text-green-600"
-                    >
-                      <Minus size={20}/>
-                    </button>
-                    <span className="mx-6 font-bold text-lg">{quantity}</span>
-                    <button 
-                      onClick={() => setQuantity(quantity + 1)} 
-                      className="p-2 hover:text-green-600"
-                    >
-                      <Plus size={20}/>
-                    </button>
-                 </div>
+              <div className="bg-[#1c1c1e] rounded-3xl p-8 space-y-6">
+                <h3 className="text-xl font-semibold">Order Now</h3>
 
-                 <div className="flex gap-3">
-                 <button 
-                   onClick={handleToggleWishlist}
-                   className={`p-4 rounded-xl font-semibold transition flex items-center justify-center ${
-                     isInWishlist
-                       ? 'bg-red-500 text-white'
-                       : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                   }`}
-                   aria-label="Add to wishlist"
-                 >
-                   <Heart size={20} className={isInWishlist ? 'fill-current' : ''} />
-                 </button>
-                 
-                 <button 
-                   onClick={handleAddToCart}
-                   className="flex-1 bg-green-700 text-white py-4 rounded-xl font-semibold text-lg hover:bg-green-800 transition"
-                 >
-                   Add to Cart
-                 </button>
-                 </div>
-                 
-                 <div className="space-y-4 pt-4 border-t border-white/10">
-                   <div className="flex items-center gap-3 text-sm text-gray-400">
-                     <Truck size={18} />
-                     <span>Free delivery for orders over 100k</span>
-                   </div>
-                   <div className="flex items-center gap-3 text-sm text-gray-400">
-                     <Shield size={18} />
-                     <span>2-year warranty included</span>
-                   </div>
-                 </div>
-               </div>
+                <div className="flex items-center justify-center p-2 bg-black rounded-lg">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="p-2 hover:text-green-600"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <span className="mx-6 font-bold text-lg">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="p-2 hover:text-green-600"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleToggleWishlist}
+                    className={`p-4 rounded-xl font-semibold transition flex items-center justify-center ${isInWishlist
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                      }`}
+                    aria-label="Add to wishlist"
+                  >
+                    <Heart size={20} className={isInWishlist ? 'fill-current' : ''} />
+                  </button>
+
+                  <button
+                    onClick={handleAddToCart}
+                    className="flex-1 bg-green-700 text-white py-4 rounded-xl font-semibold text-lg hover:bg-green-800 transition"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center gap-3 text-sm text-gray-400">
+                    <Truck size={18} />
+                    <span>Free delivery for orders over 100k</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-400">
+                    <Shield size={18} />
+                    <span>2-year warranty included</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Right Col - Content */}
           <div className="md:col-span-2 space-y-24">
-            
+
             {/* Description Section */}
             <section>
               <h2 className="text-3xl font-semibold mb-6">Overview</h2>
@@ -458,46 +331,46 @@ const ProductDetail = () => {
             <section className="border-t border-white/10 pt-16">
               <h2 className="text-3xl font-semibold mb-12">Specifications</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16">
-                 {product.length && (
-                   <div>
-                     <h4 className="font-semibold text-white mb-2 text-lg">Dimensions</h4>
-                     <p className="text-gray-400">{product.length}cm (L) x {product.width}cm (W) x {product.height}cm (H)</p>
-                   </div>
-                 )}
-                 {product.available_materials && (
-                   <div>
-                     <h4 className="font-semibold text-white mb-2 text-lg">Material</h4>
-                     <p className="text-gray-400">{product.available_materials}</p>
-                   </div>
-                 )}
-                 {product.available_colors && (
-                   <div>
-                     <h4 className="font-semibold text-white mb-2 text-lg">Colors</h4>
-                     <p className="text-gray-400">{product.available_colors}</p>
-                   </div>
-                 )}
+                {product.length && (
+                  <div>
+                    <h4 className="font-semibold text-white mb-2 text-lg">Dimensions</h4>
+                    <p className="text-gray-400">{product.length}cm (L) x {product.width}cm (W) x {product.height}cm (H)</p>
+                  </div>
+                )}
+                {product.available_materials && (
+                  <div>
+                    <h4 className="font-semibold text-white mb-2 text-lg">Material</h4>
+                    <p className="text-gray-400">{product.available_materials}</p>
+                  </div>
+                )}
+                {product.available_colors && (
+                  <div>
+                    <h4 className="font-semibold text-white mb-2 text-lg">Colors</h4>
+                    <p className="text-gray-400">{product.available_colors}</p>
+                  </div>
+                )}
               </div>
             </section>
 
-             {/* Reviews Section */}
-             {feedback.length > 0 && (
-                <section className="border-t border-white/10 pt-16">
-                  <h2 className="text-3xl font-semibold mb-12">Reviews</h2>
-                  <div className="space-y-8">
-                    {feedback.map((review: any) => (
-                      <div key={review.id} className="bg-[#1c1c1e] p-6 rounded-2xl">
-                         <div className="flex items-center justify-between mb-4">
-                            <span className="font-semibold">{review.client_name}</span>
-                            <div className="flex text-yellow-500">
-                              {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} />)}
-                            </div>
-                         </div>
-                         <p className="text-gray-400">{review.message}</p>
+            {/* Reviews Section */}
+            {feedback.length > 0 && (
+              <section className="border-t border-white/10 pt-16">
+                <h2 className="text-3xl font-semibold mb-12">Reviews</h2>
+                <div className="space-y-8">
+                  {feedback.map((review: any) => (
+                    <div key={review.id} className="bg-[#1c1c1e] p-6 rounded-2xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="font-semibold">{review.client_name}</span>
+                        <div className="flex text-yellow-500">
+                          {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} />)}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
-             )}
+                      <p className="text-gray-400">{review.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
           </div>
 
