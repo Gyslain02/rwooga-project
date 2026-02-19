@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { CreditCard, Loader2, AlertCircle, Calendar, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { momoService } from '@/services/momoService'; // We'll reuse the service structure or create a new one
+import { paymentsService } from '@/services/paymentsService';
+import { momoService } from '@/services/momoService';
 
 interface CardPaymentProps {
   amount: number;
@@ -26,7 +27,7 @@ const CardPayment: React.FC<CardPaymentProps> = ({
     cvv: '',
     cardName: customerName || ''
   });
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,33 +60,31 @@ const CardPayment: React.FC<CardPaymentProps> = ({
       // Use the generic payment endpoint but with card method
       // Note: We're reusing momoService.initiatePayment but passing extra data
       // In a real app we might want a separate service or update the type definition
-      const response = await momoService.initiatePayment({
+      const response = await paymentsService.initiateCardPayment({
         amount,
         currency: 'RWF',
-        phoneNumber: '', // Not needed for card
+        phoneNumber: '',
         reference: momoService.generateReference(),
         customerName: formData.cardName,
         customerEmail,
-        // @ts-ignore - Dynamic property for card payment
-        paymentMethod: 'card', 
         cardNumber: formData.cardNumber.replace(/\s/g, ''),
         expiryDate: formData.expiryDate,
         cvv: formData.cvv
-      } as any);
+      });
 
       if (response.ok && response.data) {
-          // Simulate card 3D secure or immediate success
-          // For now, we'll assume immediate success or pending status
-          if (response.data.status === 'successful') {
-             onSuccess(response.data.transactionId);
-          } else {
-             // If pending, we might poll, but for card usually it's faster. 
-             // Let's reuse the polling logic or just wait a bit.
-             // For this simulation, let's assume we need to poll like MoMo
-             pollStatus(response.data.transactionId);
-          }
+        // Simulate card 3D secure or immediate success
+        // For now, we'll assume immediate success or pending status
+        if (response.data.status === 'successful') {
+          onSuccess(response.data.transactionId);
+        } else {
+          // If pending, we might poll, but for card usually it's faster. 
+          // Let's reuse the polling logic or just wait a bit.
+          // For this simulation, let's assume we need to poll like MoMo
+          pollStatus(response.data.transactionId);
+        }
       } else {
-        throw new Error(response.error || 'Payment failed');
+        throw new Error('Payment failed');
       }
     } catch (err: any) {
       setError(err.message || 'Payment processing failed');
@@ -94,32 +93,32 @@ const CardPayment: React.FC<CardPaymentProps> = ({
   };
 
   const pollStatus = async (transactionId: string) => {
-      // Simple polling for demo
-      let attempts = 0;
-      const maxAttempts = 10;
-      
-      const check = async () => {
-          try {
-              const res = await momoService.checkPaymentStatus(transactionId);
-              if (res.ok && res.data?.status === 'successful') {
-                  onSuccess(transactionId);
-              } else if (res.ok && res.data?.status === 'failed') {
-                  setError('Payment failed');
-                  setIsProcessing(false);
-              } else if (attempts < maxAttempts) {
-                  attempts++;
-                  setTimeout(check, 2000);
-              } else {
-                  setError('Payment timed out');
-                  setIsProcessing(false);
-              }
-          } catch (e) {
-              setError('Connection error');
-              setIsProcessing(false);
-          }
-      };
-      
-      check();
+    // Simple polling for demo
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const check = async () => {
+      try {
+        const res = await paymentsService.getPaymentStatus(transactionId);
+        if (res.ok && res.data?.status === 'successful') {
+          onSuccess(transactionId);
+        } else if (res.ok && res.data?.status === 'failed') {
+          setError('Payment failed');
+          setIsProcessing(false);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(check, 2000);
+        } else {
+          setError('Payment timed out');
+          setIsProcessing(false);
+        }
+      } catch (e) {
+        setError('Connection error');
+        setIsProcessing(false);
+      }
+    };
+
+    check();
   };
 
   return (
@@ -141,95 +140,95 @@ const CardPayment: React.FC<CardPaymentProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
           <div className="relative">
-             <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-             <input
-                type="text"
-                name="cardNumber"
-                value={formData.cardNumber}
-                onChange={handleInputChange}
-                placeholder="0000 0000 0000 0000"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                required
-             />
+            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              name="cardNumber"
+              value={formData.cardNumber}
+              onChange={handleInputChange}
+              placeholder="0000 0000 0000 0000"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              required
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-           <div>
-             <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-             <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                    type="text"
-                    name="expiryDate"
-                    value={formData.expiryDate}
-                    onChange={handleInputChange}
-                    placeholder="MM/YY"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                />
-             </div>
-           </div>
-           <div>
-             <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-             <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                    type="text"
-                    name="cvv"
-                    value={formData.cvv}
-                    onChange={handleInputChange}
-                    placeholder="123"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                />
-             </div>
-           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={handleInputChange}
+                placeholder="MM/YY"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                name="cvv"
+                value={formData.cvv}
+                onChange={handleInputChange}
+                placeholder="123"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                required
+              />
+            </div>
+          </div>
         </div>
 
         <div>
-           <label className="block text-sm font-medium text-gray-700 mb-1">Cardholder Name</label>
-           <input
-              type="text"
-              name="cardName"
-              value={formData.cardName}
-              onChange={handleInputChange}
-              placeholder="Full Name"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              required
-           />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cardholder Name</label>
+          <input
+            type="text"
+            name="cardName"
+            value={formData.cardName}
+            onChange={handleInputChange}
+            placeholder="Full Name"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+            required
+          />
         </div>
 
         {error && (
-           <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm">
-              <AlertCircle size={16} />
-              {error}
-           </div>
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm">
+            <AlertCircle size={16} />
+            {error}
+          </div>
         )}
 
         <div className="flex gap-3 mt-6">
-           <button
-             type="button"
-             onClick={onCancel}
-             className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-             disabled={isProcessing}
-           >
-             Cancel
-           </button>
-           <button
-             type="submit"
-             disabled={isProcessing}
-             className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-           >
-             {isProcessing ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  Processing...
-                </>
-             ) : (
-                'Pay Now'
-             )}
-           </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+            disabled={isProcessing}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isProcessing}
+            className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Processing...
+              </>
+            ) : (
+              'Pay Now'
+            )}
+          </button>
         </div>
       </form>
     </div>

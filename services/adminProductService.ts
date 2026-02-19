@@ -4,7 +4,7 @@ const API_URL = '/api/v1/products';
 
 export interface ProductFormData {
   name: string;
-  category: string;
+  category: string | number;
   short_description: string;
   detailed_description?: string;
   unit_price: number;
@@ -12,7 +12,9 @@ export interface ProductFormData {
   available_sizes?: string;
   available_colors?: string;
   available_materials?: string;
-  height?: number;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
   material?: string[];
   materials?: string[];
   measurement_unit?: string;
@@ -35,8 +37,7 @@ class AdminProductService {
   async getAllProducts(params?: { category?: string; published?: boolean; search?: string }) {
     try {
       const response = await api.get(`${API_URL}/products/`, {
-        params,
-        headers: this.getAuthHeaders(),
+        params
       });
       return { ok: true, data: response.data };
     } catch (error: any) {
@@ -50,9 +51,7 @@ class AdminProductService {
    */
   async getProduct(id: string) {
     try {
-      const response = await api.get(`${API_URL}/products/${id}/`, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await api.get(`${API_URL}/products/${id}/`);
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error fetching product:', error);
@@ -65,9 +64,7 @@ class AdminProductService {
    */
   async createProduct(productData: ProductFormData) {
     try {
-      const response = await api.post(`${API_URL}/products/`, productData, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await api.post(`${API_URL}/products/`, productData);
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error creating product:', error);
@@ -80,9 +77,7 @@ class AdminProductService {
    */
   async updateProduct(id: string, productData: Partial<ProductFormData>) {
     try {
-      const response = await api.patch(`${API_URL}/products/${id}/`, productData, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await api.patch(`${API_URL}/products/${id}/`, productData);
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error updating product:', error);
@@ -95,9 +90,7 @@ class AdminProductService {
    */
   async deleteProduct(id: string) {
     try {
-      await api.delete(`${API_URL}/products/${id}/`, {
-        headers: this.getAuthHeaders(),
-      });
+      await api.delete(`${API_URL}/products/${id}/`);
       return { ok: true };
     } catch (error: any) {
       console.error('Error deleting product:', error);
@@ -110,9 +103,7 @@ class AdminProductService {
    */
   async publishProduct(id: string) {
     try {
-      const response = await api.post(`${API_URL}/products/${id}/publish/`, {}, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await api.post(`${API_URL}/products/${id}/publish/`, {});
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error publishing product:', error);
@@ -125,9 +116,7 @@ class AdminProductService {
    */
   async unpublishProduct(id: string) {
     try {
-      const response = await api.post(`${API_URL}/products/${id}/unpublish/`, {}, {
-        headers: this.getAuthHeaders(),
-      });
+      const response = await api.post(`${API_URL}/products/${id}/unpublish/`, {});
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error unpublishing product:', error);
@@ -154,15 +143,7 @@ class AdminProductService {
       if (altText) formData.append('alt_text', altText);
       if (displayOrder !== undefined) formData.append('display_order', displayOrder.toString());
 
-      // Manually construct headers to avoid Content-Type issue and potential TS errors
-      const token = localStorage.getItem('access_token');
-      const headers = {
-        'Authorization': token ? `Bearer ${token}` : '',
-      };
-
-      const response = await api.post(`${API_URL}/media/`, formData, {
-        headers: headers,
-      });
+      const response = await api.post(`${API_URL}/media/`, formData);
       return { ok: true, data: response.data };
     } catch (error: any) {
       console.error('Error uploading product media:', error);
@@ -228,9 +209,7 @@ class AdminProductService {
    */
   async deleteProductMedia(mediaId: string) {
     try {
-      await api.delete(`${API_URL}/media/${mediaId}/`, {
-        headers: this.getAuthHeaders(),
-      });
+      await api.delete(`${API_URL}/media/${mediaId}/`);
       return { ok: true };
     } catch (error: any) {
       console.error('Error deleting product media:', error);
@@ -244,8 +223,7 @@ class AdminProductService {
   async getProductMedia(productId: string) {
     try {
       const response = await api.get(`${API_URL}/media/`, {
-        params: { product: productId },
-        headers: this.getAuthHeaders(),
+        params: { product: productId }
       });
       return { ok: true, data: response.data };
     } catch (error: any) {
@@ -254,16 +232,6 @@ class AdminProductService {
     }
   }
 
-  /**
-   * Get auth headers with token
-   */
-  private getAuthHeaders() {
-    const token = localStorage.getItem('access_token');
-    return {
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-    };
-  }
 }
 
 export const adminProductService = new AdminProductService();

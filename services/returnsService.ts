@@ -78,5 +78,122 @@ export const returnsService = {
             status: response.status,
             data: response.data
         };
+    },
+
+    /**
+     * Create a new refund
+     */
+    async createRefund(refundData: {
+        order: string | number;
+        amount: number;
+        reason: string;
+        transaction_id?: string;
+    }) {
+        const response = await api.post('/api/v1/orders/refunds/', refundData);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Update a refund request
+     */
+    async updateRefund(refundId: string | number, refundData: Partial<{
+        amount: number;
+        reason: string;
+        status: string;
+    }>) {
+        const response = await api.patch(`/api/v1/orders/refunds/${refundId}/`, refundData);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Delete a refund request
+     */
+    async deleteRefund(refundId: string | number) {
+        const response = await api.delete(`/api/v1/orders/refunds/${refundId}/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Mark a refund as completed
+     */
+    async completeRefund(refundId: string | number) {
+        const response = await api.post(`/api/v1/orders/refunds/${refundId}/complete/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Mark a refund as failed
+     */
+    async failRefund(refundId: string | number) {
+        const response = await api.post(`/api/v1/orders/refunds/${refundId}/fail/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Approve a return request
+     */
+    async approveReturn(returnId: string | number) {
+        const response = await api.post(`/api/v1/orders/returns/${returnId}/approve/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Reject a return request
+     */
+    async rejectReturn(returnId: string | number, rejection_reason?: string) {
+        const response = await api.post(`/api/v1/orders/returns/${returnId}/reject/`, { rejection_reason });
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Mark a return as completed
+     */
+    async completeReturn(returnId: string | number) {
+        const response = await api.post(`/api/v1/orders/returns/${returnId}/complete/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
+    },
+
+    /**
+     * Cancel a return request (admin/system)
+     */
+    async cancelReturnRequest(returnId: string | number) {
+        const response = await api.post(`/api/v1/orders/returns/${returnId}/cancel_return/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     }
 };

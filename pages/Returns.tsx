@@ -1,36 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    RefreshCw, ArrowLeft, Calendar, AlertCircle, CheckCircle, 
+import {
+    RefreshCw, ArrowLeft, Calendar, AlertCircle, CheckCircle,
     XCircle, Clock, Package, DollarSign, FileText, Plus,
     Filter, Search, Eye, Download, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { returnsService } from '@/services/returnsService';
 import { ordersService } from '@/services/ordersService';
-
-interface Return {
-    id: string;
-    return_number: string;
-    order: {
-        id: string;
-        order_number: string;
-        items: Array<{
-            product_name: string;
-            quantity: number;
-            price_at_purchase: number;
-        }>;
-    };
-    status: string;
-    reason: string;
-    detailed_reason: string;
-    rejection_reason?: string;
-    requested_refund_amount: number;
-    approved_refund_amount?: number;
-    created_at: string;
-    approved_at?: string;
-}
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { fetchRefunds, deleteRefund } from '@/store/slices/refundsSlice';
+import { fetchReturns, cancelReturnRequest, Return } from '@/store/slices/returnsSlice';
 
 interface Refund {
     id: string;
@@ -48,10 +30,11 @@ interface Refund {
 
 const Returns: React.FC = () => {
     const navigate = useNavigate();
-    const [returns, setReturns] = useState<Return[]>([]);
-    const [refunds, setRefunds] = useState<Refund[]>([]);
+    const dispatch = useDispatch();
+    const { items: refunds, loading: refundsLoading, error: refundsError } = useSelector((state: RootState) => state.refunds);
+    const { items: returns, loading: returnsLoading, error: returnsError } = useSelector((state: RootState) => state.returns);
     const [orders, setOrders] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingOrders, setLoadingOrders] = useState(true);
     const [selectedStatus, setSelectedStatus] = useState<string>('all');
     const [activeTab, setActiveTab] = useState<'returns' | 'refunds'>('returns');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -63,21 +46,17 @@ const Returns: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            setLoading(true);
-            const [returnsRes, refundsRes, ordersRes] = await Promise.all([
-                returnsService.getReturns(),
-                returnsService.getRefunds(),
-                ordersService.getOrders()
-            ]);
-            
-            if (returnsRes.ok) setReturns(returnsRes.data.results || returnsRes.data);
-            if (refundsRes.ok) setRefunds(refundsRes.data.results || refundsRes.data);
+            setLoadingOrders(true);
+            dispatch(fetchReturns() as any);
+            dispatch(fetchRefunds() as any);
+
+            const ordersRes = await ordersService.getOrders();
             if (ordersRes.ok) setOrders(ordersRes.data.results || ordersRes.data);
         } catch (error) {
-            toast.error('Failed to load returns data');
-            console.error('Error fetching returns:', error);
+            toast.error('Failed to load data');
+            console.error('Error fetching data:', error);
         } finally {
-            setLoading(false);
+            setLoadingOrders(false);
         }
     };
 
@@ -120,8 +99,8 @@ const Returns: React.FC = () => {
         }
     };
 
-    const filteredReturns = selectedStatus === 'all' 
-        ? returns 
+    const filteredReturns = selectedStatus === 'all'
+        ? returns
         : returns.filter(return_item => return_item.status === selectedStatus);
 
     const statusCounts = returns.reduce((acc, return_item) => {
@@ -129,12 +108,12 @@ const Returns: React.FC = () => {
         return acc;
     }, {} as Record<string, number>);
 
-    if (loading) {
+    if (returnsLoading || refundsLoading || loadingOrders) {
         return (
             <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center">
                 <div className="text-center">
                     <RefreshCw className="animate-spin mx-auto mb-4" size={32} />
-                    <p>Loading returns...</p>
+                    <p>Loading returns and refunds...</p>
                 </div>
             </div>
         );
@@ -170,21 +149,19 @@ const Returns: React.FC = () => {
                 <div className="flex gap-1 mb-8 bg-white/5 p-1 rounded-xl">
                     <button
                         onClick={() => setActiveTab('returns')}
-                        className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                            activeTab === 'returns'
-                                ? 'bg-green-700 text-white'
-                                : 'text-gray-400 hover:text-white'
-                        }`}
+                        className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${activeTab === 'returns'
+                            ? 'bg-green-700 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
                     >
                         Returns ({returns.length})
                     </button>
                     <button
                         onClick={() => setActiveTab('refunds')}
-                        className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                            activeTab === 'refunds'
-                                ? 'bg-green-700 text-white'
-                                : 'text-gray-400 hover:text-white'
-                        }`}
+                        className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${activeTab === 'refunds'
+                            ? 'bg-green-700 text-white'
+                            : 'text-gray-400 hover:text-white'
+                            }`}
                     >
                         Refunds ({refunds.length})
                     </button>
@@ -197,11 +174,10 @@ const Returns: React.FC = () => {
                         <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
                             <button
                                 onClick={() => setSelectedStatus('all')}
-                                className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap ${
-                                    selectedStatus === 'all'
-                                        ? 'bg-green-700 text-white'
-                                        : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                                }`}
+                                className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap ${selectedStatus === 'all'
+                                    ? 'bg-green-700 text-white'
+                                    : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                                    }`}
                             >
                                 All ({returns.length})
                             </button>
@@ -209,11 +185,10 @@ const Returns: React.FC = () => {
                                 <button
                                     key={status}
                                     onClick={() => setSelectedStatus(status)}
-                                    className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
-                                        selectedStatus === status
-                                            ? 'bg-green-700 text-white'
-                                            : 'bg-white/10 text-gray-400 hover:bg-white/20'
-                                    }`}
+                                    className={`px-4 py-2 rounded-full font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${selectedStatus === status
+                                        ? 'bg-green-700 text-white'
+                                        : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                                        }`}
                                 >
                                     {getStatusIcon(status)}
                                     {status.charAt(0) + status.slice(1).toLowerCase()} ({count})
@@ -227,8 +202,8 @@ const Returns: React.FC = () => {
                                 <RefreshCw size={64} className="mx-auto mb-4 text-gray-400" />
                                 <h3 className="text-xl font-semibold mb-2">No returns found</h3>
                                 <p className="text-gray-400 mb-6">
-                                    {selectedStatus === 'all' 
-                                        ? "You haven't made any return requests yet" 
+                                    {selectedStatus === 'all'
+                                        ? "You haven't made any return requests yet"
                                         : `No returns with status "${selectedStatus}"`
                                     }
                                 </p>
@@ -251,7 +226,7 @@ const Returns: React.FC = () => {
                                             className="bg-[#1c1c1e] rounded-2xl border border-white/10 overflow-hidden"
                                         >
                                             {/* Return Header */}
-                                            <div 
+                                            <div
                                                 className="p-6 cursor-pointer hover:bg-white/5 transition-colors"
                                                 onClick={() => setExpandedReturn(expandedReturn === return_item.id ? null : return_item.id)}
                                             >
@@ -357,7 +332,15 @@ const Returns: React.FC = () => {
                                                                     View Order Details
                                                                 </button>
                                                                 {return_item.status === 'REQUESTED' && (
-                                                                    <button className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl transition-colors">
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            if (window.confirm('Cancel this return request?')) {
+                                                                                await dispatch(cancelReturnRequest(return_item.id) as any);
+                                                                                toast.success('Return request cancelled');
+                                                                            }
+                                                                        }}
+                                                                        className="px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-xl transition-colors"
+                                                                    >
                                                                         Cancel Return
                                                                     </button>
                                                                 )}
@@ -415,6 +398,20 @@ const Returns: React.FC = () => {
                                                     <p className="text-gray-400 text-xs mt-1">
                                                         ID: {refund.transaction_id}
                                                     </p>
+                                                )}
+                                                {refund.status === 'PENDING' && (
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (window.confirm('Cancel this refund request?')) {
+                                                                await dispatch(deleteRefund(refund.id) as any);
+                                                                toast.success('Refund request cancelled');
+                                                            }
+                                                        }}
+                                                        className="mt-3 px-3 py-1 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg text-xs font-bold transition-all"
+                                                    >
+                                                        Cancel Request
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>

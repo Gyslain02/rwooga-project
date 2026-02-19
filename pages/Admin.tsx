@@ -9,7 +9,7 @@ import {
   Search, Bell, Download, Monitor, CheckCircle2, AlertCircle,
   Truck, MessageCircle, MoreVertical, Menu, Moon, Sun, Users as UsersIcon, UserPlus, Filter,
   Mail, Phone, LogOut, Home, Upload, Image as ImageIcon,
-  Lock, Shield, Calendar, Eye, EyeOff, RefreshCw, AlertTriangle, User
+  Lock, Shield, Calendar, Eye, EyeOff, RefreshCw, AlertTriangle, User, DollarSign, Tag, Video, Box, Star
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -34,12 +34,32 @@ import {
   toggleUserStatus,
   clearUserError
 } from '@/store/slices/usersSlice';
+import { fetchRefunds, completeRefund, failRefund } from '@/store/slices/refundsSlice';
+import { fetchReturns, approveReturn, rejectReturn, completeReturn as completeReturnRequest, cancelReturnRequest } from '@/store/slices/returnsSlice';
+import { fetchShippingRecords, createShippingRecord, updateShippingRecord, deleteShippingRecord } from '@/store/slices/shippingSlice';
+import { fetchPayments, cancelPayment } from '@/store/slices/paymentsSlice';
+import { fetchDiscounts, deleteDiscount } from '@/store/slices/discountsSlice';
+import { fetchFeedbacks, moderateFeedback, deleteFeedback } from '@/store/slices/feedbackSlice';
+import { fetchMedia, deleteMedia } from '@/store/slices/mediaSlice';
+import { fetchOrders } from '@/store/slices/ordersSlice';
 import UserModal from '@/components/UserModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 import { adminProductService } from '@/services/adminProductService'
 import { productsService } from '@/services/productsService'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return 'N/A';
+    }
+  };
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const activeTabFromStore = 'dashboard' // Keep as local state if simple, or move to slice if needed
@@ -94,6 +114,30 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   useEffect(() => {
     if (activeTab === 'requests') {
       dispatch(fetchRequests({}))
+    }
+    if (activeTab === 'refunds') {
+      dispatch(fetchRefunds())
+    }
+    if (activeTab === 'returns') {
+      dispatch(fetchReturns())
+    }
+    if (activeTab === 'shipping') {
+      dispatch(fetchShippingRecords())
+    }
+    if (activeTab === 'payments') {
+      dispatch(fetchPayments())
+    }
+    if (activeTab === 'discounts') {
+      dispatch(fetchDiscounts())
+    }
+    if (activeTab === 'feedback') {
+      dispatch(fetchFeedbacks({}))
+    }
+    if (activeTab === 'media') {
+      dispatch(fetchMedia({}))
+    }
+    if (activeTab === 'orders') {
+      dispatch(fetchOrders())
     }
   }, [activeTab, dispatch]);
 
@@ -303,6 +347,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
   const { items: customRequests } = useSelector((state: RootState) => state.requests)
   const { items: products, loading: productsLoading, error: productsError } = useSelector((state: RootState) => state.products)
+  const { items: refunds } = useSelector((state: RootState) => state.refunds)
+  const { items: returns } = useSelector((state: RootState) => state.returns)
+  const { items: shipping } = useSelector((state: RootState) => state.shipping)
+  const { items: payments } = useSelector((state: RootState) => state.payments)
+  const { items: discounts } = useSelector((state: RootState) => state.discounts)
+  const { items: feedback } = useSelector((state: RootState) => state.feedback)
+  const { items: media } = useSelector((state: RootState) => state.media)
+  const { items: orders } = useSelector((state: RootState) => state.orders)
 
   // Product Management State
   const [showProductForm, setShowProductForm] = useState(false)
@@ -773,12 +825,19 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
           </button>
         </div>
 
-        <nav className="flex-1 w-full space-y-2 px-3">
+        <nav className="flex-1 w-full space-y-2 px-3 overflow-y-auto custom-scrollbar">
           <SidebarLink active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} icon={<LayoutDashboard size={20} />} label="Dashboard" />
           <SidebarLink active={activeTab === 'users'} onClick={() => { setActiveTab('users'); setIsSidebarOpen(false); }} icon={<UsersIcon size={20} />} label="Users" />
           <SidebarLink active={activeTab === 'categories'} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }} icon={<Briefcase size={20} />} label="Categories" />
           <SidebarLink active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={20} />} label="Products" />
           <SidebarLink active={activeTab === 'orders'} onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} icon={<ShoppingBag size={20} />} label="Shop Orders" />
+          <SidebarLink active={activeTab === 'returns'} onClick={() => { setActiveTab('returns'); setIsSidebarOpen(false); }} icon={<RefreshCw size={20} />} label="Returns" />
+          <SidebarLink active={activeTab === 'shipping'} onClick={() => { setActiveTab('shipping'); setIsSidebarOpen(false); }} icon={<Truck size={20} />} label="Shipping" />
+          <SidebarLink active={activeTab === 'payments'} onClick={() => { setActiveTab('payments'); setIsSidebarOpen(false); }} icon={<DollarSign size={20} />} label="Payments" />
+          <SidebarLink active={activeTab === 'discounts'} onClick={() => { setActiveTab('discounts'); setIsSidebarOpen(false); }} icon={<Tag size={20} />} label="Discounts" />
+          <SidebarLink active={activeTab === 'feedback'} onClick={() => { setActiveTab('feedback'); setIsSidebarOpen(false); }} icon={<MessageSquare size={20} />} label="Feedback" />
+          <SidebarLink active={activeTab === 'media'} onClick={() => { setActiveTab('media'); setIsSidebarOpen(false); }} icon={<ImageIcon size={20} />} label="Media" />
+          <SidebarLink active={activeTab === 'refunds'} onClick={() => { setActiveTab('refunds'); setIsSidebarOpen(false); }} icon={<DollarSign size={20} />} label="Refunds" />
           <SidebarLink active={activeTab === 'requests'} onClick={() => { setActiveTab('requests'); setIsSidebarOpen(false); }} icon={<ClipboardList size={20} />} label="Custom Requests" />
           <SidebarLink active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} icon={<Settings size={20} />} label="Settings" />
         </nav>
@@ -1096,7 +1155,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           {existingImages.map((media, index) => (
                             <div key={media.id} className="relative group">
                               <div className={`w-full h-32 rounded-2xl overflow-hidden border-2 ${mainImageIndex === index ? 'border-brand-primary' : 'border-gray-100 dark:border-slate-700'}`}>
-                                <img src={media.image} alt={media.alt_text || `Image ${index + 1}`} className="w-full h-full object-cover" />
+                                <img src={media.image_url || media.image} alt={media.alt_text || `Image ${index + 1}`} className="w-full h-full object-cover" />
                               </div>
                               {mainImageIndex === index && (
                                 <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs font-bold px-2 py-1 rounded-lg">
@@ -1367,10 +1426,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       className="group bg-white dark:bg-[#1E293B] p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 hover:border-brand-primary/30 dark:hover:border-brand-primary/50 hover:shadow-xl transition-all relative"
                     >
                       {/* Product Image Thumbnail */}
-                      {(p.media && p.media.length > 0 && (p.media[0].image || p.media[0].image_url)) ? (
+                      {(p.media && p.media.length > 0 && (p.media[0].image_url || p.media[0].image)) ? (
                         <div className="w-full h-48 mb-4 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                           <img
-                            src={p.media[0].image || p.media[0].image_url}
+                            src={p.media[0].image_url || p.media[0].image}
                             alt={p.name}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
@@ -1613,6 +1672,649 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       />
                     ))
                   )}
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'returns' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="mb-10">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Return Management</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Review and process customer return requests</p>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[1000px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Return ID</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order Info</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Refund Requested</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {returns.map((ret: any) => (
+                        <tr key={ret.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4">
+                            <p className="font-bold text-slate-800 dark:text-white">{ret.return_number}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(ret.created_at)}</p>
+                          </td>
+                          <td className="py-5">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">Order: {ret.order?.order_number || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{ret.reason}</p>
+                          </td>
+                          <td className="py-5 px-4 font-black">
+                            {(ret.requested_refund_amount || 0).toLocaleString()} RWF
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${ret.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              ret.status === 'REQUESTED' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                ret.status === 'REJECTED' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' :
+                                  'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+                              }`}>
+                              {ret.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {ret.status === 'REQUESTED' && (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm('Approve this return request?')) {
+                                        await dispatch(approveReturn(ret.id) as any);
+                                        toast.success('Return approved');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      const reason = window.prompt('Enter rejection reason:');
+                                      if (reason !== null) {
+                                        await dispatch(rejectReturn({ id: ret.id, reason }) as any);
+                                        toast.error('Return rejected');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                              {ret.status === 'APPROVED' && (
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm('Mark this return as completed?')) {
+                                      await dispatch(completeReturnRequest(ret.id) as any);
+                                      toast.success('Return completed');
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 bg-brand-primary text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
+                                >
+                                  Complete
+                                </button>
+                              )}
+                              <button
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {returns.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No return requests found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'shipping' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex items-center justify-between mb-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Shipping Management</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Track and manage order shipments</p>
+                  </div>
+                  <button
+                    onClick={() => toast.error('Create shipping manually coming soon')}
+                    className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl hover:brightness-110 transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-brand-primary/25"
+                  >
+                    <Plus size={16} />
+                    New Shipment
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[1000px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Shipment ID</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Carrier & Tracking</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {shipping.map((ship: any) => (
+                        <tr key={ship.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4 px-4 font-bold text-slate-800 dark:text-white">
+                            #{ship.id?.toString().slice(-6).toUpperCase() || 'N/A'}
+                          </td>
+                          <td className="py-5">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">{ship.order?.order_number || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(ship.created_at)}</p>
+                          </td>
+                          <td className="py-5 px-4">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">{ship.carrier || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium select-all">{ship.tracking_number || 'N/A'}</p>
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${ship.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              ship.status === 'SHIPPED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
+                                ship.status === 'IN_TRANSIT' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                  'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+                              }`}>
+                              {ship.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => toast.error('Update coming soon')}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="Edit Shipment"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm('Delete this shipment record?')) {
+                                    await dispatch(deleteShippingRecord(ship.id) as any);
+                                    toast.success('Shipment deleted');
+                                  }
+                                }}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Delete Shipment"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {shipping.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No shipping records found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'payments' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="mb-10">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Payment Transactions</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Monitor and manage all payment activities</p>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[1000px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Transaction ID</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Customer</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Amount</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Method</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {payments.map((pay: any) => (
+                        <tr key={pay.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4">
+                            <p className="font-bold text-slate-800 dark:text-white">#{pay.id?.toString().slice(-8).toUpperCase() || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium select-all">{pay.reference || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(pay.created_at)}</p>
+                          </td>
+                          <td className="py-5">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">{pay.customer_name || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{pay.customer_email || 'N/A'}</p>
+                          </td>
+                          <td className="py-5 px-4 font-black">
+                            {(pay.amount || 0).toLocaleString()} {pay.currency || 'RWF'}
+                          </td>
+                          <td className="py-5 px-4 font-bold text-xs">
+                            <span className="uppercase tracking-widest">{pay.payment_method || 'N/A'}</span>
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${pay.status === 'SUCCESSFUL' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              pay.status === 'PENDING' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                pay.status === 'FAILED' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' :
+                                  'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+                              }`}>
+                              {pay.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {pay.status === 'PENDING' && (
+                                <button
+                                  onClick={async () => {
+                                    if (window.confirm('Cancel this pending payment?')) {
+                                      await dispatch(cancelPayment(pay.id) as any);
+                                      toast.success('Payment cancelled');
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all font-bold"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                              <button
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {payments.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No payment records found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'discounts' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex items-center justify-between mb-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Discount Management</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage promo codes and product discounts</p>
+                  </div>
+                  <button
+                    onClick={() => toast.error('Create discount coming soon')}
+                    className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl hover:brightness-110 transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-brand-primary/25"
+                  >
+                    <Plus size={16} />
+                    New Discount
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[1000px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Code</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Type</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Value</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Usage</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {discounts.map((discount: any) => (
+                        <tr key={discount.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4 px-4 font-black text-brand-primary">
+                            {discount.code || 'N/A'}
+                          </td>
+                          <td className="py-5">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                              {discount.discount_type || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="py-5 px-4 font-black">
+                            {discount.discount_type === 'PERCENTAGE' ? `${discount.value || 0}%` : `${(discount.value || 0).toLocaleString()} RWF`}
+                          </td>
+                          <td className="py-5 px-4 text-sm font-bold text-slate-600 dark:text-slate-400">
+                            {discount.usage_count || 0} / {discount.usage_limit || '∞'}
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${discount.active ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                              }`}>
+                              {discount.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => toast.error('Edit coming soon')}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="Edit Discount"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm('Delete this discount?')) {
+                                    await dispatch(deleteDiscount(discount.id) as any);
+                                    toast.success('Discount deleted');
+                                  }
+                                }}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Delete Discount"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {discounts.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No discounts found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'feedback' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="mb-10">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Customer Feedback</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Moderate and manage product reviews</p>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[1000px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Client</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Product</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Rating</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Comment</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {feedback.map((review: any) => (
+                        <tr key={review.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4 px-4 font-bold text-slate-800 dark:text-white">
+                            {review.client_name || 'Anonymous'}
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(review.created_at)}</p>
+                          </td>
+                          <td className="py-5">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                              {review.product_name || (review.product ? `Product ID: ${review.product}` : 'Unknown Product')}
+                            </span>
+                          </td>
+                          <td className="py-5 px-4">
+                            <div className="flex text-yellow-500">
+                              {[...Array(5)].map((_, i) => <Star key={i} size={12} fill={i < review.rating ? "currentColor" : "none"} />)}
+                            </div>
+                          </td>
+                          <td className="py-5 px-4">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 max-w-[300px]">
+                              {review.comment}
+                            </p>
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${review.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              review.status === 'PENDING' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                              }`}>
+                              {review.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {review.status === 'PENDING' && (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      await dispatch(moderateFeedback({ id: review.id, status: 'APPROVED' }) as any);
+                                      toast.success('Feedback approved');
+                                    }}
+                                    className="p-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:brightness-110 rounded-xl transition-all"
+                                    title="Approve"
+                                  >
+                                    <CheckCircle2 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      const reason = window.prompt('Enter rejection reason:');
+                                      if (reason !== null) {
+                                        await dispatch(moderateFeedback({ id: review.id, status: 'REJECTED', comment: reason }) as any);
+                                        toast.error('Feedback rejected');
+                                      }
+                                    }}
+                                    className="p-2 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:brightness-110 rounded-xl transition-all"
+                                    title="Reject"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm('Delete this feedback entry?')) {
+                                    await dispatch(deleteFeedback(review.id) as any);
+                                    toast.success('Feedback deleted');
+                                  }
+                                }}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Delete Forever"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {feedback.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No feedback records found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'media' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex items-center justify-between mb-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Media Gallery</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage all product images, videos, and 3D models</p>
+                  </div>
+                  <button
+                    onClick={() => toast.error('Upload coming soon')}
+                    className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl hover:brightness-110 transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-brand-primary/25"
+                  >
+                    <Upload size={16} />
+                    Upload Media
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                  {media.map((m: any) => (
+                    <div key={m.id} className="group relative aspect-square bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-brand-primary/10 transition-all duration-300">
+                      {m.media_type === 'IMAGE' ? (
+                        <img src={m.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : m.media_type === 'VIDEO' ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover:text-brand-primary">
+                          <Video size={40} className="mb-2" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Video</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 group-hover:text-brand-primary">
+                          <Box size={40} className="mb-2" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">3D Model</span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform">
+                        <p className="text-[10px] font-bold text-white truncate mb-1">{m.product_name || `ID: ${m.product}`}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[8px] text-slate-300 font-black uppercase tracking-tighter">Order: {m.display_order}</span>
+                          <button
+                            onClick={async () => {
+                              if (window.confirm('Delete this media asset?')) {
+                                await dispatch(deleteMedia(m.id) as any);
+                                toast.success('Asset deleted');
+                              }
+                            }}
+                            className="p-1.5 bg-red-500 text-white rounded-lg hover:brightness-110 transition-all"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {media.length === 0 && (
+                    <div className="col-span-full py-24 text-center">
+                      <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <ImageIcon size={32} className="text-slate-300" />
+                      </div>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-bold">No media assets found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          }
+
+          {
+            activeTab === 'refunds' && (
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="mb-10">
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Refund Management</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Process and track customer refund requests</p>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-[900px]">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Refund ID</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order Info</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Amount</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {refunds.map((refund: any) => (
+                        <tr key={refund.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4">
+                            <p className="font-bold text-slate-800 dark:text-white">{refund.refund_number}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(refund.created_at)}</p>
+                          </td>
+                          <td className="py-5">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">Order: {refund.order?.order_number || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{refund.reason || 'N/A'}</p>
+                          </td>
+                          <td className="py-5 px-4 font-black">
+                            {(refund.amount || 0).toLocaleString()} RWF
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${refund.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              refund.status === 'PENDING' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                              }`}>
+                              {refund.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {refund.status === 'PENDING' && (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm('Mark this refund as completed?')) {
+                                        await dispatch(completeRefund(refund.id));
+                                        toast.success('Refund completed');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
+                                  >
+                                    Complete
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm('Mark this refund as failed?')) {
+                                        await dispatch(failRefund(refund.id));
+                                        toast.error('Refund failed');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
+                                  >
+                                    Fail
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {refunds.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                            No refund requests found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )

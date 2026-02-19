@@ -12,6 +12,8 @@ import { productsService } from '@/services/productsService'
 import { useDispatch, useSelector } from 'react-redux'
 import { addToCart } from '@/store/slices/cartSlice'
 import { toggleWishlist, fetchWishlist } from '@/store/slices/wishlistSlice'
+import { fetchFeedbacks } from '@/store/slices/feedbackSlice'
+import { fetchMedia } from '@/store/slices/mediaSlice'
 import { RootState } from '@/store'
 import ThreeDViewer from '@/components/ThreeDViewer'
 
@@ -70,24 +72,21 @@ const ProductDetail = () => {
       if (productRes.ok && productRes.data) {
         setProduct(productRes.data)
 
-        const mediaRes = await productsService.getProductMedia(productId)
-        if (mediaRes.ok && mediaRes.data) {
-          const mediaList = mediaRes.data.results || mediaRes.data
-          const sortedMedia = mediaList.sort((a: any, b: any) => a.display_order - b.display_order)
+        const mediaRes: any = await dispatch(fetchMedia({ product: productId }) as any).unwrap()
+        if (mediaRes) {
+          const sortedMedia = [...mediaRes].sort((a: any, b: any) => a.display_order - b.display_order)
           setMedia(sortedMedia)
 
           // Check if there is a 3D model
           const has3D = sortedMedia.some((m: any) => m.media_type === 'model_3d' || m.file_type === 'glb' || m.file_type === 'gltf' || m.model_file)
           if (has3D) {
-            // Logic to initialize 3D view if desired, or let user toggle it
-            // For now we look for the 3D model in the media list
+            // Logic to initialize 3D view
           }
         }
 
-        const feedbackRes = await productsService.getProductFeedback(productId)
-        if (feedbackRes.ok && feedbackRes.data) {
-          const feedbackList = feedbackRes.data.results || feedbackRes.data
-          setFeedback(feedbackList)
+        const feedbackRes: any = await dispatch(fetchFeedbacks({ product: productId, status: 'APPROVED' }) as any).unwrap()
+        if (feedbackRes) {
+          setFeedback(feedbackRes)
         }
       } else {
         setError('Product not found')
@@ -136,7 +135,7 @@ const ProductDetail = () => {
   const getMainImage = () => {
     if (media.length > 0) {
       const mainMedia = media.find(m => m.display_order === 0) || media[0]
-      return mainMedia.image_url || mainMedia.video_file_url || '/placeholder-product.jpg'
+      return mainMedia.image_url || mainMedia.image || mainMedia.video_file_url || mainMedia.video_file || '/placeholder-product.jpg'
     }
     return product?.thumbnail || product?.image || '/placeholder-product.jpg'
   }
@@ -149,12 +148,13 @@ const ProductDetail = () => {
     // Look for GLB/GLTF files in media
     const model = media.find(m =>
       m.model_file ||
+      m.model_3d ||
       m.model_3d_url ||
       m.image_url?.endsWith('.glb') ||
       m.image_url?.endsWith('.gltf') ||
       m.media_type === 'model_3d'
     )
-    return model?.model_file || model?.model_3d_url || model?.image_url
+    return model?.model_file || model?.model_3d || model?.model_3d_url || model?.image_url
   }
 
   const is3DAvailable = !!get3DModelUrl();
@@ -220,15 +220,15 @@ const ProductDetail = () => {
           ) : (
             <div className="w-full h-full relative">
               {/* Check for video or image */}
-              {media[activeMediaIndex]?.video_file_url ? (
+              {(media[activeMediaIndex]?.video_file_url || media[activeMediaIndex]?.video_file) ? (
                 <video
-                  src={media[activeMediaIndex].video_file_url}
+                  src={media[activeMediaIndex].video_file_url || media[activeMediaIndex].video_file}
                   className="w-full h-full object-contain"
                   controls
                 />
               ) : (
                 <img
-                  src={media[activeMediaIndex]?.image_url || getMainImage()}
+                  src={media[activeMediaIndex]?.image_url || media[activeMediaIndex]?.image || getMainImage()}
                   alt={product.name}
                   className="w-full h-full object-contain p-8 md:p-16 transition-transform duration-700 hover:scale-105"
                 />

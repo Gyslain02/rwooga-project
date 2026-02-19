@@ -88,9 +88,7 @@ export const ordersService = {
      * Cancel an order
      */
     async cancelOrder(orderId: string | number) {
-        const response = await api.patch(`/api/v1/orders/orders/${orderId}/`, {
-            status: 'CANCELLED'
-        });
+        const response = await api.post(`/api/v1/orders/orders/${orderId}/cancel/`);
         return {
             ok: true,
             status: response.status,

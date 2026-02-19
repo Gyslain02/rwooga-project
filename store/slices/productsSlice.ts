@@ -3,42 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { adminProductService } from '@/services/adminProductService';
 import { productsService } from '@/services/productsService';
 
-export interface ProductMedia {
-    id: number;
-    file_type: string;
-    media_type: string;
-    image_url?: string;
-    video_file_url?: string;
-    model_file?: string;
-    display_order: number;
-}
-
-export interface ProductCategory {
-    id: number;
-    name: string;
-    description?: string;
-}
-
-export interface Product {
-    id: number;
-    name: string;
-    category: ProductCategory | number;
-    category_name?: string;
-    short_description: string;
-    detailed_description: string;
-    unit_price: number;
-    currency: string;
-    available_colors?: string;
-    available_materials?: string;
-    published: boolean;
-    length?: number;
-    width?: number;
-    height?: number;
-    media: ProductMedia[];
-    thumbnail?: string;
-    created_at?: string;
-    updated_at?: string;
-}
+import { Product, ProductMedia, ProductCategory } from '@/types';
 
 export interface ProductsState {
     items: Product[];

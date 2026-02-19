@@ -68,7 +68,7 @@ const Shop = () => {
       name: product.name,
       price: product.unit_price || 0,
       currency: product.currency || 'RWF',
-      image: (product.media && product.media.length > 0) ? (product.media[0].image_url || product.media[0].thumbnail) : (product.thumbnail || product.image || '/placeholder-product.jpg'),
+      image: (product.media && product.media.length > 0) ? (product.media[0].image_url || product.media[0].image) : (product.thumbnail || product.image || '/placeholder-product.jpg'),
       category: typeof product.category === 'object' ? product.category.name : (product.category_name || 'Product')
     }
 
@@ -260,7 +260,7 @@ const ProductCard: React.FC<{
   const getMainImage = () => {
     if (product.media && product.media.length > 0) {
       const mainMedia = product.media.find((m: any) => m.display_order === 0) || product.media[0]
-      return mainMedia.image_url || mainMedia.video_file_url || product.thumbnail || product.image
+      return mainMedia.image_url || mainMedia.image || mainMedia.video_file_url || product.thumbnail || product.image
     }
     return product.thumbnail || product.image || '/placeholder-product.jpg'
   }

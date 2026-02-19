@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Smartphone, CheckCircle, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { momoService, MomoPaymentRequest, MomoPaymentResponse } from '@/services/momoService';
+import { paymentsService } from '@/services/paymentsService';
+import { momoService, MomoPaymentRequest } from '@/services/momoService';
 
 interface MomoPaymentProps {
   amount: number;
@@ -85,7 +86,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
     };
 
     try {
-      const response = await momoService.initiatePayment(paymentData);
+      const response = await paymentsService.initiateMomoPayment(paymentData);
 
       if (response.ok && response.data) {
         setTransactionId(response.data.transactionId);
@@ -94,7 +95,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
         // Reset timer for new payment
         setTimeLeft(300);
       } else {
-        throw new Error(response.error || 'Failed to initiate payment');
+        throw new Error('Failed to initiate payment');
       }
     } catch (error: any) {
       console.error('Payment initiation error:', error);
@@ -111,7 +112,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
 
     try {
       console.log('Checking payment status for:', transactionId);
-      const response = await momoService.checkPaymentStatus(transactionId);
+      const response = await paymentsService.getPaymentStatus(transactionId);
       console.log('Payment status response:', response);
 
       if (response.ok && response.data) {
