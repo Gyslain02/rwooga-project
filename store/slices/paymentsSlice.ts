@@ -77,6 +77,22 @@ export const initiateMomoPayment = createAsyncThunk(
     }
 );
 
+export const deletePayment = createAsyncThunk(
+    'payments/deletePayment',
+    async (id: string | number, { rejectWithValue, dispatch }) => {
+        try {
+            const response = await paymentsService.deletePayment(id);
+            if (response.ok) {
+                dispatch(fetchPayments());
+                return id;
+            }
+            return rejectWithValue('Failed to delete payment');
+        } catch (error: any) {
+            return rejectWithValue(error.message || 'Failed to delete payment');
+        }
+    }
+);
+
 const paymentsSlice = createSlice({
     name: 'payments',
     initialState,

@@ -97,8 +97,16 @@ api.interceptors.response.use(
                 // Handle Django REST framework field-level errors: {"field": ["error msg"]}
                 const fieldErrors = Object.entries(data)
                     .map(([key, value]) => {
-                        const msgs = Array.isArray(value) ? value.join(', ') : String(value);
-                        return `${key}: ${msgs}`;
+                        const formatValue = (v: any): string => {
+                            if (Array.isArray(v)) {
+                                return v.map(item => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(', ');
+                            }
+                            if (typeof v === 'object' && v !== null) {
+                                return JSON.stringify(v);
+                            }
+                            return String(v);
+                        };
+                        return `${key}: ${formatValue(value)}`;
                     })
                     .join('; ');
                 if (fieldErrors) message = fieldErrors;

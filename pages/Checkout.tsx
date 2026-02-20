@@ -55,10 +55,10 @@ const Checkout: React.FC = () => {
     const [showCardPayment, setShowCardPayment] = useState(false);
     const [createdOrderId, setCreatedOrderId] = useState<string | number>('');
     const [formData, setFormData] = useState({
-        name: user?.name || '',
         phone: user?.phone || '',
-        address: '',
-        city: 'Kigali',
+        street: '',
+        sector: '',
+        district: '',
     });
 
     // Monitor form data changes
@@ -71,11 +71,18 @@ const Checkout: React.FC = () => {
             items: cart.map(item => ({
                 product: item.id,
                 quantity: 1,
-                price_at_purchase: item.price,
-                product_name: item.name
+                price_at_purchase: Number(item.price),
+                product_name: item.name,
+                subtotal: Number(item.price) // quantity is 1
             })),
-            shipping_address: `${formData.address}, ${formData.city}`,
-            shipping_phone: Number(String(formData.phone).replace(/\D/g, '')),
+            shipping_address: `${formData.street}, ${formData.sector}, ${formData.district}`,
+            shipping_phone: String(formData.phone),
+            shipping: {
+                shipping_phone: String(formData.phone),
+                district: formData.district,
+                sector: formData.sector,
+                street_address: formData.street
+            },
             total_amount: getTotal(),
             shipping_fee: 0,
             customer_notes: `Payment via ${paymentMethod}`
@@ -233,45 +240,13 @@ const Checkout: React.FC = () => {
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
-                                            <div className="relative">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={18} />
-                                                <input
-                                                    type="text"
-                                                    value={formData.name}
-                                                    onChange={(e) => {
-                                                        console.log('Form name input changed:', e.target.value);
-                                                        setFormData({ ...formData, name: e.target.value });
-                                                    }}
-                                                    style={{
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                                                        color: 'white',
-                                                        padding: '16px 48px',
-                                                        borderRadius: '16px',
-                                                        outline: 'none',
-                                                        width: '100%',
-                                                        fontSize: '16px',
-                                                        transition: 'all 0.3s ease'
-                                                    }}
-                                                    placeholder="Recipient Name"
-                                                    required
-                                                    autoComplete="name"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Phone Number</label>
                                             <div className="relative">
                                                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={18} />
                                                 <input
                                                     type="tel"
                                                     value={formData.phone}
-                                                    onChange={(e) => {
-                                                        console.log('Form phone input changed:', e.target.value);
-                                                        setFormData({ ...formData, phone: e.target.value });
-                                                    }}
-                                                    onFocus={(e) => console.log('Form phone input focused')}
+                                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                     style={{
                                                         backgroundColor: '#1a1a1a',
                                                         border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -283,23 +258,46 @@ const Checkout: React.FC = () => {
                                                         fontSize: '16px',
                                                         transition: 'all 0.3s ease'
                                                     }}
-                                                    placeholder="0788xxxxxx or 0789xxxxxx"
+                                                    placeholder="Phone Number (e.g. 078...)"
                                                     required
-                                                    autoComplete="tel"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">District</label>
+                                            <div className="relative">
+                                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" size={18} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.district}
+                                                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white outline-none focus:border-brand-primary transition-all"
+                                                    placeholder="District"
+                                                    required
                                                 />
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Delivery Address</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Sector</label>
                                             <input
                                                 type="text"
-                                                value={formData.address}
-                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white outline-none focus:border-brand-primary transition-all"
-                                                placeholder="Street, District, Plot..."
+                                                value={formData.sector}
+                                                onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-brand-primary transition-all"
+                                                placeholder="Sector"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Street Address</label>
+                                            <input
+                                                type="text"
+                                                value={formData.street}
+                                                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-brand-primary transition-all"
+                                                placeholder="Street, House No..."
                                                 required
                                             />
                                         </div>
@@ -444,7 +442,7 @@ const Checkout: React.FC = () => {
                                 <MomoPayment
                                     amount={getTotal()}
                                     orderId={createdOrderId}
-                                    customerName={formData.name}
+                                    customerName={user?.name || 'Customer'}
                                     customerEmail={user?.email}
                                     onSuccess={handleMomoPaymentSuccess}
                                     onError={handleMomoPaymentError}
@@ -485,7 +483,7 @@ const Checkout: React.FC = () => {
                                 <CardPayment
                                     amount={getTotal()}
                                     orderId={createdOrderId}
-                                    customerName={formData.name}
+                                    customerName={user?.name || 'Customer'}
                                     customerEmail={user?.email}
                                     onSuccess={handleCardPaymentSuccess}
                                     onError={handleCardPaymentError}

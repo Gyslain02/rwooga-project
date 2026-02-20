@@ -38,12 +38,19 @@ export const ordersService = {
             quantity: number;
             price_at_purchase: number;
             product_name: string;
+            subtotal?: number;
         }>;
         shipping_address: string;
-        shipping_phone: number;
+        shipping_phone: string;
         customer_notes?: string;
+        shipping?: {
+            shipping_phone: string;
+            district: string;
+            sector: string;
+            street_address: string;
+        };
         total_amount: number;
-        shipping_fee?: number;
+        shipping_fee?: number | string;
     }) {
         const response = await api.post('/api/v1/orders/orders/', orderData);
         return {

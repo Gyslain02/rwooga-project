@@ -93,5 +93,17 @@ export const paymentsService = {
             status: response.status,
             data: response.data
         };
+    },
+
+    /**
+     * Delete a payment
+     */
+    async deletePayment(id: string | number) {
+        const response = await api.delete(`/api/v1/payments/payments/${id}/`);
+        return {
+            ok: true,
+            status: response.status,
+            data: response.data
+        };
     }
 };

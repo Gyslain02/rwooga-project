@@ -79,19 +79,24 @@ export interface ShippingRecord {
   updated_at?: string;
 }export interface PaymentRecord {
   id: string | number;
-  amount: number;
+  amount: number | string;
   currency: string;
   status: 'PENDING' | 'PROCESSING' | 'SUCCESSFUL' | 'FAILED' | 'CANCELLED';
-  payment_method: 'CARD' | 'MOMO' | 'BANK_TRANSFER';
+  payment_method: string;
+  provider?: string;
+  card_number_masked?: string;
+  card_type?: string;
   reference: string;
   transaction_id?: string;
-  order?: {
+  order?: string | {
     id: string | number;
     order_number: string;
   };
-  customer_name: string;
-  customer_email?: string;
-  customer_phone?: string;
+  phone_number?: string;
+  district?: string;
+  sector?: string;
+  street?: string;
+  expires_at?: string;
   created_at: string;
   updated_at?: string;
 }

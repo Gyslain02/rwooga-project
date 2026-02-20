@@ -37,11 +37,11 @@ import {
 import { fetchRefunds, completeRefund, failRefund } from '@/store/slices/refundsSlice';
 import { fetchReturns, approveReturn, rejectReturn, completeReturn as completeReturnRequest, cancelReturnRequest } from '@/store/slices/returnsSlice';
 import { fetchShippingRecords } from '@/store/slices/shippingSlice';
-import { fetchPayments, cancelPayment } from '@/store/slices/paymentsSlice';
+import { fetchPayments, cancelPayment, deletePayment } from '@/store/slices/paymentsSlice';
 import { fetchDiscounts, deleteDiscount } from '@/store/slices/discountsSlice';
 import { fetchFeedbacks, moderateFeedback, deleteFeedback } from '@/store/slices/feedbackSlice';
 import { fetchMedia, deleteMedia } from '@/store/slices/mediaSlice';
-import { fetchOrders } from '@/store/slices/ordersSlice';
+import { fetchOrders, cancelOrder } from '@/store/slices/ordersSlice';
 import UserModal from '@/components/UserModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 import { adminProductService } from '@/services/adminProductService'
@@ -407,6 +407,9 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [isDeletingProduct, setIsDeletingProduct] = useState(false)
   const [isDeletingDiscount, setIsDeletingDiscount] = useState(false)
   const [isDeletingMedia, setIsDeletingMedia] = useState(false)
+
+  const [paymentToDelete, setPaymentToDelete] = useState<any>(null)
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false)
 
   // Initial load - fetch users, categories, and products
   useEffect(() => {
@@ -828,6 +831,20 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
       } catch (err: any) {
         toast.error(err.message || 'Delete failed')
       }
+    }
+  }
+
+  const handleDeletePaymentConfirm = async () => {
+    if (!paymentToDelete) return
+    try {
+      setIsDeletingPayment(true)
+      await dispatch(deletePayment(paymentToDelete.id) as any).unwrap()
+      toast.success('Payment record deleted')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete payment')
+    } finally {
+      setIsDeletingPayment(false)
+      setPaymentToDelete(null)
     }
   }
 
@@ -1905,10 +1922,10 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   <table className="w-full min-w-250">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Transaction ID</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Customer</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Amount</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Method</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Transaction</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order & Contact</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Billing Address</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Payment Info</th>
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
                       </tr>
@@ -1918,18 +1935,29 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         <tr key={pay.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
                           <td className="py-5 pl-4">
                             <p className="font-bold text-slate-800 dark:text-white">#{pay.id?.toString().slice(-8).toUpperCase() || 'N/A'}</p>
-                            <p className="text-[10px] text-slate-400 font-medium select-all">{pay.reference || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-400 font-medium select-all">Ref: {pay.reference || 'N/A'}</p>
                             <p className="text-[10px] text-slate-400 font-medium">{formatDate(pay.created_at)}</p>
                           </td>
                           <td className="py-5">
-                            <p className="text-sm font-bold text-slate-800 dark:text-white">{pay.customer_name || 'N/A'}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{pay.customer_email || 'N/A'}</p>
+                            <p className="font-bold text-slate-800 dark:text-white">
+                              {pay.order ? (typeof pay.order === 'string' ? pay.order : pay.order.order_number) : 'N/A'}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-medium">{pay.phone_number || 'N/A'}</p>
+                          </td>
+                          <td className="py-5 px-4">
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                              {pay.district || 'N/A'}, {pay.sector || 'N/A'}
+                            </p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{pay.street || 'N/A'}</p>
                           </td>
                           <td className="py-5 px-4 font-black">
-                            {(pay.amount || 0).toLocaleString()} {pay.currency || 'RWF'}
-                          </td>
-                          <td className="py-5 px-4 font-bold text-xs">
-                            <span className="uppercase tracking-widest">{pay.payment_method || 'N/A'}</span>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm">{(Number(pay.amount) || 0).toLocaleString()} {pay.currency || 'RWF'}</p>
+                              <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+                                <span>{pay.payment_method}</span>
+                                {pay.provider && <span> — {pay.provider}</span>}
+                              </div>
+                            </div>
                           </td>
                           <td className="py-5 px-4 text-center">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${pay.status === 'SUCCESSFUL' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
@@ -1956,10 +1984,11 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                                 </button>
                               )}
                               <button
-                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
-                                title="View Details"
+                                onClick={() => setPaymentToDelete(pay)}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Delete Payment"
                               >
-                                <Eye size={16} />
+                                <Trash2 size={16} />
                               </button>
                             </div>
                           </td>
@@ -2330,10 +2359,108 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'orders' && (
-              <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm text-center py-20 md:py-32 transition-colors">
-                <ShoppingBag className="mx-auto text-slate-200 dark:text-slate-700 mb-6" size={64} />
-                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Order Tracking System</h3>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This complex logistics module is currently being integrated with our carrier APIs. Status updates will appear here soon.</p>
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex items-center justify-between mb-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Shop Orders</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage customer orders and track fulfillment</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => dispatch(fetchOrders())}
+                      className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary rounded-xl transition-all"
+                      title="Refresh Orders"
+                    >
+                      <RefreshCw size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
+                  <table className="w-full min-w-350">
+                    <thead>
+                      <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Order Details</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Items</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Contact & Address</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Total Amount</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
+                      {orders.map((order: any) => (
+                        <tr key={order.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
+                          <td className="py-5 pl-4">
+                            <p className="font-bold text-slate-800 dark:text-white uppercase">#{order.order_number}</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{formatDate(order.created_at)}</p>
+                          </td>
+                          <td className="py-5 px-4">
+                            <div className="space-y-1">
+                              {order.items?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="w-5 h-5 flex items-center justify-center bg-brand-primary/10 text-brand-primary text-[10px] font-bold rounded-md">{item.quantity}</span>
+                                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 line-clamp-1 truncate max-w-40">{item.product_name}</span>
+                                </div>
+                              ))}
+                              {!order.items?.length && <p className="text-xs text-slate-400">No items</p>}
+                            </div>
+                          </td>
+                          <td className="py-5 px-4">
+                            <p className="text-xs font-bold text-slate-800 dark:text-white">{order.shipping_phone || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-50" title={order.shipping_address}>
+                              {order.shipping_address || 'N/A'}
+                            </p>
+                          </td>
+                          <td className="py-5 px-4">
+                            <p className="text-sm font-black text-slate-800 dark:text-white">{(Number(order.total_amount) || 0).toLocaleString()} RWF</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Fee: {(Number(order.shipping_fee) || 0).toLocaleString()} RWF</p>
+                          </td>
+                          <td className="py-5 px-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${order.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                              order.status === 'PROCESSING' || order.status === 'SHIPPED' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
+                                order.status === 'CANCELLED' || order.status === 'FAILED' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' :
+                                  'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
+                              }`}>
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="py-5 text-right pr-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => toast.error('Update coming soon')}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
+                                title="Manage Order"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm('Are you sure you want to cancel this order?')) {
+                                    await dispatch(cancelOrder(order.id) as any).unwrap();
+                                    toast.success('Order cancelled successfully');
+                                  }
+                                }}
+                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
+                                title="Cancel Order"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {orders.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-20 text-center">
+                            <ShoppingBag className="mx-auto text-slate-200 dark:text-slate-700 mb-4" size={48} />
+                            <p className="text-slate-500 dark:text-slate-400 text-sm font-bold">No orders found.</p>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )
           }
@@ -2847,6 +2974,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         loading={isDeletingMedia}
       />
 
+      <DeleteConfirmModal
+        isOpen={!!paymentToDelete}
+        onClose={() => setPaymentToDelete(null)}
+        onConfirm={handleDeletePaymentConfirm}
+        title="Delete Payment Record"
+        message={`Are you sure you want to delete payment record #${paymentToDelete?.id?.toString().slice(-8).toUpperCase() || ''}? This action cannot be undone.`}
+        loading={isDeletingPayment}
+      />
     </div >
   )
 }
