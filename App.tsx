@@ -134,7 +134,7 @@ const AppContent: React.FC<{
                       </button>
 
                       {/* Dropdown Menu */}
-                      <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-[60]">
+                      <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-60">
                         <div className="glass-card border border-white/10 py-2 w-52 shadow-2xl rounded-2xl overflow-hidden backdrop-blur-xl">
                           <div className="px-5 py-3 border-b border-white/5 mb-1 bg-white/5">
                             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Signed in as</p>
@@ -308,7 +308,7 @@ const AppContent: React.FC<{
       )}
 
       {/* Content */}
-      <main className={`flex-grow ${!isAdminPage ? 'pt-24' : ''}`}>
+      <main className={`grow ${!isAdminPage ? 'pt-24' : ''}`}>
         <Routes>
           <Route path="/" element={<Home isPrintingEnabled={isCustomPrintingEnabled} />} />
           <Route path="/about" element={<About />} />

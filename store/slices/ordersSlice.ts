@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { ordersService } from '@/services/ordersService';
+import { ShippingRecord, PaymentRecord } from '@/types';
 
 export interface OrderItem {
     id: string;
@@ -31,6 +32,8 @@ export interface Order {
     shipped_at?: string;
     delivered_at?: string;
     items: OrderItem[];
+    shipping?: ShippingRecord;
+    payment?: PaymentRecord;
 }
 
 interface OrdersState {

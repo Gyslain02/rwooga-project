@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchRequests, removeRequest, updateExistingRequest } from '@/store/slices/requestsSlice';
 import { RootState } from '@/store';
+import { useAuth } from '@/context/AuthContext';
 import {
     ClipboardList,
     Trash2,
@@ -26,6 +27,7 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
 const MyCustomRequests: React.FC = () => {
     const dispatch = useDispatch();
+    const { user } = useAuth();
     const { items: requests, loading, error } = useSelector((state: RootState) => state.requests);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({
@@ -41,6 +43,11 @@ const MyCustomRequests: React.FC = () => {
     }, [dispatch]);
 
     const handleDelete = (request: any) => {
+        // Verify that the user owns this request
+        if (!user || user.email !== request.client_email) {
+            toast.error('You can only delete your own requests');
+            return;
+        }
         setRequestToDelete(request);
     };
 
@@ -58,6 +65,12 @@ const MyCustomRequests: React.FC = () => {
     };
 
     const startEditing = (request: any) => {
+        // Verify that the user owns this request
+        if (!user || user.email !== request.client_email) {
+            toast.error('You can only edit your own requests');
+            return;
+        }
+        
         if (request.status !== 'PENDING') {
             toast.error('Only pending requests can be edited.');
             return;
@@ -166,7 +179,9 @@ const MyCustomRequests: React.FC = () => {
                 ) : (
                     <div className="grid grid-cols-1 gap-6">
                         <AnimatePresence mode="popLayout">
-                            {requests.map((request: any) => (
+                            {requests
+                                .filter((request: any) => user && request.client_email === user.email)
+                                .map((request: any) => (
                                 <motion.div
                                     key={request.id}
                                     layout

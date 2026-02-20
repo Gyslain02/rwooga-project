@@ -1,19 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { paymentsService } from '@/services/paymentsService';
-
-export interface PaymentRecord {
-    id: string;
-    amount: number;
-    currency: string;
-    status: string;
-    payment_method: string;
-    reference: string;
-    transaction_id?: string;
-    customer_name: string;
-    customer_email?: string;
-    created_at: string;
-    updated_at: string;
-}
+import { PaymentRecord } from '@/types';
 
 interface PaymentsState {
     items: PaymentRecord[];

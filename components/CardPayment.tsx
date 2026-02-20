@@ -6,6 +6,7 @@ import { momoService } from '@/services/momoService';
 
 interface CardPaymentProps {
   amount: number;
+  orderId: string | number;
   customerName: string;
   customerEmail?: string;
   onSuccess: (transactionId: string) => void;
@@ -15,6 +16,7 @@ interface CardPaymentProps {
 
 const CardPayment: React.FC<CardPaymentProps> = ({
   amount,
+  orderId,
   customerName,
   customerEmail,
   onSuccess,
@@ -63,8 +65,9 @@ const CardPayment: React.FC<CardPaymentProps> = ({
       const response = await paymentsService.initiateCardPayment({
         amount,
         currency: 'RWF',
-        phoneNumber: '',
+        phone_number: '',
         reference: momoService.generateReference(),
+        order: orderId,
         customerName: formData.cardName,
         customerEmail,
         cardNumber: formData.cardNumber.replace(/\s/g, ''),

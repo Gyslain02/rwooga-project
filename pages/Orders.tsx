@@ -212,7 +212,7 @@ const Orders: React.FC = () => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
-                                    className="bg-[#111418] border border-white/5 rounded-[32px] overflow-hidden hover:border-white/10 transition-all"
+                                    className="bg-[#111418] border border-white/5 rounded-4xl overflow-hidden hover:border-white/10 transition-all"
                                 >
                                     {/* Order Header */}
                                     <div
@@ -255,7 +255,7 @@ const Orders: React.FC = () => {
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: 'auto', opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden bg-white/[0.02] border-t border-white/5"
+                                                className="overflow-hidden bg-white/2 border-t border-white/5"
                                             >
                                                 <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
                                                     {/* Items Column */}
@@ -269,7 +269,7 @@ const Orders: React.FC = () => {
                                                                     <div key={item.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
                                                                         <div className="w-16 h-16 rounded-xl bg-black/50 overflow-hidden border border-white/5">
                                                                             <img
-                                                                                src={item.product?.image || item.product?.thumbnail || '/placeholder-product.jpg'}
+                                                                                src={item.product?.image || '/placeholder-product.jpg'}
                                                                                 alt={item.product_name}
                                                                                 className="w-full h-full object-cover"
                                                                             />
@@ -413,7 +413,7 @@ const Orders: React.FC = () => {
             {/* Return Modal */}
             <AnimatePresence>
                 {showReturnModal && selectedOrderForReturn && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                    <div className="fixed inset-0 z-100 flex items-center justify-center px-4">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}

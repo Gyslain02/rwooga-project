@@ -39,7 +39,7 @@ const Checkout: React.FC = () => {
 
     // Calculate total
     const getTotal = () => {
-        return cart.reduce((sum, item) => sum + item.price, 0);
+        return cart.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
     };
 
     // Cart loading is handled by Redux slice initialization
@@ -53,6 +53,7 @@ const Checkout: React.FC = () => {
     const [isSuccess, setIsSuccess] = useState(false);
     const [showMomoPayment, setShowMomoPayment] = useState(false);
     const [showCardPayment, setShowCardPayment] = useState(false);
+    const [createdOrderId, setCreatedOrderId] = useState<string | number>('');
     const [formData, setFormData] = useState({
         name: user?.name || '',
         phone: user?.phone || '',
@@ -65,7 +66,7 @@ const Checkout: React.FC = () => {
         console.log('Form data updated:', formData);
     }, [formData]);
 
-    const submitOrder = async () => {
+    const createPendingOrder = async () => {
         const orderData = {
             items: cart.map(item => ({
                 product: item.id,
@@ -81,9 +82,8 @@ const Checkout: React.FC = () => {
         };
 
         try {
-            await dispatch(createOrder(orderData) as any).unwrap();
-            setIsSuccess(true);
-            handleClearCart();
+            const orderRes = await dispatch(createOrder(orderData) as any).unwrap();
+            return orderRes;
         } catch (error: any) {
             const message = typeof error === 'string' ? error : (error?.message || 'Failed to create order');
             toast.error(message);
@@ -93,55 +93,54 @@ const Checkout: React.FC = () => {
 
     const handlePlaceOrder = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Form submitted with data:', formData);
-        console.log('Payment method:', paymentMethod);
 
         if (!paymentMethod) {
             toast.error('Please select a payment method');
             return;
         }
 
-        if (paymentMethod === 'momo') {
-            setShowMomoPayment(true);
-            return;
-        }
+        try {
+            setIsProcessing(true);
+            let orderId = createdOrderId;
 
-        if (paymentMethod === 'card') {
-            setShowCardPayment(true);
-            return;
+            if (!orderId) {
+                const newOrder = await createPendingOrder();
+                orderId = newOrder.id;
+                setCreatedOrderId(orderId);
+            }
+            setIsProcessing(false);
+
+            if (paymentMethod === 'momo') {
+                setShowMomoPayment(true);
+            } else if (paymentMethod === 'card') {
+                setShowCardPayment(true);
+            }
+        } catch (error) {
+            setIsProcessing(false);
+            console.error('Order creation failed:', error);
         }
+    };
+
+    const finalizeOrderSuccess = (transactionId: string) => {
+        setIsSuccess(true);
+        handleClearCart();
+        setTimeout(() => {
+            navigate('/orders');
+        }, 5000);
     };
 
     const handleMomoPaymentSuccess = async (transactionId: string) => {
-        try {
-            setIsProcessing(true);
-            await submitOrder();
-            toast.success(`Payment successful! Order created. Transaction ID: ${transactionId}`);
-            setTimeout(() => {
-                navigate('/orders');
-            }, 5000);
-        } catch (error) {
-            console.error('Order creation failed after MoMo payment:', error);
-        } finally {
-            setIsProcessing(false);
-            setShowMomoPayment(false);
-        }
+        setIsProcessing(false);
+        setShowMomoPayment(false);
+        toast.success(`Payment successful! Order created. Transaction ID: ${transactionId}`);
+        finalizeOrderSuccess(transactionId);
     };
 
     const handleCardPaymentSuccess = async (transactionId: string) => {
-        try {
-            setIsProcessing(true);
-            await submitOrder();
-            toast.success(`Card Payment successful! Order created. Transaction ID: ${transactionId}`);
-            setTimeout(() => {
-                navigate('/orders');
-            }, 5000);
-        } catch (error) {
-            console.error('Order creation failed after Card payment:', error);
-        } finally {
-            setIsProcessing(false);
-            setShowCardPayment(false);
-        }
+        setIsProcessing(false);
+        setShowCardPayment(false);
+        toast.success(`Card Payment successful! Order created. Transaction ID: ${transactionId}`);
+        finalizeOrderSuccess(transactionId);
     };
 
     const handleMomoPaymentError = (error: string) => {
@@ -444,6 +443,7 @@ const Checkout: React.FC = () => {
 
                                 <MomoPayment
                                     amount={getTotal()}
+                                    orderId={createdOrderId}
                                     customerName={formData.name}
                                     customerEmail={user?.email}
                                     onSuccess={handleMomoPaymentSuccess}
@@ -484,6 +484,7 @@ const Checkout: React.FC = () => {
 
                                 <CardPayment
                                     amount={getTotal()}
+                                    orderId={createdOrderId}
                                     customerName={formData.name}
                                     customerEmail={user?.email}
                                     onSuccess={handleCardPaymentSuccess}

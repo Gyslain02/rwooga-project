@@ -34,10 +34,6 @@ const ProductDetail = () => {
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items)
   const isInWishlist = product ? wishlistItems.some((item: any) => item.product.id === product.id) : false
 
-  // Scroll tracking for sticky header/buy bar
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [lastScrollY, setLastScrollY] = useState(0)
-  const [isScrollingUp, setIsScrollingUp] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -49,19 +45,6 @@ const ProductDetail = () => {
     dispatch(fetchWishlist() as any)
   }, [dispatch])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const scrolled = currentScrollY > 100
-
-      setIsScrolled(scrolled)
-      setIsScrollingUp(currentScrollY < lastScrollY)
-      setLastScrollY(currentScrollY)
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
 
   const fetchProductData = async (productId: string) => {
     try {
@@ -135,7 +118,7 @@ const ProductDetail = () => {
   const getMainImage = () => {
     if (media.length > 0) {
       const mainMedia = media.find(m => m.display_order === 0) || media[0]
-      return mainMedia.image_url || mainMedia.image || mainMedia.video_file_url || mainMedia.video_file || '/placeholder-product.jpg'
+      return mainMedia.image || mainMedia.video_file_url || mainMedia.video_file || '/placeholder-product.jpg'
     }
     return product?.thumbnail || product?.image || '/placeholder-product.jpg'
   }
@@ -165,22 +148,10 @@ const ProductDetail = () => {
   return (
     <div className="bg-[#000000] min-h-screen text-[#f5f5f7] pb-20">
 
-      {/* Sticky Product Nav */}
-      <div className={`fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${isScrolled && isScrollingUp ? 'translate-y-0' :
-        isScrolled && !isScrollingUp ? '-translate-y-full' :
-          'translate-y-0'
-        }`}>
-        <div className="max-w-[1000px] mx-auto px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold">{product.name}</h2>
-          <div className="flex items-center gap-6">
-            <span className="text-sm text-gray-400">{(product.unit_price || 0).toLocaleString()} RWF</span>
-            <button onClick={handleAddToCart} className="bg-green-700 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-800">Buy</button>
-          </div>
-        </div>
-      </div>
+
 
       {/* Hero / Media Section - Apple Style */}
-      <div className="max-w-[1200px] mx-auto pt-32 px-6">
+      <div className="max-w-300 mx-auto pt-32 px-6">
 
         {/* Back Button */}
         <button
@@ -209,7 +180,7 @@ const ProductDetail = () => {
         </div>
 
         {/* Main Viewer Area */}
-        <div className="relative w-full aspect-[4/3] md:aspect-[16/9] bg-[#1c1c1e] rounded-3xl overflow-hidden mb-16 group">
+        <div className="relative w-full aspect-4/3 md:aspect-video bg-[#1c1c1e] rounded-3xl overflow-hidden mb-16 group">
 
           {show3D && is3DAvailable ? (
             <ThreeDViewer

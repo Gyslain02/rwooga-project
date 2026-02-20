@@ -39,6 +39,19 @@ export const fetchPublishedProducts = createAsyncThunk(
     }
 );
 
+export const fetchProduct = createAsyncThunk(
+    'products/fetchOne',
+    async (id: string | number, { rejectWithValue }) => {
+        try {
+            const response = await adminProductService.getProduct(id.toString());
+            if (response.ok) return response.data;
+            return rejectWithValue(response.error || 'Failed to fetch product');
+        } catch (error: any) {
+            return rejectWithValue(error.message || 'An error occurred');
+        }
+    }
+);
+
 export const createProduct = createAsyncThunk(
     'products/create',
     async (data: any, { rejectWithValue }) => {
@@ -120,6 +133,25 @@ const productsSlice = createSlice({
                 state.count = action.payload.count || (Array.isArray(action.payload) ? action.payload.length : (action.payload.results ? action.payload.results.length : 0));
             })
             .addCase(fetchPublishedProducts.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+            })
+            // Fetch Single Product
+            .addCase(fetchProduct.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchProduct.fulfilled, (state, action) => {
+                state.loading = false;
+                // Update or add the product in the items list
+                const index = state.items.findIndex(p => p.id === action.payload.id);
+                if (index !== -1) {
+                    state.items[index] = action.payload;
+                } else {
+                    state.items.push(action.payload);
+                }
+            })
+            .addCase(fetchProduct.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             })

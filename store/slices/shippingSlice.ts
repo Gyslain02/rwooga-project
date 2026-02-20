@@ -1,21 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { shippingService } from '@/services/shippingService';
-
-export interface ShippingRecord {
-    id: string;
-    order: {
-        id: string;
-        order_number: string;
-    };
-    tracking_number: string;
-    carrier: string;
-    status: string;
-    shipping_address: string;
-    estimated_delivery?: string;
-    actual_delivery?: string;
-    created_at: string;
-    updated_at: string;
-}
+import { ShippingRecord } from '@/types';
 
 interface ShippingState {
     items: ShippingRecord[];

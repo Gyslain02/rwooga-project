@@ -58,8 +58,9 @@ export const paymentsService = {
     async initiateCardPayment(paymentData: {
         amount: number;
         currency: string;
-        phoneNumber: string;
+        phone_number: string;
         reference: string;
+        order: string | number;
         customerName: string;
         customerEmail?: string;
         cardNumber: string;
@@ -80,8 +81,9 @@ export const paymentsService = {
     async initiateMomoPayment(paymentData: {
         amount: number;
         currency: string;
-        phoneNumber: string;
+        phone_number: string;
         reference: string;
+        order: string | number;
         customerName: string;
         customerEmail?: string;
     }) {

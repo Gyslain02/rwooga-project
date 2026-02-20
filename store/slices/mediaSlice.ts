@@ -7,8 +7,12 @@ export interface Media {
     product_name?: string;
     media_type: 'IMAGE' | 'VIDEO' | 'MODEL_3D';
     image_url?: string;
+    image?: string;
+    image_secure_url?: string;
     video_file_url?: string;
+    video_file?: string;
     model_file?: string;
+    model_3d?: string;
     display_order: number;
     created_at: string;
     updated_at: string;
@@ -32,7 +36,10 @@ export const fetchMedia = createAsyncThunk(
         try {
             const response = await mediaService.getMedia(params);
             if (response.ok) {
-                return response.data.results || response.data;
+                // Handle both direct array and paginated response
+                const data = response.data;
+                const mediaArray = Array.isArray(data) ? data : (data.results || data);
+                return Array.isArray(mediaArray) ? mediaArray : [];
             }
             return rejectWithValue('Failed to fetch media');
         } catch (error: any) {
@@ -87,9 +94,9 @@ const mediaSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(fetchMedia.fulfilled, (state, action: PayloadAction<Media[]>) => {
+            .addCase(fetchMedia.fulfilled, (state, action: PayloadAction<any>) => {
                 state.loading = false;
-                state.items = action.payload;
+                state.items = Array.isArray(action.payload) ? action.payload : [];
             })
             .addCase(fetchMedia.rejected, (state, action) => {
                 state.loading = false;

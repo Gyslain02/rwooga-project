@@ -18,7 +18,7 @@ import { authService } from '@/services/authService';
 import logo from '@/assets/Rwooga logo.png'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState, AppDispatch } from '@/store'
-import { fetchAllProducts, createProduct, updateProduct, deleteProduct as deleteProductRedux, clearError as clearProductError } from '@/store/slices/productsSlice'
+import { fetchAllProducts, createProduct, updateProduct, deleteProduct as deleteProductRedux, clearError as clearProductError, fetchProduct } from '@/store/slices/productsSlice'
 import {
   fetchRequests,
   submitRequest,
@@ -36,7 +36,7 @@ import {
 } from '@/store/slices/usersSlice';
 import { fetchRefunds, completeRefund, failRefund } from '@/store/slices/refundsSlice';
 import { fetchReturns, approveReturn, rejectReturn, completeReturn as completeReturnRequest, cancelReturnRequest } from '@/store/slices/returnsSlice';
-import { fetchShippingRecords, createShippingRecord, updateShippingRecord, deleteShippingRecord } from '@/store/slices/shippingSlice';
+import { fetchShippingRecords } from '@/store/slices/shippingSlice';
 import { fetchPayments, cancelPayment } from '@/store/slices/paymentsSlice';
 import { fetchDiscounts, deleteDiscount } from '@/store/slices/discountsSlice';
 import { fetchFeedbacks, moderateFeedback, deleteFeedback } from '@/store/slices/feedbackSlice';
@@ -46,6 +46,7 @@ import UserModal from '@/components/UserModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 import { adminProductService } from '@/services/adminProductService'
 import { productsService } from '@/services/productsService'
+import { PaymentRecord, ShippingRecord } from '@/types'
 
 const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleLogout: () => void, isEnabled: boolean, onToggle: (val: boolean) => void }) => {
   const formatDate = (dateString: string) => {
@@ -400,6 +401,12 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
   const [userToDelete, setUserToDelete] = useState<any>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null)
   const [requestToDelete, setRequestToDelete] = useState<any>(null)
+  const [productToDelete, setProductToDelete] = useState<any>(null)
+  const [discountToDelete, setDiscountToDelete] = useState<any>(null)
+  const [mediaToDelete, setMediaToDelete] = useState<any>(null)
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false)
+  const [isDeletingDiscount, setIsDeletingDiscount] = useState(false)
+  const [isDeletingMedia, setIsDeletingMedia] = useState(false)
 
   // Initial load - fetch users, categories, and products
   useEffect(() => {
@@ -548,16 +555,52 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
     }
   }
 
-  const deleteProduct = async (id: string | number) => {
-    const confirmed = window.confirm('Are you sure you want to delete this product?')
-    if (!confirmed) return
+  const deleteProduct = (product: any) => {
+    setProductToDelete(product)
+  }
 
+  const handleProductDeleteConfirm = async () => {
+    if (!productToDelete) return
     try {
-      await dispatch(deleteProductRedux(id)).unwrap()
+      setIsDeletingProduct(true)
+      await dispatch(deleteProductRedux(productToDelete.id)).unwrap()
       toast.success('Product deleted successfully')
     } catch (error: any) {
       console.error('Error deleting product:', error)
       toast.error('Failed to delete product: ' + (error.message || error))
+    } finally {
+      setIsDeletingProduct(false)
+      setProductToDelete(null)
+    }
+  }
+
+  const handleDiscountDeleteConfirm = async () => {
+    if (!discountToDelete) return
+    try {
+      setIsDeletingDiscount(true)
+      await dispatch(deleteDiscount(discountToDelete.id) as any).unwrap()
+      toast.success('Discount deleted')
+    } catch (error: any) {
+      console.error('Error deleting discount:', error)
+      toast.error('Failed to delete discount')
+    } finally {
+      setIsDeletingDiscount(false)
+      setDiscountToDelete(null)
+    }
+  }
+
+  const handleMediaDeleteConfirm = async () => {
+    if (!mediaToDelete) return
+    try {
+      setIsDeletingMedia(true)
+      await dispatch(deleteMedia(mediaToDelete.id) as any).unwrap()
+      toast.success('Asset deleted')
+    } catch (error: any) {
+      console.error('Error deleting media:', error)
+      toast.error('Failed to delete asset')
+    } finally {
+      setIsDeletingMedia(false)
+      setMediaToDelete(null)
     }
   }
 
@@ -607,13 +650,19 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             toast.error(uploadResult.error || 'Some images failed to upload');
           } else {
             toast.success('All images uploaded successfully');
+            // Fetch the product again to get updated media data
+            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for backend processing
+            await dispatch(fetchProduct(result.id));
           }
         }
 
         toast.success(editingProduct ? 'Product updated successfully' : 'Product created successfully')
         setShowProductForm(false)
         resetProductForm()
-        dispatch(fetchAllProducts({})) // Refresh to get all data
+        // Refresh all products to display updates
+        if (!productImages.length) {
+          dispatch(fetchAllProducts({}) as any) // Refresh to get all data
+        }
       }
     } catch (error: any) {
       console.error('Error saving product:', error)
@@ -952,7 +1001,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   </div>
 
                   <div className="overflow-x-auto -mx-8 px-8">
-                    <table className="w-full min-w-[600px]">
+                    <table className="w-full min-w-150">
                       <thead>
                         <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                           <th className="py-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Client Name</th>
@@ -972,7 +1021,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                               <span className="px-3 py-1 rounded-lg bg-brand-primary/10 text-brand-primary text-[10px] font-bold uppercase">{req.productType}</span>
                             </td>
                             <td className="py-5">
-                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">{req.files?.[0] || 'No file attached'}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate max-w-37.5">{req.files?.[0] || 'No file attached'}</p>
                             </td>
                             <td className="py-5 text-right">
                               <button className="bg-slate-100 dark:bg-slate-800 hover:bg-brand-primary hover:text-white p-2 rounded-lg text-slate-500 dark:text-slate-400 transition-all" aria-label="Download file" title="Download file">
@@ -1028,7 +1077,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
 
           {activeTab === 'categories' && (
-            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Category Management</h2>
@@ -1042,7 +1091,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 )}
               </div>
               {showCategoryForm && (
-                <motion.form initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleCategorySubmit} className="mb-12 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 rounded-[32px] border border-gray-100 dark:border-slate-800">
+                <motion.form initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleCategorySubmit} className="mb-12 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 rounded-4xl border border-gray-100 dark:border-slate-800">
                   <div className="flex justify-between items-center mb-8">
                     <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">{editingCategory ? 'Edit Category' : 'New Category'}</h3>
                     <button type="button" onClick={() => setShowCategoryForm(false)} className="w-10 h-10 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-red-500 transition-all"><X size={20} /></button>
@@ -1110,7 +1159,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
           )}
 
           {activeTab === 'products' && (
-            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+            <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Catalog Management</h2>
@@ -1135,7 +1184,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   onSubmit={handleProductSubmit}
-                  className="mb-12 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 rounded-[32px] border border-gray-100 dark:border-slate-800"
+                  className="mb-12 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 rounded-4xl border border-gray-100 dark:border-slate-800"
                 >
                   <div className="flex justify-between items-center mb-8">
                     <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-widest">{editingProduct ? 'Edit Product' : 'New Product'}</h3>
@@ -1423,7 +1472,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     <motion.div
                       key={p.id}
                       layout
-                      className="group bg-white dark:bg-[#1E293B] p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 hover:border-brand-primary/30 dark:hover:border-brand-primary/50 hover:shadow-xl transition-all relative"
+                      className="group bg-white dark:bg-[#1E293B] p-6 rounded-4xl border border-slate-100 dark:border-slate-800 hover:border-brand-primary/30 dark:hover:border-brand-primary/50 hover:shadow-xl transition-all relative"
                     >
                       {/* Product Image Thumbnail */}
                       {(p.media && p.media.length > 0 && (p.media[0].image_url || p.media[0].image)) ? (
@@ -1455,7 +1504,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             <Edit2 size={18} />
                           </button>
                           <button
-                            onClick={() => deleteProduct(p.id)}
+                            onClick={() => deleteProduct(p)}
                             className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 p-2.5 rounded-xl transition-all"
                             aria-label="Delete product"
                             title="Delete product"
@@ -1489,14 +1538,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'users' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500 transition-colors">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">User Management</h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400">Manage administrator and client accounts</p>
                   </div>
                   <div className="flex flex-col sm:flex-row w-full md:w-auto gap-4">
-                    <div className="relative flex-1 sm:min-w-[300px]">
+                    <div className="relative flex-1 sm:min-w-75">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
                         type="text"
@@ -1517,7 +1566,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[900px]">
+                  <table className="w-full min-w-225">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">User Details</th>
@@ -1644,7 +1693,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'requests' && (
-              <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-[500px] transition-colors">
+              <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm min-h-125 transition-colors">
                 <div className="flex items-center justify-between mb-12">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Custom Requests</h2>
@@ -1679,14 +1728,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'returns' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Return Management</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Review and process customer return requests</p>
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[1000px]">
+                  <table className="w-full min-w-250">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Return ID</th>
@@ -1705,7 +1754,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           </td>
                           <td className="py-5">
                             <p className="text-sm font-bold text-slate-800 dark:text-white">Order: {ret.order?.order_number || 'N/A'}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{ret.reason}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-50">{ret.reason}</p>
                           </td>
                           <td className="py-5 px-4 font-black">
                             {(ret.requested_refund_amount || 0).toLocaleString()} RWF
@@ -1787,36 +1836,30 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'shipping' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
-                <div className="flex items-center justify-between mb-10">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Shipping Management</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Track and manage order shipments</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Track and manage shipments via /api/v1/orders/shipping/</p>
                   </div>
-                  <button
-                    onClick={() => toast.error('Create shipping manually coming soon')}
-                    className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-2xl hover:brightness-110 transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-brand-primary/25"
-                  >
-                    <Plus size={16} />
-                    New Shipment
-                  </button>
                 </div>
 
+
+                {/* Shipments Table */}
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[1000px]">
+                  <table className="w-full min-w-[750px]">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Shipment ID</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">ID</th>
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Order</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Carrier & Tracking</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4 text-center">Status</th>
-                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right pr-4">Actions</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Address</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-4">Fee</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-                      {shipping.map((ship: any) => (
+                      {shipping.map((ship: ShippingRecord) => (
                         <tr key={ship.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
-                          <td className="py-5 pl-4 px-4 font-bold text-slate-800 dark:text-white">
+                          <td className="py-5 pl-4 pr-2 font-bold text-slate-800 dark:text-white text-sm">
                             #{ship.id?.toString().slice(-6).toUpperCase() || 'N/A'}
                           </td>
                           <td className="py-5">
@@ -1824,46 +1867,21 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             <p className="text-[10px] text-slate-400 font-medium">{formatDate(ship.created_at)}</p>
                           </td>
                           <td className="py-5 px-4">
-                            <p className="text-sm font-bold text-slate-800 dark:text-white">{ship.carrier || 'N/A'}</p>
-                            <p className="text-[10px] text-slate-400 font-medium select-all">{ship.tracking_number || 'N/A'}</p>
+                            <p className="text-sm font-bold text-slate-800 dark:text-white">
+                              {[ship.street_address, ship.sector, ship.district].filter(Boolean).join(', ') || 'N/A'}
+                            </p>
+                            {ship.shipping_phone && (
+                              <p className="text-[10px] text-slate-400 font-medium">{ship.shipping_phone}</p>
+                            )}
                           </td>
-                          <td className="py-5 px-4 text-center">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${ship.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' :
-                              ship.status === 'SHIPPED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' :
-                                ship.status === 'IN_TRANSIT' ? 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' :
-                                  'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400'
-                              }`}>
-                              {ship.status}
-                            </span>
-                          </td>
-                          <td className="py-5 text-right pr-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => toast.error('Update coming soon')}
-                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded-xl transition-all"
-                                title="Edit Shipment"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (window.confirm('Delete this shipment record?')) {
-                                    await dispatch(deleteShippingRecord(ship.id) as any);
-                                    toast.success('Shipment deleted');
-                                  }
-                                }}
-                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
-                                title="Delete Shipment"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                          <td className="py-5 px-4 font-bold text-slate-800 dark:text-white text-sm">
+                            {ship.shipping_fee ? `${Number(ship.shipping_fee).toLocaleString()} RWF` : '—'}
                           </td>
                         </tr>
                       ))}
                       {shipping.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
+                          <td colSpan={4} className="py-20 text-center text-slate-500 dark:text-slate-400 text-sm font-bold">
                             No shipping records found.
                           </td>
                         </tr>
@@ -1877,14 +1895,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'payments' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Payment Transactions</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Monitor and manage all payment activities</p>
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[1000px]">
+                  <table className="w-full min-w-250">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Transaction ID</th>
@@ -1896,7 +1914,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
-                      {payments.map((pay: any) => (
+                      {payments.map((pay: PaymentRecord) => (
                         <tr key={pay.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all">
                           <td className="py-5 pl-4">
                             <p className="font-bold text-slate-800 dark:text-white">#{pay.id?.toString().slice(-8).toUpperCase() || 'N/A'}</p>
@@ -1932,7 +1950,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                                       toast.success('Payment cancelled');
                                     }
                                   }}
-                                  className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all font-bold"
+                                  className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black uppercase hover:brightness-110 transition-all"
                                 >
                                   Cancel
                                 </button>
@@ -1963,7 +1981,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'discounts' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="flex items-center justify-between mb-10">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Discount Management</h2>
@@ -1979,7 +1997,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[1000px]">
+                  <table className="w-full min-w-250">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Code</th>
@@ -2023,12 +2041,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                onClick={async () => {
-                                  if (window.confirm('Delete this discount?')) {
-                                    await dispatch(deleteDiscount(discount.id) as any);
-                                    toast.success('Discount deleted');
-                                  }
-                                }}
+                                onClick={() => setDiscountToDelete(discount)}
                                 className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50/50 rounded-xl transition-all"
                                 title="Delete Discount"
                               >
@@ -2054,14 +2067,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'feedback' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Customer Feedback</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Moderate and manage product reviews</p>
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[1000px]">
+                  <table className="w-full min-w-250">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Client</th>
@@ -2090,7 +2103,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                             </div>
                           </td>
                           <td className="py-5 px-4">
-                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 max-w-[300px]">
+                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 max-w-75">
                               {review.comment}
                             </p>
                           </td>
@@ -2163,7 +2176,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'media' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="flex items-center justify-between mb-10">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Media Gallery</h2>
@@ -2195,17 +2208,12 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                         </div>
                       )}
 
-                      <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform">
+                      <div className="absolute inset-x-0 bottom-0 p-3 bg-linear-to-t from-black/80 to-transparent translate-y-full group-hover:translate-y-0 transition-transform">
                         <p className="text-[10px] font-bold text-white truncate mb-1">{m.product_name || `ID: ${m.product}`}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-[8px] text-slate-300 font-black uppercase tracking-tighter">Order: {m.display_order}</span>
                           <button
-                            onClick={async () => {
-                              if (window.confirm('Delete this media asset?')) {
-                                await dispatch(deleteMedia(m.id) as any);
-                                toast.success('Asset deleted');
-                              }
-                            }}
+                            onClick={() => setMediaToDelete(m)}
                             className="p-1.5 bg-red-500 text-white rounded-lg hover:brightness-110 transition-all"
                           >
                             <Trash2 size={12} />
@@ -2229,14 +2237,14 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'refunds' && (
-              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
+              <div className="bg-white dark:bg-[#1E293B] p-6 md:p-10 rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-500">
                 <div className="mb-10">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Refund Management</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Process and track customer refund requests</p>
                 </div>
 
                 <div className="overflow-x-auto -mx-6 md:-mx-10 px-6 md:px-10">
-                  <table className="w-full min-w-[900px]">
+                  <table className="w-full min-w-225">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-slate-800 text-left">
                         <th className="pb-4 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-4">Refund ID</th>
@@ -2255,7 +2263,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                           </td>
                           <td className="py-5">
                             <p className="text-sm font-bold text-slate-800 dark:text-white">Order: {refund.order?.order_number || 'N/A'}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{refund.reason || 'N/A'}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-50">{refund.reason || 'N/A'}</p>
                           </td>
                           <td className="py-5 px-4 font-black">
                             {(refund.amount || 0).toLocaleString()} RWF
@@ -2322,7 +2330,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
           {
             activeTab === 'orders' && (
-              <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm text-center py-20 md:py-32 transition-colors">
+              <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-6 md:p-10 shadow-sm text-center py-20 md:py-32 transition-colors">
                 <ShoppingBag className="mx-auto text-slate-200 dark:text-slate-700 mb-6" size={64} />
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Order Tracking System</h3>
                 <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">This complex logistics module is currently being integrated with our carrier APIs. Status updates will appear here soon.</p>
@@ -2334,7 +2342,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
             activeTab === 'settings' && (
               <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
                 {/* Header */}
-                <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 text-center shadow-sm transition-colors">
+                <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 text-center shadow-sm transition-colors">
                   {loadingProfile ? (
                     <div className="py-12">
                       <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -2347,7 +2355,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </div>
                   ) : (
                     <>
-                      <div className="w-24 h-24 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4 shadow-xl">
+                      <div className="w-24 h-24 bg-linear-to-br from-brand-primary to-brand-secondary rounded-full flex items-center justify-center text-white text-4xl font-bold mx-auto mb-4 shadow-xl">
                         {profile.full_name?.charAt(0).toUpperCase()}
                       </div>
                       <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">
@@ -2372,7 +2380,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 {profile && (
                   <>
                     {/* Profile Information Card */}
-                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                    <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
                       <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center">
                           <User className="mr-2" size={24} />
@@ -2594,7 +2602,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </div>
 
                     {/* Security Card */}
-                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                    <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
                       <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center mb-6">
                         <Lock className="mr-2" size={24} />
                         Change Password
@@ -2685,7 +2693,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                     </div>
 
                     {/* Account Details Card */}
-                    <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                    <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
                       <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center mb-6">
                         <Shield className="mr-2" size={24} />
                         Account Details
@@ -2713,7 +2721,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
                 )}
 
                 {/* System Settings (Preserved) */}
-                <div className="bg-white dark:bg-[#1E293B] rounded-[32px] md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
+                <div className="bg-white dark:bg-[#1E293B] rounded-4xl md:rounded-[40px] border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-8">System Settings</h2>
                   <div className="space-y-10">
                     <div className="flex items-center justify-between">
@@ -2747,7 +2755,7 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
 
                 {/* Danger Zone */}
                 {profile && (
-                  <div className="bg-red-500/5 border border-red-500/20 rounded-[32px] md:rounded-[40px] shadow-xl p-8 mb-6">
+                  <div className="bg-red-500/5 border border-red-500/20 rounded-4xl md:rounded-[40px] shadow-xl p-8 mb-6">
                     <h2 className="text-xl font-bold text-red-500 flex items-center mb-4">
                       <AlertTriangle className="mr-2" size={24} />
                       Danger Zone
@@ -2811,6 +2819,34 @@ const Admin = ({ user, handleLogout, isEnabled, onToggle }: { user: any, handleL
         message="Are you sure you want to delete your account? This action cannot be undone and you will lose all access immediately."
         loading={isDeletingProfile}
       />
+
+      <DeleteConfirmModal
+        isOpen={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={handleProductDeleteConfirm}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone.`}
+        loading={isDeletingProduct}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!discountToDelete}
+        onClose={() => setDiscountToDelete(null)}
+        onConfirm={handleDiscountDeleteConfirm}
+        title="Delete Discount"
+        message={`Are you sure you want to delete the discount code "${discountToDelete?.code}"? This action cannot be undone.`}
+        loading={isDeletingDiscount}
+      />
+
+      <DeleteConfirmModal
+        isOpen={!!mediaToDelete}
+        onClose={() => setMediaToDelete(null)}
+        onConfirm={handleMediaDeleteConfirm}
+        title="Delete Media Asset"
+        message={`Are you sure you want to delete this media asset? This action cannot be undone.`}
+        loading={isDeletingMedia}
+      />
+
     </div >
   )
 }
@@ -2891,7 +2927,7 @@ const ProductRequestCard: React.FC<{ request: any; onUpdateStatus: (status: stri
       </div>
     </div>
 
-    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-[32px] border border-gray-100 dark:border-slate-800 shadow-inner mb-8 transition-colors">
+    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-4xl border border-gray-100 dark:border-slate-800 shadow-inner mb-8 transition-colors">
       <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Project Description</p>
       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{request.description}</p>
     </div>

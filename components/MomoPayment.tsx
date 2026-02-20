@@ -6,6 +6,7 @@ import { momoService, MomoPaymentRequest } from '@/services/momoService';
 
 interface MomoPaymentProps {
   amount: number;
+  orderId: string | number;
   customerName: string;
   customerEmail?: string;
   onSuccess: (transactionId: string) => void;
@@ -15,6 +16,7 @@ interface MomoPaymentProps {
 
 const MomoPayment: React.FC<MomoPaymentProps> = ({
   amount,
+  orderId,
   customerName,
   customerEmail,
   onSuccess,
@@ -61,7 +63,7 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
 
   const validatePhone = (phone: string | number) => {
     if (!momoService.validatePhoneNumber(phone)) {
-      setErrorMessage('Please enter a valid MTN Rwanda number (078xxxxxx or 079xxxxxx)');
+      setErrorMessage('Please enter a valid MTN Rwanda number (e.g. 78xxxxxxx or 078xxxxxxx)');
       return false;
     }
     setErrorMessage('');
@@ -79,8 +81,9 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
     const paymentData: MomoPaymentRequest = {
       amount,
       currency: 'RWF',
-      phoneNumber: momoService.formatPhoneNumber(phoneNumber),
+      phone_number: momoService.formatPhoneNumber(phoneNumber),
       reference: momoService.generateReference(),
+      order: orderId,
       customerName,
       customerEmail
     };
@@ -200,9 +203,9 @@ const MomoPayment: React.FC<MomoPaymentProps> = ({
               value={phoneNumber}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '');
-                setPhoneNumber(value === '' ? '' : Number(value));
+                setPhoneNumber(value);
               }}
-              placeholder="0788xxxxxx or 0789xxxxxx"
+              placeholder="e.g. 78xxxxxxx or 078xxxxxxx"
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
               disabled={isProcessing}
             />

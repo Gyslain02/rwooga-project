@@ -16,7 +16,7 @@ interface CartState {
 }
 
 const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => sum + Number(item.price), 0);
+    return items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
 };
 
 const items = JSON.parse(localStorage.getItem('cart_items') || '[]');

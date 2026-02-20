@@ -3,8 +3,9 @@ import api from './api';
 export interface MomoPaymentRequest {
   amount: number;
   currency: string;
-  phoneNumber: string;
+  phone_number: string;
   reference: string;
+  order: string | number;
   customerName: string;
   customerEmail?: string;
   paymentMethod?: 'momo' | 'card';
@@ -68,8 +69,8 @@ export const momoService = {
    * Validate phone number for MTN Rwanda
    */
   validatePhoneNumber(phoneNumber: string | number): boolean {
-    // MTN Rwanda numbers: 0788xxxxxx, 0789xxxxxx
-    const mtnRegex = /^(0788|0789)\d{6}$/;
+    // MTN Rwanda numbers: optionally start with 0, then 78 or 79, followed by 7 digits
+    const mtnRegex = /^(0?78|0?79)\d{7}$/;
     return mtnRegex.test(String(phoneNumber).replace(/\s/g, ''));
   },
 

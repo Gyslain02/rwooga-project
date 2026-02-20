@@ -64,3 +64,34 @@ export interface Product {
 export interface AppSettings {
   isCustomPrintingEnabled: boolean;
 }
+export interface ShippingRecord {
+  id: string | number;
+  order?: {
+    id: string | number;
+    order_number: string;
+  };
+  shipping_fee?: number | string;
+  shipping_phone?: string;
+  district?: string;
+  sector?: string;
+  street_address?: string;
+  created_at: string;
+  updated_at?: string;
+}export interface PaymentRecord {
+  id: string | number;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'PROCESSING' | 'SUCCESSFUL' | 'FAILED' | 'CANCELLED';
+  payment_method: 'CARD' | 'MOMO' | 'BANK_TRANSFER';
+  reference: string;
+  transaction_id?: string;
+  order?: {
+    id: string | number;
+    order_number: string;
+  };
+  customer_name: string;
+  customer_email?: string;
+  customer_phone?: string;
+  created_at: string;
+  updated_at?: string;
+}

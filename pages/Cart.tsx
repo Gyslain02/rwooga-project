@@ -101,7 +101,7 @@ const Cart: React.FC = () => {
                 <div key={item.id} className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-green-500 transition-all">
                   <div className="flex gap-6 flex-wrap sm:flex-nowrap">
                     {/* Product Image */}
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden bg-gray-900 flex-shrink-0">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden bg-gray-900 shrink-0">
                       <img
                         src={item.image || '/placeholder-product.jpg'}
                         alt={item.name}

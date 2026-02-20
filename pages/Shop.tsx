@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '@/store'
 import { fetchPublishedProducts } from '@/store/slices/productsSlice'
+import { fetchMedia } from '@/store/slices/mediaSlice'
 import { addToCart, removeFromCart } from '@/store/slices/cartSlice'
 import { productsService } from '@/services/productsService'
 import toast from 'react-hot-toast'
@@ -24,6 +25,7 @@ const Shop = () => {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [showCart, setShowCart] = useState(false)
   const { items: products, loading, error } = useSelector((state: RootState) => state.products)
+  const { items: allMedia } = useSelector((state: RootState) => state.media)
   const cartState = useSelector((state: RootState) => state.cart)
   const cart = cartState.items || []
   const [categories, setCategories] = useState<any[]>([])
@@ -32,12 +34,12 @@ const Shop = () => {
   // Cart loading is handled by Redux slice initialization
 
   const getTotal = () => {
-    return cart.reduce((sum, item) => sum + item.price, 0);
+    return cart.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
   }
 
-  // Fetch products and categories on mount
+  // Fetch products and media on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         const categoriesRes = await productsService.getCategories()
         if (categoriesRes.ok && categoriesRes.data) {
@@ -47,10 +49,15 @@ const Shop = () => {
       } catch (err) {
         console.error('Error fetching categories:', err)
       }
+
+      // Fetch published products
+      await dispatch(fetchPublishedProducts({}) as any)
+      
+      // Fetch all media 
+      await dispatch(fetchMedia({}) as any)
     }
 
-    fetchCategories()
-    dispatch(fetchPublishedProducts({}) as any)
+    fetchData()
   }, [dispatch])
 
   const categoryNames = ['All', ...categories.map(c => c.name)]
@@ -63,12 +70,34 @@ const Shop = () => {
     })
 
   const handleAddToCart = (product: any) => {
+    // Get image from allMedia 
+    let mainImage = '/placeholder-product.jpg'
+    
+    if (allMedia && Array.isArray(allMedia) && allMedia.length > 0) {
+      const productId = String(product.id)
+      const productMedia = allMedia.filter((m: any) => {
+        const mediaProductId = String(m.product || m.product_id || m.productId || '')
+        return mediaProductId === productId
+      })
+      
+      if (productMedia && productMedia.length > 0) {
+        const sortedMedia = productMedia.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+        const mainMediaItem = sortedMedia[0]
+        mainImage = mainMediaItem.image_url || mainMediaItem.image || mainMediaItem.image_secure_url || mainImage
+      }
+    } else if (product.media && product.media.length > 0) {
+      const sortedMedia = [...product.media].sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+      mainImage = sortedMedia[0].image_url || sortedMedia[0].image || mainImage
+    } else {
+      mainImage = product.thumbnail || product.image || mainImage
+    }
+    
     const cartItem = {
       id: product.id,
       name: product.name,
       price: product.unit_price || 0,
       currency: product.currency || 'RWF',
-      image: (product.media && product.media.length > 0) ? (product.media[0].image_url || product.media[0].image) : (product.thumbnail || product.image || '/placeholder-product.jpg'),
+      image: mainImage,
       category: typeof product.category === 'object' ? product.category.name : (product.category_name || 'Product')
     }
 
@@ -90,7 +119,7 @@ const Shop = () => {
 
   return (
     <div className="bg-brand-dark min-h-screen pt-32 pb-20 relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-12 relative z-10">
+      <div className="max-w-350 mx-auto px-6 sm:px-12 relative z-10">
 
         {/* Apple-style Header */}
         <div className="mb-24 text-center">
@@ -141,6 +170,7 @@ const Shop = () => {
                   key={product.id}
                   product={product}
                   index={index}
+                  allMedia={allMedia}
                 />
               ))}
             </AnimatePresence>
@@ -161,7 +191,7 @@ const Shop = () => {
       {/* Cart Button (Floating) */}
       <button
         onClick={() => setShowCart(true)}
-        className="fixed bottom-8 right-8 p-4 bg-white text-black rounded-full shadow-2xl hover:scale-110 transition-transform z-50"
+        className="fixed bottom-24 right-8 p-4 bg-white text-black rounded-full shadow-2xl hover:scale-110 transition-transform z-50"
       >
         <ShoppingCart size={24} />
         {cart.length > 0 && (
@@ -180,14 +210,14 @@ const Shop = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCart(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-md z-[60]"
+              className="fixed inset-0 bg-black/40 backdrop-blur-md z-60"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 w-full md:w-[450px] h-screen bg-[#1c1c1e] text-white z-[70] p-6 md:p-10 flex flex-col shadow-2xl"
+              className="fixed top-0 right-0 w-full md:w-112.5 h-screen bg-[#1c1c1e] text-white z-70 p-6 md:p-10 flex flex-col shadow-2xl"
             >
               <div className="flex justify-between items-center mb-10">
                 <h3 className="text-2xl font-bold">Your Cart</h3>
@@ -199,7 +229,7 @@ const Shop = () => {
                 </button>
               </div>
 
-              <div className="flex-grow overflow-y-auto space-y-6 mb-10 custom-scrollbar">
+              <div className="grow overflow-y-auto space-y-6 mb-10 custom-scrollbar">
                 {cart.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
                     <ShoppingCart size={48} className="mb-4" />
@@ -209,7 +239,7 @@ const Shop = () => {
                   cart.map((item, idx) => (
                     <div key={`${item.id}-${idx}`} className="flex gap-4 py-4 border-b border-white/10">
                       <img src={item.image} className="w-16 h-16 rounded-xl object-cover bg-white/5" alt={item.name} />
-                      <div className="flex-grow">
+                      <div className="grow">
                         <div className="flex justify-between items-start">
                           <h4 className="font-medium text-lg">{item.name}</h4>
                           <button onClick={() => handleRemoveFromCart(item.id)} className="text-gray-500 hover:text-red-500">
@@ -249,19 +279,36 @@ const Shop = () => {
 const ProductCard: React.FC<{
   product: any;
   index: number;
-}> = ({ product, index }) => {
+  allMedia: any[];
+}> = ({ product, index, allMedia }) => {
   const navigate = useNavigate()
 
   const price = product.unit_price || product.price || 0
   const currency = product.currency || 'RWF'
   const isNew = calculateIsNew(product.created_at)
 
-  // Get main image
+  // Get main image from allMedia
   const getMainImage = () => {
-    if (product.media && product.media.length > 0) {
-      const mainMedia = product.media.find((m: any) => m.display_order === 0) || product.media[0]
-      return mainMedia.image_url || mainMedia.image || mainMedia.video_file_url || product.thumbnail || product.image
+    if (!allMedia || !Array.isArray(allMedia) || allMedia.length === 0) {
+      return product.thumbnail || product.image || '/placeholder-product.jpg'
     }
+    
+    // Find media for this product - handle multiple property name variations and type conversions
+    const productId = String(product.id)
+    const productMedia = allMedia.filter((m: any) => {
+      const mediaProductId = String(m.product || m.product_id || m.productId || '')
+      return mediaProductId === productId
+    })
+    
+    if (productMedia && productMedia.length > 0) {
+      const sortedMedia = productMedia.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+      const mainMedia = sortedMedia[0]
+      
+      // Check multiple possible image property names
+      const imageUrl = mainMedia.image_url || mainMedia.image || mainMedia.image_secure_url || ''
+      if (imageUrl && imageUrl.trim()) return imageUrl
+    }
+    
     return product.thumbnail || product.image || '/placeholder-product.jpg'
   }
 
@@ -289,11 +336,11 @@ const ProductCard: React.FC<{
       <div className="space-y-2">
         <h3 className="text-3xl font-bold text-white tracking-tight">{product.name}</h3>
         <p className="text-xl text-white">
-          <span className="text-gray-500 text-sm align-top mr-1">From</span>
+          
           {price.toLocaleString()} {currency}
         </p>
 
-        <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+        <div className="pt-4">
           <button className="px-6 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors">
             Buy
           </button>
